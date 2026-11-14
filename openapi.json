@@ -1,0 +1,2737 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TriCoach API",
+    "version": "1.0.0",
+    "description": "API for the TriCoach triathlon coaching application"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "OkResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "AthleteProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "currentWeight": {
+            "type": "number",
+            "nullable": true
+          },
+          "targetWeight": {
+            "type": "number",
+            "nullable": true
+          },
+          "level": {
+            "type": "string"
+          },
+          "availableDays": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limitations": {
+            "type": "string",
+            "nullable": true
+          },
+          "ftp": {
+            "type": "number",
+            "nullable": true
+          },
+          "vo2max": {
+            "type": "number",
+            "nullable": true
+          },
+          "swimPace": {
+            "type": "string",
+            "nullable": true
+          },
+          "runPace": {
+            "type": "string",
+            "nullable": true
+          },
+          "raceHistory": {
+            "type": "string",
+            "nullable": true
+          },
+          "trainingYears": {
+            "type": "integer",
+            "nullable": true
+          },
+          "weeklyHours": {
+            "type": "number",
+            "nullable": true
+          },
+          "currentWeeklyVol": {
+            "type": "number",
+            "nullable": true
+          },
+          "swimLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "bikeLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "runLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "weakestSport": {
+            "type": "string",
+            "nullable": true
+          },
+          "strongestSport": {
+            "type": "string",
+            "nullable": true
+          },
+          "goalType": {
+            "type": "string",
+            "nullable": true
+          },
+          "goalTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "injuryHistory": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentInjuries": {
+            "type": "string",
+            "nullable": true
+          },
+          "medicalConditions": {
+            "type": "string",
+            "nullable": true
+          },
+          "sleepHours": {
+            "type": "number",
+            "nullable": true
+          },
+          "stressLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasPoolAccess": {
+            "type": "boolean"
+          },
+          "poolSize": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasTrainer": {
+            "type": "boolean"
+          },
+          "hasPowerMeter": {
+            "type": "boolean"
+          },
+          "hasHRM": {
+            "type": "boolean"
+          },
+          "bikeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "dietaryNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "workSchedule": {
+            "type": "string",
+            "nullable": true
+          },
+          "travelFrequency": {
+            "type": "string",
+            "nullable": true
+          },
+          "previousPlanExp": {
+            "type": "string",
+            "nullable": true
+          },
+          "testCSS400": {
+            "type": "string",
+            "nullable": true
+          },
+          "testCSS200": {
+            "type": "string",
+            "nullable": true
+          },
+          "testCSSPace": {
+            "type": "string",
+            "nullable": true
+          },
+          "testFTP20min": {
+            "type": "number",
+            "nullable": true
+          },
+          "testFTPEstimated": {
+            "type": "number",
+            "nullable": true
+          },
+          "testFTPHR": {
+            "type": "integer",
+            "nullable": true
+          },
+          "testRun30min": {
+            "type": "number",
+            "nullable": true
+          },
+          "testRunPace": {
+            "type": "string",
+            "nullable": true
+          },
+          "testRunHR": {
+            "type": "integer",
+            "nullable": true
+          },
+          "testRun3km": {
+            "type": "string",
+            "nullable": true
+          },
+          "canSwim": {
+            "type": "boolean"
+          },
+          "testsCompleted": {
+            "type": "boolean"
+          },
+          "coachAssessmentDone": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TargetRace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "distance": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WorkoutLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "workoutId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "actualDuration": {
+            "type": "integer",
+            "nullable": true
+          },
+          "actualDistance": {
+            "type": "number",
+            "nullable": true
+          },
+          "rpe": {
+            "type": "integer",
+            "nullable": true
+          },
+          "weight": {
+            "type": "number",
+            "nullable": true
+          },
+          "heartRateAvg": {
+            "type": "integer",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "stravaActivityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Workout": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modality": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "integer"
+          },
+          "targetZone": {
+            "type": "string",
+            "nullable": true
+          },
+          "tssEstimate": {
+            "type": "number",
+            "nullable": true
+          },
+          "phase": {
+            "type": "string",
+            "nullable": true
+          },
+          "weekNumber": {
+            "type": "integer",
+            "nullable": true
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "log": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkoutLog"
+              }
+            ]
+          }
+        }
+      },
+      "WeightLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DashboardResponse": {
+        "type": "object",
+        "properties": {
+          "weeklyLoad": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "week": {
+                  "type": "string"
+                },
+                "natacao": {
+                  "type": "number"
+                },
+                "ciclismo": {
+                  "type": "number"
+                },
+                "corrida": {
+                  "type": "number"
+                },
+                "total": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "weightLogs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "weight": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "compliance": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "done": {
+                "type": "integer"
+              },
+              "rate": {
+                "type": "integer"
+              }
+            }
+          },
+          "races": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "distance": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "profile": {
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "currentWeight": {
+                "type": "number",
+                "nullable": true
+              },
+              "targetWeight": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "PlanGenerateResponse": {
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "string"
+          },
+          "workoutsCount": {
+            "type": "integer"
+          },
+          "generatedBy": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/signup": {
+      "post": {
+        "operationId": "signup",
+        "summary": "Create a new user account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or duplicate email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "Authenticate with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "operationId": "getProfile",
+        "summary": "Get athlete profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Athlete profile (null if not created yet)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AthleteProfile"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "updateProfile",
+        "summary": "Create or update athlete profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentWeight": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "targetWeight": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "level": {
+                    "type": "string"
+                  },
+                  "availableDays": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "limitations": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "ftp": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "vo2max": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "swimPace": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "runPace": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "raceHistory": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "daySchedule": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "weeklyHours": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "bikeEnvByDay": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "runEnvByDay": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AthleteProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profile/assessment": {
+      "get": {
+        "operationId": "getAssessment",
+        "summary": "Get athlete profile (assessment view)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Athlete profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AthleteProfile"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "saveAssessment",
+        "summary": "Save coach assessment data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "trainingYears": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "level": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "previousPlanExp": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "raceHistory": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "swimLevel": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "bikeLevel": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "runLevel": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "weakestSport": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "strongestSport": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "currentWeight": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "targetWeight": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "ftp": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "vo2max": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "swimPace": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "runPace": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "goalType": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "goalTime": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "testCSS400": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "testCSS200": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "testCSSPace": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "testFTP20min": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "testFTPEstimated": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "testFTPHR": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "testRun30min": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "testRunPace": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "testRunHR": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "testRun3km": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "canSwim": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "testsCompleted": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "injuryHistory": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "currentInjuries": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "medicalConditions": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "sleepHours": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "stressLevel": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "dietaryNotes": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "weeklyHours": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "currentWeeklyVol": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "availableDays": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "nullable": true
+                  },
+                  "workSchedule": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "travelFrequency": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "hasPoolAccess": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "poolSize": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "hasTrainer": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "hasPowerMeter": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "hasHRM": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "bikeType": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "limitations": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assessment saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "operationId": "getDashboard",
+        "summary": "Get dashboard summary data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-observed": {
+          "status": 200,
+          "samples": 1,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "weeklyLoad": {
+                "nullable": true
+              },
+              "weightLogs": {
+                "nullable": true
+              },
+              "compliance": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer"
+                  },
+                  "done": {
+                    "type": "integer"
+                  },
+                  "rate": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "races": {
+                "nullable": true
+              },
+              "profile": {
+                "nullable": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/races": {
+      "get": {
+        "operationId": "getRaces",
+        "summary": "List all target races",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of races",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TargetRace"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOrUpdateRace",
+        "summary": "Create or update a target race",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "date",
+                  "distance"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "If provided, updates existing race"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "distance": {
+                    "type": "string",
+                    "enum": [
+                      "sprint",
+                      "olimpico",
+                      "70.3",
+                      "ironman"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Race updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetRace"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Race created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetRace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/races/delete": {
+      "post": {
+        "operationId": "deleteRace",
+        "summary": "Delete a target race",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Race deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Race not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts": {
+      "get": {
+        "operationId": "getWorkouts",
+        "summary": "List workouts, optionally filtered by date range",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Start date filter (ISO 8601)"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "End date filter (ISO 8601)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of workouts with logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Workout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOrUpdateWorkout",
+        "summary": "Create or update a workout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "If provided, updates existing workout"
+                  },
+                  "planId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "modality": {
+                    "type": "string",
+                    "enum": [
+                      "natacao",
+                      "ciclismo",
+                      "corrida",
+                      "forca",
+                      "descanso"
+                    ]
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "duration": {
+                    "type": "integer"
+                  },
+                  "targetZone": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "tssEstimate": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "phase": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "weekNumber": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "completed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workout updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workout"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Workout created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workout"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts/log": {
+      "post": {
+        "operationId": "logWorkout",
+        "summary": "Log completion data for a workout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workoutId"
+                ],
+                "properties": {
+                  "workoutId": {
+                    "type": "string"
+                  },
+                  "actualDuration": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "actualDistance": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "rpe": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "weight": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "heartRateAvg": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Log saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts/delete": {
+      "post": {
+        "operationId": "deleteWorkout",
+        "summary": "Delete a workout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workout deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workout not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/weight": {
+      "get": {
+        "operationId": "getWeightLogs",
+        "summary": "List weight log entries",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of weight logs (max 100)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeightLog"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWeightLog",
+        "summary": "Add a weight log entry",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "weight"
+                ],
+                "properties": {
+                  "weight": {
+                    "type": "number"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Weight log created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plan/generate": {
+      "post": {
+        "operationId": "generatePlan",
+        "summary": "Generate a personalized training plan via AI",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanGenerateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetUserId": {
+                    "type": "string"
+                  },
+                  "modality": {
+                    "type": "string",
+                    "enum": ["triatlo", "natacao", "ciclismo", "corrida"]
+                  },
+                  "advanced": {
+                    "type": "boolean"
+                  },
+                  "goal": {
+                    "type": "string",
+                    "description": "Objetivo-alvo. Corrida: pace, 5k, 10k, 15k, 21k, 42k. Triatlo: supersprint, sprint, olimpica, 70.3, ironman."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mobile-auth/signup": {
+      "post": {
+        "operationId": "mobileSignup",
+        "summary": "Create an account and return a bearer token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": true,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "email": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "image": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "description": "The signed-in user from NextAuth's session."
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An account with that email already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Signup is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mobile-auth/login": {
+      "post": {
+        "operationId": "mobileLogin",
+        "summary": "Exchange credentials for a bearer token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": true,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "email": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "image": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "description": "The signed-in user from NextAuth's session."
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Email and password are required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid email or password.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Authentication is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mobile-auth/me": {
+      "get": {
+        "operationId": "getMobileAuthMe",
+        "summary": "The user for the supplied bearer token.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The signed-in user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": true,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "email": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "image": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "description": "The signed-in user from NextAuth's session."
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session for this token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-observed": {
+          "status": 200,
+          "samples": 1,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/motivation": {
+      "get": {
+        "operationId": "getMotivation",
+        "summary": "Get the daily AI motivational phrase",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily motivational phrase",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phrase": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-observed": {
+          "status": 200,
+          "samples": 1,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "phrase": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plan/delete": {
+      "post": {
+        "operationId": "deletePlan",
+        "summary": "Delete a training plan (coach: any; athlete: own) and its workouts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/set-password": {
+      "post": {
+        "operationId": "setPassword",
+        "summary": "Set the password for an invited account on first access",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invite not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Password already set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/athlete/create": {
+      "post": {
+        "operationId": "createAthlete",
+        "summary": "Coach registers a new athlete (no password; set on first access)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Athlete created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a coach",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/athlete/delete": {
+      "post": {
+        "operationId": "deleteAthlete",
+        "summary": "Coach deletes an athlete member and all their data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Athlete deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a coach",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts/update": {
+      "post": {
+        "operationId": "updateWorkout",
+        "summary": "Update a workout (coach: any; athlete: own)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "duration": {
+                    "type": "number"
+                  },
+                  "targetZone": {
+                    "type": "string"
+                  },
+                  "modality": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workout updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "workout": {
+                      "$ref": "#/components/schemas/Workout"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workout not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts/create": {
+      "post": {
+        "operationId": "createWorkout",
+        "summary": "Create a workout (coach may pass targetUserId to create for an athlete)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "modality",
+                  "date"
+                ],
+                "properties": {
+                  "targetUserId": {
+                    "type": "string"
+                  },
+                  "planId": {
+                    "type": "string"
+                  },
+                  "weekNumber": {
+                    "type": "number"
+                  },
+                  "phase": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "duration": {
+                    "type": "number"
+                  },
+                  "targetZone": {
+                    "type": "string"
+                  },
+                  "modality": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workout created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "workout": {
+                      "$ref": "#/components/schemas/Workout"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/upload/presigned": {
+      "post": {
+        "operationId": "getPresignedUploadUrl",
+        "summary": "Get a presigned URL to upload a profile image to cloud storage",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fileName",
+                  "contentType"
+                ],
+                "properties": {
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "contentType": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Presigned upload URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string"
+                    },
+                    "cloud_storage_path": {
+                      "type": "string"
+                    },
+                    "publicUrl": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
