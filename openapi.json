@@ -242,6 +242,11 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "hasIntervalsKey": {
+            "description": "Indica se há chave Intervals configurada; a credencial nunca é devolvida no perfil.",
+            "readOnly": true,
+            "type": "boolean"
           }
         }
       },
@@ -1733,7 +1738,12 @@
                   },
                   "modality": {
                     "type": "string",
-                    "enum": ["triatlo", "natacao", "ciclismo", "corrida"]
+                    "enum": [
+                      "triatlo",
+                      "natacao",
+                      "ciclismo",
+                      "corrida"
+                    ]
                   },
                   "advanced": {
                     "type": "boolean"
@@ -2224,7 +2234,7 @@
     "/api/auth/set-password": {
       "post": {
         "operationId": "setPassword",
-        "summary": "Set the password for an invited account on first access",
+        "summary": "Definir senha de conta convidada com token de uso único",
         "requestBody": {
           "required": true,
           "content": {
@@ -2233,13 +2243,22 @@
                 "type": "object",
                 "required": [
                   "email",
-                  "password"
+                  "password",
+                  "token"
                 ],
                 "properties": {
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email"
                   },
                   "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "No mínimo 6 caracteres e no máximo 72 bytes em UTF-8."
+                  },
+                  "token": {
+                    "description": "Token recebido no fragmento do link de convite; não registrar nem compartilhar em logs.",
+                    "pattern": "^[a-f0-9]{64}$",
                     "type": "string"
                   }
                 }
@@ -2249,7 +2268,7 @@
         },
         "responses": {
           "200": {
-            "description": "Password set",
+            "description": "Senha definida e convite consumido",
             "content": {
               "application/json": {
                 "schema": {
@@ -2259,27 +2278,7 @@
             }
           },
           "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Invite not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Password already set",
+            "description": "Dados inválidos ou convite inválido, expirado ou já utilizado",
             "content": {
               "application/json": {
                 "schema": {
@@ -2288,13 +2287,14 @@
               }
             }
           }
-        }
+        },
+        "description": "Exige convite válido por até 48 horas. Token inválido, expirado, consumido ou de conta já ativa retorna erro 400."
       }
     },
     "/api/athlete/create": {
       "post": {
         "operationId": "createAthlete",
-        "summary": "Coach registers a new athlete (no password; set on first access)",
+        "summary": "Treinador cadastra atleta ou renova convite de primeiro acesso",
         "security": [
           {
             "bearerAuth": []
@@ -2336,6 +2336,25 @@
                       "type": "string"
                     },
                     "email": {
+                      "type": "string"
+                    },
+                    "invitationUrl": {
+                      "description": "Link de primeiro acesso com convite no fragmento; válido por 48 horas.",
+                      "format": "uri",
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "description": "Expiração do convite.",
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "emailSent": {
+                      "type": "boolean",
+                      "description": "Indica se o envio opcional de e-mail foi confirmado."
+                    },
+                    "waLink": {
+                      "description": "Link opcional para compartilhar pelo WhatsApp.",
+                      "nullable": true,
                       "type": "string"
                     }
                   }
@@ -2383,7 +2402,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Somente treinadores. Para conta ainda sem senha, renova o convite. O link é sensível e a resposta usa Cache-Control no-store."
       }
     },
     "/api/athlete/delete": {

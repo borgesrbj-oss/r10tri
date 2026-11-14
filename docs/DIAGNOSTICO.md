@@ -67,8 +67,11 @@ O ZIP não continha README nem migrações de banco. Continha um `.env` preenchi
 | Verificação dos arquivos rastreados | 216 arquivos examinados sem padrões de credenciais. A comparação exata com os segredos do `.env` original, a senha literal do seed recebido e os segredos do novo ambiente local também não encontrou ocorrências. |
 | Compilação de produção | Passou com saída `.build`, por meio de `NEXT_DIST_DIR=.build`. |
 | Preparação local do Git | Repositório iniciado na branch `main`, com identidade configurada apenas no projeto e e-mail de privacidade do GitHub. |
-| Workflow de verificação do projeto | Preparado em `.github/workflows/verificar.yml`; resultado remoto aguardando o primeiro envio ao GitHub. |
-| Portfólio | 7 testes de busca, paginação, privacidade e fallback passaram; página e JSON responderam HTTP 200 na revisão local. |
+| Repositório público | Código enviado à branch `main` de [borgesrbj-oss/r10tri](https://github.com/borgesrbj-oss/r10tri), com três commits organizados em português na publicação inicial. |
+| Workflow de verificação do projeto | [Execução 43639788897 aprovada](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897): `npm ci` em Linux, verificação de segredos, migrações, lint, tipos, 28 testes, auditoria sem vulnerabilidades, compilação e 21 cenários de integração em produção. |
+| Portfólio | 7 testes de busca, paginação, privacidade e fallback passaram. Snapshot atualizado com oito repositórios públicos e [deploy 43639849786 aprovado](https://github.com/borgesrbj-oss/borgesrbj-oss.github.io/actions/runs/43639849786). |
+| README de perfil | [Perfil público atualizado](https://github.com/borgesrbj-oss/borgesrbj-oss) com os oito repositórios públicos. |
+| Revisão visual | Portfólio conferido em computador e larguras de celular de 390 e 430 pixels no Chromium disponível, com busca e filtro dos oito repositórios. Login do R10 TRI revisado visualmente, sem erros no console observado. |
 
 Os testes unitários de segurança executam os handlers reais com dependências controladas. O teste de integração é separado e deve ser executado com o servidor apontando para o mesmo PostgreSQL de testes. Aprovação de teste local não comprova configuração das integrações externas.
 
@@ -81,9 +84,10 @@ Os testes unitários de segurança executam os handlers reais com dependências 
 - O ZIP contém guias e exemplos técnicos herdados. Eles foram preservados e não constituem evidência de uma integração externa estar ativa.
 - A tela Strava não implementa conexão/sincronização. O usuário informou que fornecerá os arquivos faltantes; essa pendência não foi substituída por uma implementação inventada.
 - AWS S3, Abacus e Intervals.icu dependem das configurações e acessos do ambiente definitivo. Nenhum segredo externo foi solicitado em texto aberto.
+- Android e iPhone físicos e o navegador Safari não foram testados. A revisão responsiva utilizou o Chromium disponível nas dimensões descritas acima.
 
 ## Encerramento da validação
 
 Os testes automatizados, a checagem de tipos, o linter global, a compilação e a auditoria de dependências foram concluídos com os resultados acima. A integração passou tanto em desenvolvimento quanto em produção. A conferência dos arquivos rastreados passou pela busca por padrões e pela comparação exata com os segredos locais e os recebidos no ZIP, sem ocorrências. O Git local está preparado na branch `main`.
 
-O workflow remoto e o envio do R10 TRI ainda aguardam confirmação. O portfólio está publicado em [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/). A pendência funcional continua sendo o recebimento dos arquivos da integração Strava e a configuração das integrações opcionais no ambiente definitivo.
+O [repositório R10 TRI](https://github.com/borgesrbj-oss/r10tri) foi publicado e seu [workflow completo foi aprovado](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897). O portfólio está publicado em [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/), com [deploy atualizado aprovado](https://github.com/borgesrbj-oss/borgesrbj-oss.github.io/actions/runs/43639849786), e o [README de perfil](https://github.com/borgesrbj-oss/borgesrbj-oss) reúne os oito projetos públicos. A pendência funcional continua sendo o recebimento dos arquivos da integração Strava e a configuração das integrações opcionais no ambiente definitivo.

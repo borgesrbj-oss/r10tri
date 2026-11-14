@@ -184,9 +184,11 @@ O teste integrado aceita somente servidor HTTP local e banco PostgreSQL em `127.
 
 `typecheck` gera primeiro os tipos do Next.js com `next typegen` e depois executa `tsc --noEmit`. A verificação de segredos examina os arquivos rastreados pelo Git e informa somente os caminhos com possíveis ocorrências; execute-a após preparar os arquivos que entrarão no commit. Essa busca por padrões complementa a revisão dos arquivos e do histórico.
 
-O workflow [.github/workflows/verificar.yml](.github/workflows/verificar.yml) prepara PostgreSQL isolado com credenciais efêmeras, instala com `npm ci`, aplica as migrações, executa as verificações, compila e testa a aplicação em produção. O resultado remoto será registrado depois do primeiro envio ao GitHub.
+O workflow [.github/workflows/verificar.yml](.github/workflows/verificar.yml) prepara PostgreSQL isolado com credenciais efêmeras, instala com `npm ci`, aplica as migrações, executa as verificações, compila e testa a aplicação em produção. A [verificação completa no GitHub Actions](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897) passou em Linux, incluindo os 28 testes, auditoria sem vulnerabilidades, compilação e os 21 cenários de integração em produção.
 
 Na validação local final, passaram os 28 testes automatizados, o linter global sem erros ou avisos, a geração e checagem de tipos e a compilação de produção. Os 21 cenários de integração passaram tanto em desenvolvimento quanto na versão de produção. A auditoria npm final não identificou vulnerabilidades, e `npm ls --all` confirmou a árvore de dependências sem erros. Os arquivos rastreados também passaram pela busca por padrões e pela comparação com os segredos dos ambientes locais, sem ocorrências.
+
+O portfólio foi conferido no navegador Chromium disponível em layout de computador e larguras de celular de 390 e 430 pixels, incluindo busca e filtro dos oito repositórios públicos. A tela de login do R10 TRI foi revisada visualmente e não apresentou erros no console observado. Aparelhos Android e iPhone físicos e o navegador Safari não foram testados.
 
 O arquivo [docs/DIAGNOSTICO.md](docs/DIAGNOSTICO.md) distingue verificações já observadas de validações ainda pendentes.
 
@@ -230,4 +232,3 @@ Os guias e exemplos técnicos recebidos foram preservados. A documentação acim
 
 - Receber e revisar os arquivos complementares da integração Strava.
 - Configurar as integrações opcionais desejadas no ambiente definitivo, sem compartilhar segredos em texto aberto.
-- Registrar o resultado do primeiro workflow remoto.
