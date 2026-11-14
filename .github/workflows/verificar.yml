@@ -1,0 +1,70 @@
+name: Verificar R10 TRI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Criar ambiente isolado de testes
+        shell: bash
+        run: |
+          POSTGRES_PASSWORD="$(openssl rand -hex 32)"
+          AUTH_SECRET="$(openssl rand -hex 48)"
+          echo "::add-mask::$POSTGRES_PASSWORD"
+          echo "::add-mask::$AUTH_SECRET"
+          export POSTGRES_PASSWORD
+          docker run -d --name r10tri-postgres -e POSTGRES_PASSWORD -e POSTGRES_USER=r10tri -e POSTGRES_DB=r10tri_ci -p 127.0.0.1:55432:5432 postgres:18
+          for tentativa in $(seq 1 30); do
+            if docker exec r10tri-postgres pg_isready -U r10tri -d r10tri_ci; then break; fi
+            sleep 1
+          done
+          docker exec r10tri-postgres pg_isready -U r10tri -d r10tri_ci
+          {
+            echo "DATABASE_URL=postgresql://r10tri:${POSTGRES_PASSWORD}@127.0.0.1:55432/r10tri_ci?schema=public"
+            echo "AUTH_SECRET=$AUTH_SECRET"
+            echo 'NEXTAUTH_URL=http://localhost:3000'
+            echo 'APP_ORIGIN=http://localhost:3000'
+            echo 'NEXT_TELEMETRY_DISABLED=1'
+          } >> "$GITHUB_ENV"
+      - name: Instalar dependências travadas
+        run: npm ci
+      - name: Validar arquivos e banco
+        run: |
+          npm run verificar:segredos
+          npx prisma validate
+          npm run db:migrate
+      - name: Verificar código e testes
+        run: |
+          npm run lint -- --max-warnings 0
+          npm run typecheck
+          npm test
+          npm audit
+      - name: Compilar para produção
+        run: npm run build
+      - name: Executar integração na versão de produção
+        shell: bash
+        run: |
+          npm start > "$RUNNER_TEMP/r10tri-servidor.log" 2>&1 &
+          servidor=$!
+          trap 'kill "$servidor" 2>/dev/null || true' EXIT
+          pronto=0
+          for tentativa in $(seq 1 60); do
+            if curl --silent --fail http://localhost:3000/api/auth/providers > /dev/null; then pronto=1; break; fi
+            sleep 1
+          done
+          test "$pronto" = 1
+          npm run test:integracao
