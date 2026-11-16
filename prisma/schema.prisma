@@ -13,10 +13,12 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
+  username      String?   @unique
   emailVerified DateTime?
   image         String?
   password      String?
   role          String    @default("atleta") // atleta, coach
+  authVersion   Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -104,6 +106,14 @@ model AthleteProfile {
   limitations       String?
   ftp               Float?
   vo2max            Float?
+  maxHeartRate      Int?
+  restingHeartRate  Int?
+  thresholdHeartRate Int?
+  runThresholdPace  String?
+  swimCssPace       String?
+  recentRaceDistanceKm Float?
+  recentRaceTimeSeconds Int?
+  recentRaceDate    DateTime?
   swimPace          String?  // pace por 100m
   runPace           String?  // pace por km
   raceHistory       String?  // texto livre
@@ -178,6 +188,7 @@ model TrainingPlan {
   status      String   @default("active") // active, archived
   generatedBy String   @default("ai") // ai, manual
   nutritionPlan String? // plano nutricional em texto/markdown
+  summary     Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -195,6 +206,7 @@ model Workout {
   modality       String       // natacao, ciclismo, corrida, forca, descanso
   title          String
   description    String
+  structure      Json?
   duration       Int          // minutos
   targetZone     String?      // Z1, Z2, Z3, Z4, Z5
   tssEstimate    Float?       // estimativa de carga
@@ -222,6 +234,9 @@ model WorkoutLog {
   rpe             Int?     // 1-10
   weight          Float?
   heartRateAvg    Int?
+  sleepHours      Float?
+  fatigueScore    Int?
+  painScore       Int?
   notes           String?
   stravaActivityId String?
   completedAt     DateTime @default(now())

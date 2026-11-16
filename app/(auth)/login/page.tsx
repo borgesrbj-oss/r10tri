@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { getSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Waves, Bike, Timer, Mail, Lock } from 'lucide-react';
+import { Waves, Bike, Timer, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,17 +16,26 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'atleta' | 'coach'>('atleta');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const isCoach = mode === 'coach';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const form = new FormData(e.currentTarget as HTMLFormElement);
+    const identifier = String(form.get('identifier') ?? email).trim();
+    const secret = String(form.get('password') ?? password);
     setLoading(true); setError('');
     try {
-      const res = await signIn('credentials', { email, password, redirect: false });
-      if (res?.error) { setError('Email ou senha incorretos'); }
-      else { router.push('/dashboard'); }
-    } catch { setError('Erro ao fazer login'); }
+      const res = await signIn('credentials', { email: identifier, password: secret, redirect: false });
+      if (res?.error === 'CredentialsSignin') {
+        setError('E-mail, usuário ou senha incorretos. Confira os dados ou use “Esqueci minha senha”. Se é seu primeiro acesso, abra o convite do coach.');
+      } else if (!res?.ok || res.error) {
+        setError('O serviço de acesso está indisponível. Tente novamente em instantes.');
+      } else if (!(await getSession())?.user?.id) {
+        setError('Não foi possível manter sua sessão. Permita cookies deste site e tente entrar novamente.');
+      } else { router.replace('/dashboard'); router.refresh(); }
+    } catch { setError('Não foi possível conectar ao aplicativo. Confira sua conexão e tente novamente.'); }
     finally { setLoading(false); }
   };
 
@@ -48,18 +57,21 @@ export default function LoginPage() {
             <button type="button" onClick={() => { setMode('coach'); setError(''); }} className={`text-sm font-medium py-2 rounded-md transition-colors ${isCoach ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Coach</button>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-sm text-destructive text-center bg-destructive/10 p-2 rounded">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive text-center bg-destructive/10 p-2 rounded">{error}</p>}
             <div className="space-y-2">
-              <Label htmlFor="email">{isCoach ? 'Usuário do coach' : 'Email ou usuário'}</Label>
+              <Label htmlFor="email">{isCoach ? 'E-mail ou usuário do coach' : 'E-mail ou usuário'}</Label>
               <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input id="email" type="text" autoCapitalize="none" placeholder={isCoach ? 'R10ADM' : 'seu@email.com'} value={email} onChange={(e: any) => setEmail(e?.target?.value ?? '')} className="pl-10" required /></div>
+              <Input id="email" name="identifier" type="text" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder={isCoach ? 'Seu usuário ou e-mail cadastrado' : 'seu@email.com'} value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 text-base md:text-sm" required /></div>
+              <p className="text-xs text-muted-foreground">Use o e-mail cadastrado ou um usuário atribuído à sua conta. Não existe usuário ou senha padrão.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
               <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e: any) => setPassword(e?.target?.value ?? '')} className="pl-10" required /></div>
+              <Input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-12 text-base md:text-sm" required />
+              <button type="button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)} className="absolute right-0 top-0 h-full min-w-11 flex items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
             </div>
             <Button type="submit" className="w-full" loading={loading}>Entrar</Button>
+            <p className="text-center text-sm"><Link href="/esqueci-senha" className="text-primary font-medium hover:underline">Esqueci minha senha</Link></p>
           </form>
           {!isCoach && (
           <p className="text-center text-sm text-muted-foreground mt-4">Primeiro acesso (atleta convidado)? <Link href="/definir-senha" className="text-primary font-medium hover:underline">Definir senha</Link></p>

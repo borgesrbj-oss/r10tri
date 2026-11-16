@@ -2,8 +2,8 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/lib/db';
-import bcrypt from 'bcryptjs';
 import { trustedRole } from '@/lib/auth-policy';
+import { authenticateCredentials, sessionVersionMatches } from '@/lib/auth-credentials';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -16,17 +16,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'E-mail ou usuário', type: 'text' },
         password: { label: 'Senha', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        const user = await prisma.user.findUnique({ where: { email: credentials.email as string } });
-        if (!user?.password) return null;
-        const valid = await bcrypt.compare(credentials.password as string, user.password);
-        if (!valid) return null;
+        const user = await authenticateCredentials(credentials ?? {}, (lookup) => prisma.user.findMany({
+          where: lookup.kind === 'email'
+            ? { email: { equals: lookup.value, mode: 'insensitive' } }
+            : { username: { equals: lookup.value, mode: 'insensitive' } },
+          take: 2,
+          select: { id: true, name: true, email: true, password: true, role: true, authVersion: true },
+        }));
+        if (!user) return null;
         const role = trustedRole(user.role);
-        return { id: user.id, name: user.name, email: user.email, role };
+        return { id: user.id, name: user.name, email: user.email, role, authVersion: user.authVersion };
       },
     }),
   ],
@@ -35,10 +38,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = trustedRole(user.role);
+        token.authVersion = user.authVersion ?? 0;
       } else if (typeof token.id === 'string') {
         // Revoga também permissões presentes em sessões emitidas antes de uma alteração.
-        const currentUser = await prisma.user.findUnique({ where: { id: token.id }, select: { role: true } });
-        if (!currentUser) return null;
+        const currentUser = await prisma.user.findUnique({ where: { id: token.id }, select: { role: true, authVersion: true } });
+        if (!currentUser || !sessionVersionMatches(token.authVersion, currentUser.authVersion)) return null;
         token.role = trustedRole(currentUser.role);
       }
       return token;
