@@ -2,7 +2,69 @@
 
 Consolidação iniciada em 14 de novembro de 2026 a partir do ZIP fornecido e das verificações locais. Este documento não contém valores de credenciais.
 
-## Projeto identificado
+## Estado da revisão de endurance em 16 de novembro de 2026
+
+A base existente de cadastro, convites, calendário, gestão de atletas, planos, registros e exportações foi mantida. Os ajustes são incrementais na branch `codex/ajustes-endurance`. Os números da publicação inicial aparecem em seção histórica abaixo e não comprovam, por si só, o estado final das novas alterações.
+
+| Área | Diagnóstico e comportamento atual | Limite ou validação restante |
+| --- | --- | --- |
+| Login | Busca de credenciais corrigida para normalizar e-mail/identificador e preservar a senha; o identificador agora existe no modelo. | Confirmar fluxo no deploy HTTPS e em Safari real. Não há conta ou senha padrão. |
+| Recuperação | Fluxo implementado com token de uso único, hash no banco, expiração de 30 minutos, intervalo mínimo de 60 segundos e invalidação de sessões antigas. | SMTP real ainda precisa de configuração e teste de entrega; sem ele, a API retorna 503. |
+| PWA e mobile | Manifesto, ícones, service worker com cache público limitado, página offline neutra e ajustes de viewport/áreas seguras. | Safari/macOS e aparelhos iPhone/Android físicos não foram testados. Push não está configurado como serviço ativo. |
+| Triagem e planos | Dados validados no servidor; geração exige disponibilidade e informações mínimas. Treinos novos persistem passos, alvos e distribuição real por tempo ativo. | Revisão individual do coach continua necessária; planos antigos têm informação parcial. |
+| Acompanhamento | Alertas restritos ao coach, previsão de corrida com Riegel, link de WhatsApp e check-in de sono/fadiga/dor. | Critérios operacionais não equivalem a diagnóstico ou previsão garantida. WhatsApp exige ação do usuário. |
+| Integrações | Exportação de arquivos e Intervals.icu preservados. | FIT não é sincronização Garmin. Strava depende dos arquivos complementares prometidos e da configuração autorizada. |
+| Hospedagem | Railway preparado com projeto, PostgreSQL e domínio; configuração de build, migração, bootstrap e saúde presente no repositório. | O app ainda não tinha deploy funcional confirmado no último estado registrado. |
+
+### Causa raiz do erro de acesso
+
+A busca anterior utilizava correspondência exata de e-mail, sem normalizar espaços externos ou maiúsculas. A tela também sugeria um identificador de coach, mas o banco não tinha campo de nome de usuário nem uma conta padrão com esse identificador. Esses caminhos levavam à mensagem genérica de credenciais inválidas. As verificações não demonstraram um defeito de salt/bcrypt que justificasse substituir senhas ou ignorar sua verificação.
+
+Foi acrescentado `User.username` opcional e único; e-mails e identificadores são normalizados e consultados sem diferenciar maiúsculas. A senha não recebe trim nem normalização Unicode. Colisões legadas de identidade são recusadas para revisão, em vez de fundir contas ou conceder privilégios. O papel continua vindo do banco. A identidade da conta inicial é configurada privadamente e não consta destes documentos.
+
+### Problemas, causas, arquivos e soluções da revisão atual
+
+| Problema | Causa | Arquivos principais | Solução |
+| --- | --- | --- | --- |
+| E-mail válido podia ser recusado; identificador sugerido não funcionava | Comparação exata e ausência de campo/conta de usuário | `auth.ts`, `lib/auth-credentials.ts`, login e APIs de autenticação, `prisma/schema.prisma` | Normalização somente da identidade, username persistido, senha integral e mensagens claras. |
+| Recuperação inexistente | Ausência de token, envio e revogação próprios | `lib/password-reset.ts`, `lib/auth-mail.ts`, rotas `forgot-password`/`reset-password`, páginas `esqueci-senha`/`redefinir-senha` | Token aleatório, hash, validade, consumo único transacional, SMTP com TLS e `authVersion` para revogar sessões. |
+| Interface não atendia instalação e particularidades mobile | Recursos PWA e tratamento de altura/áreas seguras incompletos | `app/layout.tsx`, `app/globals.css`, `components/pwa-manager.tsx`, navegação, `public/manifest.json`, `public/sw.js`, `public/offline.html` | Instalação progressiva em contexto seguro, viewport dinâmico, inputs e cache restrito a recursos públicos. |
+| Triagem aceitava dados incompletos ou inconsistentes | Ausência de contrato único validado antes de gerar | `lib/assessment-validation.ts`, APIs de perfil/triagem/plano, `components/coach-questionnaire.tsx` | Validação por campo, consistência de FC/datas e lista explícita do que falta. |
+| Treinos genéricos não permitiam comprovar distribuição e descansos | Conteúdo textual sem passos persistidos e sem resumo calculado | `lib/training-types.ts`, `lib/training-zones.ts`, `lib/training-structure.ts`, `lib/plan-engine.ts`, APIs/plano/calendário | Estrutura versionada com tempos, zonas, alvos, recuperação e soma verificável; compatibilidade com planos legados. |
+| Percentual intenso podia ser apenas uma declaração | Falta de cálculo sobre o treino real | `lib/training-structure.ts`, componentes de estrutura e plano | Medição pelo tempo aeróbico ativo; força/pausa passiva separadas e justificativa para semanas menos intensas. |
+| Falta de acompanhamento objetivo | Dados de sono/fadiga/dor e alertas não estavam ligados ao fluxo | `lib/coach-alerts.ts`, `/api/coach-alerts`, `components/coach-alerts.tsx`, API de registro, calendário | Check-in com limites, alertas de revisão e acesso exclusivo de coach. |
+| Estimativa de prova sem limite explícito seria enganosa | Ausência de regra e requisitos claros de resultado | `lib/race-prediction.ts`, componente de previsão | Riegel com resultado real recente, intervalos de entrada e avisos; não apresentado como VDOT. |
+| Operação na hospedagem sem procedimento reproduzível | Falta de preparação de banco, conta inicial e saúde | `scripts/bootstrap-coach.mjs`, `app/api/health/route.ts`, `railway.json`, `package.json` | Migração e bootstrap idempotente privado antes do deploy, inicialização e verificação do banco. |
+| Operações de prova exigiam proteção adicional por proprietário | Identificador de prova sem verificação suficiente do usuário | `app/api/races/route.ts`, testes de autorização | Validação de propriedade nas operações; regressões incluídas na bateria global. |
+| Alteração parcial de FC podia ignorar dados já salvos | Consistência conferida sem combinar os valores persistidos e enviados | Validação e APIs de perfil/triagem | Conferência do perfil resultante antes de gravar FC máxima, de repouso e limiar. |
+| Duração automática e objetivos não tinham efeito completo no plano | Horizonte e preferências não eram aplicados de ponta a ponta | API de geração, motor, alvos, resumo e telas de plano/planilha | Auto até prova mais duas semanas, escolha explícita de 1–52 semanas, objetivo e modo da corrida efetivamente aplicados e revisão visível. |
+
+### Plano de alterações e preservação
+
+A relação de módulos foi apresentada antes das alterações. A execução seguiu acesso/recuperação, PWA/mobile, triagem/treinos e funcionalidades complementares, mantendo os contratos existentes quando possível. A migração `20261114010000_endurance` acrescenta campos; não apaga registros. Treinos novos recebem `Workout.structure` e planos recebem `TrainingPlan.summary`. A nomenclatura JSON, as faixas e as decisões de produto estão na [metodologia](METODOLOGIA_TREINOS.md).
+
+O usuário autorizou remover somente AppShell, AuthLayout, ThemeToggle e a pasta de exemplos de visualização sem uso. Essa aprovação não se estende a outras telas. Não foram encontrados ranking público nem feed social no aplicativo. A execução da limpeza deve ser conferida no diff final. As opções de identidade permanecem em [OPCOES_IDENTIDADE.md](OPCOES_IDENTIDADE.md), sem troca automática da marca.
+
+### Verificações observadas em 16 de novembro de 2026
+
+| Escopo | Evidência |
+| --- | --- |
+| Bateria global automatizada | 130 de 130 testes passaram, incluindo regressões de autenticação, autorização, treinos, exportação, PWA, apresentação e alertas. |
+| Tipos e lint global | Passaram; nenhum erro ou aviso de lint. |
+| Build final de produção | Passou. |
+| Auditoria de dependências | Zero vulnerabilidades após atualização do transporte SMTP para Nodemailer 10.6.0 por alias, preservando a compatibilidade da dependência opcional de Auth.js. |
+| Verificação de segredos | 236 arquivos examinados, sem ocorrências. |
+| Integração local em produção | 21 de 21 cenários HTTP/PostgreSQL passaram. |
+| Recuperação com SMTP TLS de teste | 10 de 10 cenários passaram. Não é evidência de entrega por provedor real. |
+| Autenticação sem SMTP | 10 de 10 cenários passaram, incluindo a indisponibilidade explícita da recuperação. |
+| Revisão no Chrome disponível | Login por identificador com conta temporária; menu, planilha e blocos a 390 px, sem transbordamento horizontal da página observado. |
+| Contrato OpenAPI | Novas rotas e estrutura de geração documentadas; JSON e referências internas conferidos, preservadas as 23 rotas legadas. |
+| Chrome disponível | Login por identificador com conta temporária funcionou; menu, planilha e blocos conferidos a 390 px sem transbordamento horizontal da página. |
+| Build final e publicação | Compilação final em andamento; deploy do aplicativo ainda sem confirmação funcional. |
+
+Os 130 testes são a bateria global; os testes HTTP/SMTP são execuções separadas. O deploy público ainda precisa de confirmação. O [checklist](CHECKLIST_ENDURANCE.md) distingue verificações automáticas, testes reais de dispositivo, serviços externos e publicação. Nenhum resultado de Safari físico foi presumido a partir de testes HTTP ou do Chrome, e nenhuma identidade privada de teste foi incluída neste documento.
+
+## Diagnóstico inicial e histórico da primeira publicação
 
 - Linguagem principal: TypeScript, com componentes React em TSX e utilitários JavaScript.
 - Framework: Next.js 16 com App Router, páginas de servidor e rotas HTTP em `app/api`.
@@ -14,7 +76,7 @@ Consolidação iniciada em 14 de novembro de 2026 a partir do ZIP fornecido e da
 
 O ZIP não continha README nem migrações de banco. Continha um `.env` preenchido e uma conta de teste com senha literal no seed original. Esses valores não fazem parte da documentação nem devem ser incluídos no histórico Git. A validação local utiliza banco separado do ambiente original.
 
-## Registro de problemas e soluções
+### Problemas e soluções da base inicial
 
 | Problema | Causa | Arquivos principais | Solução aplicada |
 | --- | --- | --- | --- |
@@ -42,7 +104,7 @@ O ZIP não continha README nem migrações de banco. Continha um `.env` preenchi
 | Regeneração do Prisma falhava com `EPERM` no Windows | O servidor do próprio projeto mantinha o mecanismo do Prisma aberto | Processo local do servidor e cliente Prisma gerado | Encerramento somente do servidor do projeto e nova execução de `prisma generate`, sem alterar permissões do sistema. |
 | Documentação insuficiente e risco de versionar credenciais | README e `.gitignore` ausentes no ZIP | `README.md`, `.env.example`, `.gitignore` | Documentação de instalação/execução, modelo sem segredos e exclusão de configurações locais e artefatos. |
 
-## Verificações observadas
+### Verificações históricas observadas na primeira publicação
 
 | Verificação | Resultado observado |
 | --- | --- |
@@ -75,19 +137,19 @@ O ZIP não continha README nem migrações de banco. Continha um `.env` preenchi
 
 Os testes unitários de segurança executam os handlers reais com dependências controladas. O teste de integração é separado e deve ser executado com o servidor apontando para o mesmo PostgreSQL de testes. Aprovação de teste local não comprova configuração das integrações externas.
 
-## Avisos e limites conhecidos
+### Avisos e limites da base inicial
 
 - A instalação inicial apontou pacotes descontinuados, incluindo Recharts 2, ESLint 9 e dependências antigas de visualização. As versões resolvidas estão no arquivo de dependências; a auditoria final não apontou vulnerabilidades.
 - O ESLint 9.39.5 foi mantido porque o `eslint-plugin-react` 7.37.5 utilizado na árvore declara compatibilidade que ainda não inclui ESLint 10. O aviso de descontinuação é conhecido; a migração exige suporte dos plugins e nova validação.
 - As bibliotecas Auth.js/NextAuth e Prisma mantêm as versões declaradas no projeto; o NextAuth utilizado é uma versão beta.
 - A saída do gerador Prisma é explícita e relativa. Uma atualização principal do Prisma permanece uma alteração separada, com revisão das orientações de migração.
-- O ZIP contém guias e exemplos técnicos herdados. Eles foram preservados e não constituem evidência de uma integração externa estar ativa.
+- O ZIP continha guias e exemplos técnicos herdados. Sua presença não constitui evidência de uma integração externa estar ativa; a limpeza posterior autorizada está descrita acima.
 - A tela Strava não implementa conexão/sincronização. O usuário informou que fornecerá os arquivos faltantes; essa pendência não foi substituída por uma implementação inventada.
 - AWS S3, Abacus e Intervals.icu dependem das configurações e acessos do ambiente definitivo. Nenhum segredo externo foi solicitado em texto aberto.
 - Android e iPhone físicos e o navegador Safari não foram testados. A revisão responsiva utilizou o Chromium disponível nas dimensões descritas acima.
 
-## Encerramento da validação
+### Resultado histórico da primeira publicação
 
-Os testes automatizados, a checagem de tipos, o linter global, a compilação e a auditoria de dependências foram concluídos com os resultados acima. A integração passou tanto em desenvolvimento quanto em produção. A conferência dos arquivos rastreados passou pela busca por padrões e pela comparação exata com os segredos locais e os recebidos no ZIP, sem ocorrências. O Git local está preparado na branch `main`.
+Na primeira publicação, os testes automatizados, a checagem de tipos, o linter global, a compilação e a auditoria de dependências foram concluídos com os resultados históricos acima. A integração passou tanto em desenvolvimento quanto em produção. A conferência dos arquivos rastreados passou pela busca por padrões e pela comparação exata com os segredos locais e os recebidos no ZIP, sem ocorrências. O Git foi inicialmente preparado na branch `main`; a revisão de endurance utiliza a branch indicada no início deste documento.
 
-O [repositório R10 TRI](https://github.com/borgesrbj-oss/r10tri) foi publicado e seu [workflow completo foi aprovado](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897). O portfólio está publicado em [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/), com [deploy atualizado aprovado](https://github.com/borgesrbj-oss/borgesrbj-oss.github.io/actions/runs/43639849786), e o [README de perfil](https://github.com/borgesrbj-oss/borgesrbj-oss) reúne os oito projetos públicos. A pendência funcional continua sendo o recebimento dos arquivos da integração Strava e a configuração das integrações opcionais no ambiente definitivo.
+O [repositório R10 TRI](https://github.com/borgesrbj-oss/r10tri) foi publicado e seu [workflow anterior foi aprovado](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897). O portfólio está publicado em [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/), com [deploy anterior aprovado](https://github.com/borgesrbj-oss/borgesrbj-oss.github.io/actions/runs/43639849786), e o [README de perfil](https://github.com/borgesrbj-oss/borgesrbj-oss) reuniu os oito projetos públicos daquele levantamento. O estado da revisão atual e suas pendências estão registrados no início deste documento.

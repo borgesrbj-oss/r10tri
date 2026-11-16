@@ -15,6 +15,18 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "authjs.session-token",
+        "description": "Sessão Auth.js no desenvolvimento HTTP. O navegador envia o cookie automaticamente."
+      },
+      "secureSessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Secure-authjs.session-token",
+        "description": "Sessão Auth.js em HTTPS. Não copie cookies para documentação ou relatórios."
       }
     },
     "schemas": {
@@ -396,6 +408,15 @@
                 "$ref": "#/components/schemas/WorkoutLog"
               }
             ]
+          },
+          "structure": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkoutStructure"
+              }
+            ],
+            "description": "Estrutura versionada nos treinos novos; ausente em registros legados."
           }
         }
       },
@@ -524,9 +545,458 @@
             "type": "integer"
           },
           "generatedBy": {
+            "type": "string",
+            "enum": [
+              "app-estruturado"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/TrainingPlanSummary"
+          }
+        },
+        "required": [
+          "planId",
+          "workoutsCount",
+          "generatedBy",
+          "warnings",
+          "summary"
+        ]
+      },
+      "TrainingTarget": {
+        "type": "object",
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "ftp",
+              "run_threshold",
+              "threshold_hr",
+              "css",
+              "rpe"
+            ]
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "W",
+              "s/km",
+              "bpm",
+              "s/100m",
+              "RPE"
+            ]
+          },
+          "low": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "text": {
+            "type": "string"
+          },
+          "source": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "basis",
+          "unit",
+          "low",
+          "high",
+          "text",
+          "source"
+        ]
+      },
+      "TrainingDistribution": {
+        "type": "object",
+        "properties": {
+          "lowSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "moderateSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "highSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "restSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "enduranceSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "strengthSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "totalSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "highFraction": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Fração Z4–Z5 do tempo aeróbico ativo; força e descanso passivo ficam separados."
+          }
+        },
+        "required": [
+          "lowSeconds",
+          "moderateSeconds",
+          "highSeconds",
+          "restSeconds",
+          "enduranceSeconds",
+          "strengthSeconds",
+          "totalSeconds",
+          "highFraction"
+        ]
+      },
+      "TrainingStep": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "aquecimento",
+              "principal",
+              "recuperacao",
+              "desaquecimento"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "zone": {
+            "type": "string",
+            "enum": [
+              "Z1",
+              "Z2",
+              "Z3",
+              "Z4",
+              "Z5",
+              null
+            ],
+            "nullable": true
+          },
+          "rest": {
+            "type": "string",
+            "enum": [
+              "ativo",
+              "passivo",
+              null
+            ],
+            "nullable": true
+          },
+          "target": {
+            "$ref": "#/components/schemas/TrainingTarget"
+          },
+          "distanceMeters": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Estimativa auxiliar; a duração continua sendo o limite do bloco."
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "durationSeconds",
+          "zone",
+          "rest",
+          "target"
+        ]
+      },
+      "WorkoutStructure": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "corrida",
+              "ciclismo",
+              "natacao",
+              "forca"
+            ]
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "base",
+              "build",
+              "peak",
+              "race",
+              "transition"
+            ]
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/TrainingStep"
+            }
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/TrainingDistribution"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requiresCoachReview": {
+            "type": "boolean",
+            "description": "Indica necessidade de revisão do treinador antes da execução; não é liberação clínica."
+          }
+        },
+        "required": [
+          "version",
+          "modality",
+          "phase",
+          "durationSeconds",
+          "steps",
+          "distribution",
+          "warnings",
+          "requiresCoachReview"
+        ]
+      },
+      "TrainingWeekSummary": {
+        "type": "object",
+        "properties": {
+          "weekNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "base",
+              "build",
+              "peak",
+              "race",
+              "transition"
+            ]
+          },
+          "recovery": {
+            "type": "boolean"
+          },
+          "budgetMinutes": {
+            "type": "number",
+            "minimum": 0
+          },
+          "plannedMinutes": {
+            "type": "number",
+            "minimum": 0
+          },
+          "targetHighFraction": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.2
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/TrainingDistribution"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "weekNumber",
+          "phase",
+          "recovery",
+          "budgetMinutes",
+          "plannedMinutes",
+          "targetHighFraction",
+          "distribution",
+          "warnings"
+        ]
+      },
+      "TrainingPlanSummary": {
+        "type": "object",
+        "properties": {
+          "basis": {
+            "type": "string",
+            "enum": [
+              "tempo_aerobico_ativo"
+            ]
+          },
+          "targetHighFraction": {
+            "type": "number",
+            "enum": [
+              0.2
+            ]
+          },
+          "goal": {
+            "type": "string",
+            "nullable": true,
+            "description": "Objetivo selecionado para este plano."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requiresCoachReview": {
+            "type": "boolean"
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/TrainingDistribution"
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrainingWeekSummary"
+            }
+          }
+        },
+        "required": [
+          "basis",
+          "targetHighFraction",
+          "goal",
+          "warnings",
+          "requiresCoachReview",
+          "distribution",
+          "weeks"
+        ]
+      },
+      "CoachAlert": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "assessment",
+              "inactive",
+              "overdue",
+              "volume",
+              "checkin"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "attention",
+              "review"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "priority",
+          "title",
+          "detail"
+        ]
+      },
+      "CoachAlertReport": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "athletesReviewed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "athletesWithAlerts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "totalAlerts": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "checkinsForReview": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "athletesReviewed",
+              "athletesWithAlerts",
+              "totalAlerts",
+              "checkinsForReview"
+            ]
+          },
+          "athletes": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "alerts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CoachAlert"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "alerts"
+              ]
+            }
+          },
+          "limited": {
+            "type": "boolean",
+            "description": "Há mais de 100 atletas no total; o relatório é limitado aos primeiros 100."
+          },
+          "totalAthletes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "generatedAt",
+          "summary",
+          "athletes",
+          "limited",
+          "totalAthletes"
+        ]
       }
     }
   },
@@ -1698,15 +2168,32 @@
     "/api/plan/generate": {
       "post": {
         "operationId": "generatePlan",
-        "summary": "Generate a personalized training plan via AI",
+        "summary": "Gerar e persistir um plano determinístico de treinos estruturados",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
           }
         ],
         "responses": {
           "200": {
-            "description": "Plan generated",
+            "description": "Plano criado com estrutura e resumo persistidos.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1715,8 +2202,19 @@
               }
             }
           },
-          "401": {
-            "description": "Not authenticated",
+          "400": {
+            "description": "Corpo JSON ausente ou inválido.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1724,17 +2222,101 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Sessão ausente ou inválida.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão para gerar o plano de outro atleta.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Triagem, preferências, horizonte ou disponibilidade exigem correção.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "missing": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
           }
         },
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
                   "targetUserId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Opcional: identificador do atleta; outro usuário exige papel de coach."
                   },
                   "modality": {
                     "type": "string",
@@ -1746,17 +2328,52 @@
                     ]
                   },
                   "advanced": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Campo legado preservado; não modifica a geração atual.",
+                    "deprecated": true
                   },
                   "goal": {
                     "type": "string",
-                    "description": "Objetivo-alvo. Corrida: pace, 5k, 10k, 15k, 21k, 42k. Triatlo: supersprint, sprint, olimpica, 70.3, ironman."
+                    "enum": [
+                      "pace",
+                      "5k",
+                      "10k",
+                      "15k",
+                      "21k",
+                      "42k",
+                      "supersprint",
+                      "sprint",
+                      "olimpica",
+                      "70.3",
+                      "ironman"
+                    ],
+                    "description": "Deve ser compatível com a modalidade efetiva. Corrida: pace, 5k, 10k, 15k, 21k, 42k. Triatlo: supersprint, sprint, olimpica, 70.3, ironman. Omitir para ciclismo/natação."
+                  },
+                  "structure": {
+                    "type": "string",
+                    "enum": [
+                      "zona",
+                      "distancia"
+                    ],
+                    "description": "Preferência da corrida: alvos por FC de limiar quando disponíveis ou estimativa auxiliar de distância por pace; há fallback explícito sem dados."
+                  },
+                  "weeks": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 52,
+                    "description": "Opcional. Omitir para Auto: até a prova mais duas semanas, ou 12 sem prova. Horizonte automático acima de 52 recebe 422 e pede duração explícita."
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Dia inicial YYYY-MM-DD válido; omitido utiliza o dia atual."
                   }
                 }
               }
             }
           }
-        }
+        },
+        "description": "Exige triagem mínima completa. O usuário gera seu plano; somente coach pode informar outro targetUserId. Aplica objetivo e modo de corrida, preserva avisos e resumo calculado. O plano anterior só é arquivado na transação que cria o novo plano válido."
       }
     },
     "/api/mobile-auth/signup": {
@@ -2742,6 +3359,639 @@
           },
           "401": {
             "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "consultarSaude",
+        "summary": "Verificar a disponibilidade do servidor e do PostgreSQL",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Banco acessível.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "indisponivel"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coach-alerts": {
+      "get": {
+        "operationId": "consultarAlertasCoach",
+        "summary": "Consultar sinais de acompanhamento dos atletas",
+        "description": "Exclusivo para coach. Limita a consulta a 100 atletas e informa o total. Os critérios de dor, fadiga, sono e disponibilidade são sinais para revisão, não diagnósticos.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relatório de alertas.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachAlertReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente ou inválida.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Disponível apenas para coach.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Não foi possível consultar os dados.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "operationId": "solicitarRecuperacaoSenha",
+        "summary": "Solicitar um link de recuperação por e-mail",
+        "description": "Resposta genérica quando o serviço está configurado. Nunca devolve token ou link. Requer SMTP TLS e origem configurados; sem o serviço, responde 503 antes de consultar a conta. Token válido por 30 minutos, consumo único e intervalo mínimo de 60 segundos por conta.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identifier": {
+                    "type": "string",
+                    "description": "E-mail ou identificador de usuário cadastrado."
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "Alias legado de identifier."
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "Alternativa de identificador de usuário."
+                  }
+                },
+                "anyOf": [
+                  {
+                    "required": [
+                      "identifier"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "email"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "username"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Solicitação recebida; a mensagem não confirma existência de conta ou entrega de e-mail.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON ou identificador inválido.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Recuperação indisponível ou falha temporária.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "RECOVERY_UNAVAILABLE"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "operationId": "redefinirSenha",
+        "summary": "Definir uma senha usando o link de recuperação",
+        "description": "Valida token, validade e consumo único em transação. A senha mantém espaços e caracteres especiais. Após a alteração, revoga as sessões anteriores. O token é obtido do fragmento do link e enviado neste corpo; nunca deve entrar em logs.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+                  },
+                  "token": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$",
+                    "writeOnly": true
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 72,
+                    "writeOnly": true,
+                    "description": "Pelo menos 6 caracteres e no máximo 72 bytes em UTF-8; não aplicar trim."
+                  }
+                },
+                "required": [
+                  "userId",
+                  "token",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Senha alterada; é necessário entrar novamente.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Senha inválida ou link inválido, expirado ou consumido.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Não foi possível redefinir a senha agora.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workouts/export": {
+      "get": {
+        "operationId": "exportarTreinoEstruturado",
+        "summary": "Baixar um treino com seus blocos e alvos",
+        "description": "O proprietário ou um coach pode exportar o treino. ZWO atende corrida/ciclismo; para natação/força, use FIT, TCX ou TXT. Formato incompatível ou prescrição sem dados necessários recebe 422. Um arquivo exportado não equivale a sincronização da conta do serviço.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador do treino salvo.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fit",
+                "tcx",
+                "zwo",
+                "txt"
+              ],
+              "default": "txt"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "description": "No FIT, km usa distâncias estimadas quando há dados suficientes; zona mantém os passos por tempo.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zona",
+                "km"
+              ],
+              "default": "zona"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Arquivo para download, com Cache-Control no-store e X-Content-Type-Options nosniff.",
+            "headers": {
+              "Content-Disposition": {
+                "description": "attachment com nome de arquivo.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.garmin.tcx+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Identificador, formato ou modo inválido.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente ou inválida.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Treino pertence a outro usuário e o acesso não é de coach.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Treino não encontrado.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Formato incompatível ou estrutura exige revisão.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Resposta privada ou dinâmica: no-store.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
