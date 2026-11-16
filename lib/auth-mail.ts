@@ -39,6 +39,17 @@ export async function sendPasswordResetEmail(
     html: `<p>Recebemos uma solicitação para redefinir sua senha no R10 TRI.</p><p><a href="${escapeHtml(url)}">Redefinir minha senha</a></p><p>Este link expira em 30 minutos e pode ser usado uma vez.</p><p>Se você não solicitou a alteração, ignore esta mensagem. Sua senha continua igual.</p>`,
   };
   if (options.sender) { await options.sender(message); return; }
+  // Resend por HTTPS funciona também nos planos Railway que bloqueiam SMTP.
+  if (configuration.host === 'smtp.resend.com') {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST', redirect: 'error', cache: 'no-store',
+      headers: { Authorization: `Bearer ${configuration.auth.pass}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...message, to: [message.to] }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new Error('O provedor recusou o envio de recuperação.');
+    return;
+  }
   const transport = nodemailer.createTransport({
     host: configuration.host,
     port: configuration.port,
