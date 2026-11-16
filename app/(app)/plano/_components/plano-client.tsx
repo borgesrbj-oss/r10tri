@@ -12,30 +12,31 @@ import { useRouter } from 'next/navigation';
 import { FadeIn } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
 import { CoachQuestionnaire } from './coach-questionnaire';
+import { TrainingDistributionSummary, WorkoutStructure, WorkoutWhatsappLink } from '@/components/workout-structure';
+import { RacePrediction } from '@/components/race-prediction';
 
 const icons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
 const colors: Record<string, string> = { natacao: 'border-l-blue-500', ciclismo: 'border-l-orange-500', corrida: 'border-l-green-500', forca: 'border-l-purple-500' };
 const modLabels: Record<string, string> = { natacao: 'Natação', ciclismo: 'Ciclismo', corrida: 'Corrida', forca: 'Força' };
-const phaseLabels: Record<string, string> = { base: 'Base', construcao: 'Construção', pico: 'Pico', polimento: 'Polimento' };
-const phaseColors: Record<string, string> = { base: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', construcao: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', pico: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', polimento: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+const phaseLabels: Record<string, string> = { base: 'Base', build: 'Construção', peak: 'Pico', race: 'Prova', transition: 'Transição', construcao: 'Construção', pico: 'Pico', polimento: 'Polimento' };
+const phaseColors: Record<string, string> = { base: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', build: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', peak: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', race: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', transition: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200', construcao: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', pico: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', polimento: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+
+async function serverWorkoutExport(w: any, format: 'zwo' | 'txt', appName?: string) {
+  if (!w?.id) { toast.error('O treino precisa estar salvo antes de exportar.'); return; }
+  try {
+    const response = await fetch(`/api/workouts/export?id=${encodeURIComponent(w.id)}&format=${format}`);
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      toast.error(data?.error || 'Não foi possível exportar o treino.'); return;
+    }
+    if (response.headers.get('Content-Type')?.includes('text/html')) { toast.error('Entre novamente antes de exportar o treino.'); return; }
+    download(await response.blob(), `${slugify(w.title)}.${format}`, response.headers.get('Content-Type') || 'application/octet-stream');
+    toast.success(`Arquivo .${format.toUpperCase()} preparado${appName ? ` para o ${appName}` : ''}.`);
+  } catch { toast.error('Falha de conexão ao exportar. Tente novamente quando estiver online.'); }
+}
 
 function exportZwo(w: any, appName?: string) {
-  const dur = w?.duration ?? 60;
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<workout_file>
-  <author>TriCoach</author>
-  <name>${w?.title ?? 'Treino'}</name>
-  <description>${(w?.description ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</description>
-  <sportType>bike</sportType>
-  <tags/>
-  <workout>
-    <Warmup Duration="${Math.round(dur * 0.15 * 60)}" PowerLow="0.40" PowerHigh="0.60"/>
-    <SteadyState Duration="${Math.round(dur * 0.70 * 60)}" Power="${w?.targetZone === 'Z4' ? '0.95' : w?.targetZone === 'Z3' ? '0.80' : '0.65'}"/>
-    <Cooldown Duration="${Math.round(dur * 0.15 * 60)}" PowerLow="0.55" PowerHigh="0.35"/>
-  </workout>
-</workout_file>`;
-  download(xml, `${slugify(w?.title)}.zwo`, 'application/xml');
-  toast.success(`Arquivo .ZWO baixado${appName ? ` para o ${appName}` : ''}!`);
+  return serverWorkoutExport(w, 'zwo', appName);
 }
 
 // Garmin Connect: baixa o arquivo .FIT estruturado (importar em Connect > Treinos)
@@ -48,13 +49,13 @@ function fitDownload(w: any, mode: 'zona' | 'km') {
   a.click();
   toast.success(mode === 'km'
     ? 'Arquivo .FIT (por distância/km) baixado! Importe em Garmin Connect > Treinos.'
-    : 'Arquivo .FIT (por zona de FC) baixado! Importe em Garmin Connect > Treinos.');
+    : 'Arquivo .FIT com os alvos disponíveis baixado. Copie para GARMIN/NewFiles no aparelho compatível.');
 }
 
 // MyWhoosh: baixa o .ZWO e abre o Workout Builder para importar
 function importMyWhoosh(w: any) {
   exportZwo(w, 'MyWhoosh');
-  setTimeout(() => { if (typeof window !== 'undefined') window.open('https://event.mywhoosh.com/', '_blank'); }, 1200);
+  if (typeof window !== 'undefined') window.open('https://event.mywhoosh.com/', '_blank', 'noopener,noreferrer');
 }
 
 // Zwift: baixa o .ZWO (copiar para a pasta Workouts do Zwift)
@@ -65,7 +66,7 @@ function importZwift(w: any) {
 // Rouvy: baixa o .ZWO (importar no app Rouvy)
 function importRouvy(w: any) {
   exportZwo(w, 'Rouvy');
-  setTimeout(() => { if (typeof window !== 'undefined') window.open('https://rouvy.com/', '_blank'); }, 1200);
+  if (typeof window !== 'undefined') window.open('https://rouvy.com/', '_blank', 'noopener,noreferrer');
 }
 
 // Baixar em PDF: gera um PDF do treino individual
@@ -87,40 +88,30 @@ async function exportWorkoutPdf(w: any) {
   doc.text('Descrição do treino:', 14, 48);
   doc.setFontSize(10);
   const lines = doc.splitTextToSize(String(w?.description ?? ''), 180);
-  doc.text(lines, 14, 56);
+  let lineY = 56;
+  for (const line of lines) {
+    if (lineY > 280) { doc.addPage(); lineY = 20; }
+    doc.text(line, 14, lineY); lineY += 5;
+  }
   doc.save(`${slugify(w?.title)}.pdf`);
   toast.success('PDF do treino baixado!');
 }
 
 function exportWorkoutTxt(w: any) {
-  const mod = modLabels[w?.modality] ?? w?.modality;
-  const txt = `=== ${mod}: ${w?.title ?? 'Treino'} ===
-Data: ${w?.date ? new Date(w.date).toLocaleDateString('pt-BR') : ''}
-Duração: ${w?.duration ?? 0} min
-Zona-alvo: ${w?.targetZone ?? 'N/A'}
-Fase: ${phaseLabels[w?.phase] ?? w?.phase ?? ''}
-Carga (TSS): ${w?.tssEstimate ?? 'N/A'}
-
---- DESCRIÇÃO DO TREINO ---
-${w?.description ?? ''}
-
---- NOTAS ---
-Gerado por TriCoach
-`;
-  download(txt, `${slugify(w?.title)}.txt`, 'text/plain');
-  toast.success(`Treino de ${mod} exportado!`);
+  return serverWorkoutExport(w, 'txt');
 }
 
 function slugify(s: string) {
   return (s ?? 'treino').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').toLowerCase();
 }
 
-function download(content: string, filename: string, mime: string) {
-  const blob = new Blob([content], { type: mime });
+function download(content: string | Blob, filename: string, mime: string) {
+  const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
+  // Dá tempo para o navegador iniciar o download antes de liberar a URL local.
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 /* ─── Zonas de treino (cálculo automático a partir dos testes) ─── */
@@ -327,12 +318,13 @@ function CalendarView({ workouts, onSelect }: { workouts: any[]; onSelect: (w: a
 
 export function PlanoClient({ plan, workouts, profile, races }: { plan: any; workouts: any[]; profile: any; races: any[] }) {
   const [generating, setGenerating] = useState(false);
+  const [generationErrors, setGenerationErrors] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [modFilter, setModFilter] = useState<string | null>(null);
   const [showGenOptions, setShowGenOptions] = useState(false);
   const [genModality, setGenModality] = useState<string>(profile?.modality ?? 'triatlo');
-  const [genGoal, setGenGoal] = useState<string>('');
+  const [genGoal, setGenGoal] = useState<string>(plan?.summary?.goal ?? '');
   const [genRunStructure, setGenRunStructure] = useState<string>(profile?.runStructure ?? 'zona');
   const [genStartDate, setGenStartDate] = useState<string>('');
   const [genWeeks, setGenWeeks] = useState<string>('');
@@ -389,6 +381,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
   const WEEKS_OPTIONS = [6, 8, 12, 16, 20, 24];
 
   const handleGenerate = async (opts?: { modality?: string; advanced?: boolean; goal?: string; structure?: string; startDate?: string; weeks?: number }) => {
+    setGenerationErrors([]);
     setGenerating(true);
     try {
       const res = await fetch('/api/plan/generate', {
@@ -402,8 +395,12 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
         toast.success(`Plano gerado com ${data?.workoutsCount ?? 0} treinos (via ${via})! Abrindo sua planilha...`);
         router.push('/planilha');
         router.refresh();
-      } else toast.error(data?.error ?? 'Erro ao gerar plano');
-    } catch { toast.error('Erro ao gerar plano'); }
+      } else {
+        const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
+        const message = data?.error || 'Não foi possível gerar o plano.';
+        setGenerationErrors([message, ...details]); toast.error(message);
+      }
+    } catch { setGenerationErrors(['Falha de conexão. Seus planos anteriores foram preservados; tente novamente quando estiver online.']); toast.error('Erro ao gerar plano'); }
     finally { setGenerating(false); }
   };
 
@@ -419,7 +416,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
   // Show questionnaire if assessment not done or user clicked "Refazer Avaliação"
   if (needsAssessment || showQuestionnaire) {
-    return <CoachQuestionnaire profile={profile} onComplete={handleAssessmentComplete} />;
+    return <CoachQuestionnaire profile={profile} races={races} generationErrors={generationErrors} onComplete={handleAssessmentComplete} />;
   }
 
   // Estatísticas do plano (todos os treinos)
@@ -469,8 +466,10 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
         </div>
       </FadeIn>
 
+      {generationErrors.length > 0 && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Confira os dados antes de gerar o plano</p><ul className="mt-2 list-disc space-y-1 pl-4">{generationErrors.map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
+
       <Dialog open={showGenOptions} onOpenChange={setShowGenOptions}>
-        <DialogContent>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Gerar plano</DialogTitle>
             <DialogDescription>Escolha a modalidade. O plano é montado automaticamente, com periodização completa até a prova — totalmente gratuito, sem consumir créditos.</DialogDescription>
@@ -497,7 +496,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                   <Button key={n} type="button" variant={genWeeks === String(n) ? 'default' : 'outline'} size="sm" onClick={() => setGenWeeks(String(n))} className="justify-center">{n} sem</Button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">Mínimo de 6 semanas{races?.length > 0 ? '. Em “Auto”, o plano vai até a data da sua próxima prova.' : '. Escolha a duração do seu ciclo de treino.'}</p>
+                <p className="text-xs text-muted-foreground">{races?.length > 0 ? 'Em “Auto”, inclui a próxima prova e a transição, até 52 semanas.' : 'Escolha a duração do seu ciclo de treino.'}</p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium">Modalidade</p>
@@ -522,7 +521,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                     </Button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">O plano será montado especificamente para o objetivo escolhido.</p>
+                <p className="text-xs text-muted-foreground">O objetivo ajusta a duração das sessões e o tipo de intervalo dentro da sua disponibilidade. Provas longas exigem revisão individual do coach.</p>
               </div>
             )}
             {genModality === 'corrida' && (
@@ -536,7 +535,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                     <Timer className="mr-2 h-4 w-4" /> Distância (km)
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Define se os treinos de corrida são prescritos por zona de frequência cardíaca ou por distância.</p>
+                <p className="text-xs text-muted-foreground">FC usa o limiar funcional informado e monitor. Sem esses dados, usa pace de limiar ou percepção. Distâncias são estimadas pelo pace; o tempo total continua sendo o limite da sessão.</p>
               </div>
             )}
           </div>
@@ -546,6 +545,8 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RacePrediction profile={profile} />
 
       {!plan ? (
         <Card><CardContent className="p-12 text-center text-muted-foreground">
@@ -563,6 +564,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
               <StatTile icon={Flame} label="Carga (TSS)" value={String(totalTss)} color="#EF4444" />
             </div>
           </FadeIn>
+          <TrainingDistributionSummary workouts={workouts} title="Distribuição de intensidade do plano" />
           {plan?.nutritionPlan && (
             <FadeIn>
               <Link href="/nutricao" className="block">
@@ -622,22 +624,25 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-3"><TrainingDistributionSummary workouts={(workouts ?? []).filter((workout: any) => (workout.weekNumber ?? 1) === weekNum)} title={`Tempo ativo da semana ${weekNum} · todas as modalidades`} compact /></div>
                   <div className="space-y-2">
                     {weekWorkouts?.map((w: any) => {
                       const Icon = icons?.[w?.modality] ?? Dumbbell;
                       const isExpanded = expanded === w?.id;
                       return (
-                        <div key={w?.id} className={`border-l-4 ${colors?.[w?.modality] ?? 'border-l-gray-300'} rounded-lg p-3 cursor-pointer hover:bg-muted/50 transition-colors ${w?.completed ? 'opacity-60' : ''}`} onClick={() => setExpanded(isExpanded ? null : w?.id)}>
-                          <div className="flex items-center gap-3">
-                            <Icon className="h-5 w-5 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-sm truncate">{w?.title}</p>
+                        <div key={w?.id} className={`border-l-4 ${colors?.[w?.modality] ?? 'border-l-gray-300'} rounded-lg p-3 hover:bg-muted/50 transition-colors ${w?.completed ? 'opacity-60' : ''}`}>
+                          <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
+                            <button type="button" className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left" aria-expanded={isExpanded} aria-controls={`workout-details-${w.id}`} onClick={() => setExpanded(isExpanded ? null : w.id)}>
+                            <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">
+                              <span className="flex items-center gap-2">
+                                <span className="truncate text-sm font-medium">{w?.title}</span>
                                 {w?.completed && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
-                              </div>
-                              <p className="text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {w?.duration}min · {w?.targetZone ?? ''}</p>
-                            </div>
-                            <div className="flex flex-wrap gap-1 shrink-0 justify-end">
+                              </span>
+                              <span className="block text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {w?.duration}min · {w?.targetZone ?? ''}</span>
+                            </span>
+                            </button>
+                            <div className="flex w-full shrink-0 flex-wrap justify-end gap-1 sm:w-auto">
                               {/* Garmin Connect (.FIT) — todas as modalidades esportivas */}
                               {(w?.modality === 'ciclismo' || w?.modality === 'corrida' || w?.modality === 'natacao') && (
                                 <Button variant="ghost" size="icon-sm" onClick={(e: any) => { e?.stopPropagation?.(); if (w?.modality === 'corrida') setGarminW(w); else fitDownload(w, 'zona'); }} title="Garmin Connect (.FIT)">
@@ -673,8 +678,9 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                             </div>
                           </div>
                           {isExpanded && (
-                            <div className="mt-3 pt-3 border-t">
-                              <p className="text-sm whitespace-pre-wrap">{w?.description}</p>
+                            <div id={`workout-details-${w.id}`} className="mt-3 space-y-3 border-t pt-3">
+                              <WorkoutStructure value={w?.structure} description={w?.description} />
+                              <WorkoutWhatsappLink workout={w} whatsapp={profile?.whatsapp} />
                               {w?.tssEstimate && <p className="text-xs text-muted-foreground mt-2">Carga estimada (TSS): {w.tssEstimate}</p>}
                             </div>
                           )}
@@ -709,7 +715,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
       </Dialog>
 
       <Dialog open={!!selectedWorkout} onOpenChange={(o) => { if (!o) setSelectedWorkout(null); }}>
-        <DialogContent>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
           {selectedWorkout && (() => {
             const w = selectedWorkout;
             const Icon = icons?.[w?.modality] ?? Dumbbell;
@@ -722,7 +728,8 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-1">
-                  <p className="text-sm whitespace-pre-wrap">{w?.description}</p>
+                  <WorkoutStructure value={w?.structure} description={w?.description} />
+                  <div className="mt-3"><WorkoutWhatsappLink workout={w} whatsapp={profile?.whatsapp} /></div>
                   {w?.tssEstimate && <p className="text-xs text-muted-foreground mt-2">Carga estimada (TSS): {w.tssEstimate}</p>}
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">

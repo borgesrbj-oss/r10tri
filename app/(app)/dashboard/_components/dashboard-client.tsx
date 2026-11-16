@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { useCurrentTime, useStoredNickname } from '@/hooks/use-browser-state';
 import { FadeIn, SlideIn, Stagger, StaggerItem, HoverLift } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
+import { CoachAlerts } from '@/components/coach-alerts';
 
 const DEFAULT_PREFS = { stats: true, provas: true, treinos: true, avisos: true, sobre: true };
 const WIDGET_LABELS: { key: keyof typeof DEFAULT_PREFS; label: string }[] = [
@@ -100,6 +101,8 @@ export function DashboardClient({ data }: { data: any }) {
           ) : null}
         </div>
       </FadeIn>
+
+      {isCoach && <CoachAlerts />}
 
       {prefs.sobre && profile?.aboutMe && (
         <FadeIn>

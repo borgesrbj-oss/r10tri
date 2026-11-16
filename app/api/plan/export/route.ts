@@ -2,8 +2,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
-import { buildFit, buildTcx, buildZwo, buildTxt, slugify } from '@/lib/export-builders';
+import { buildFit, buildTcx, buildZwo, buildTxt, slugify, WorkoutExportError } from '@/lib/export-builders';
 import { paceToSec } from '@/lib/plan-engine';
+import { bikeThreshold } from '@/lib/training-zones';
 import JSZip from 'jszip';
 
 // Exporta o PLANO COMPLETO (todos os treinos, ou de uma modalidade) em um único .ZIP
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
     return name;
   };
 
-  workouts.forEach((w, idx) => {
+  try { workouts.forEach((w, idx) => {
     const wk = String(w.weekNumber ?? Math.floor(idx / 5) + 1).padStart(2, '0');
     const ds = w.date ? new Date(w.date).toISOString().slice(0, 10) : null; // prefixo de data p/ agendar no calendário
     const base = `${ds ? ds + '_' : ''}S${wk}_${slugify(w.title)}`;
@@ -64,20 +65,23 @@ export async function GET(req: NextRequest) {
     } else {
       // MyWhoosh / Zwift / Rouvy: .ZWO para ciclismo e corrida; demais como texto.
       if (w.modality === 'ciclismo' || w.modality === 'corrida') {
-        zip.file(uniqueName(base, 'zwo'), buildZwo(w));
+        zip.file(uniqueName(base, 'zwo'), buildZwo(w, { ftp: bikeThreshold(profile) }));
       } else {
         zip.file(uniqueName(base, 'txt'), buildTxt(w));
       }
     }
-  });
+  }); } catch (error) {
+    return NextResponse.json({error:error instanceof WorkoutExportError ? error.message : 'Não foi possível exportar. Peça ao treinador para revisar a estrutura dos treinos.'},{status:422,headers:{'Cache-Control':'no-store'}});
+  }
 
   // Inclui a planilha completa em texto como referência.
   const readme = [
     `PLANO: ${plan.name}`,
     `Plataforma: ${platform === 'garmin' ? `Garmin (${format === 'tcx' ? '.TCX' : '.FIT'})` : 'MyWhoosh / Zwift (.ZWO)'}`,
     `Modalidade: ${modality === 'todos' ? 'Todas' : modality}`,
-    ...(platform === 'garmin' && format === 'fit' ? [`Alvo da corrida: ${mode === 'km' ? 'por distância (km)' : 'por zona de FC'}`] : []),
+    ...(platform === 'garmin' && format === 'fit' ? [`Alvo da corrida: ${mode === 'km' ? 'por distância estimada quando há pace de limiar' : 'blocos e alvos disponíveis no plano'}`] : []),
     `Total de treinos: ${workouts.length}`,
+    ...((plan.summary as any)?.requiresCoachReview ? ['REVISÃO NECESSÁRIA: este plano requer avaliação do treinador e não representa liberação para treinar.'] : []),
     '',
     ...(platform === 'garmin'
       ? (format === 'tcx'

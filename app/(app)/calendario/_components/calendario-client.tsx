@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { FadeIn } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
+import { WorkoutStructure } from '@/components/workout-structure';
 
 const icons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
 const colors: Record<string, string> = { natacao: 'bg-blue-50 dark:bg-blue-950', ciclismo: 'bg-orange-50 dark:bg-orange-950', corrida: 'bg-green-50 dark:bg-green-950', forca: 'bg-purple-50 dark:bg-purple-950' };
@@ -19,7 +20,8 @@ const colors: Record<string, string> = { natacao: 'bg-blue-50 dark:bg-blue-950',
 export function CalendarioClient({ workouts }: { workouts: any[] }) {
   const [filter, setFilter] = useState('todos');
   const [logDialog, setLogDialog] = useState<any>(null);
-  const [logForm, setLogForm] = useState({ actualDuration: '', actualDistance: '', rpe: '', weight: '', notes: '' });
+  const [logForm, setLogForm] = useState({ actualDuration: '', actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '' });
+  const [logError, setLogError] = useState('');
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -38,6 +40,12 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
 
   const handleLog = async () => {
     if (!logDialog?.id) return;
+    setLogError('');
+    for (const [field, min, max, label] of [['sleepHours', 0, 24, 'Sono'], ['fatigueScore', 0, 10, 'Fadiga'], ['painScore', 0, 10, 'Dor'], ['rpe', 1, 10, 'RPE']] as const) {
+      if (logForm[field] !== '' && (!Number.isFinite(Number(logForm[field])) || Number(logForm[field]) < min || Number(logForm[field]) > max || (field !== 'sleepHours' && !Number.isInteger(Number(logForm[field]))))) {
+        setLogError(`${label}: informe um valor entre ${min} e ${max}${field === 'sleepHours' ? ' horas' : ', em números inteiros'}.`); return;
+      }
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/workouts/log', {
@@ -49,11 +57,19 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
           rpe: logForm.rpe ? Number(logForm.rpe) : null,
           weight: logForm.weight ? Number(logForm.weight) : null,
           notes: logForm.notes || null,
+          sleepHours: logForm.sleepHours !== '' ? Number(logForm.sleepHours) : null,
+          fatigueScore: logForm.fatigueScore !== '' ? Number(logForm.fatigueScore) : null,
+          painScore: logForm.painScore !== '' ? Number(logForm.painScore) : null,
         }),
       });
       if (res.ok) { toast.success('Treino registrado!'); setLogDialog(null); router.refresh(); }
-      else toast.error('Erro ao registrar');
-    } catch { toast.error('Erro ao registrar'); }
+      else {
+        const data = await res.json().catch(() => null);
+        const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
+        const message = [data?.error || 'Não foi possível registrar o treino.', ...details].join(' ');
+        setLogError(message); toast.error(data?.error || 'Erro ao registrar');
+      }
+    } catch { setLogError('Sem conexão com o servidor. Reconecte antes de salvar o registro.'); toast.error('Erro ao registrar'); }
     finally { setSaving(false); }
   };
 
@@ -67,7 +83,7 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
       </FadeIn>
 
       <div className="flex gap-2 flex-wrap">
-        {[{ key: 'todos', label: 'Todos' }, { key: 'natacao', label: 'Natação' }, { key: 'ciclismo', label: 'Ciclismo' }, { key: 'corrida', label: 'Corrida' }].map((f: any) => (
+        {[{ key: 'todos', label: 'Todos' }, { key: 'natacao', label: 'Natação' }, { key: 'ciclismo', label: 'Ciclismo' }, { key: 'corrida', label: 'Corrida' }, { key: 'forca', label: 'Força' }].map((f: any) => (
           <Button key={f.key} variant={filter === f.key ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f.key)}>{f.label}</Button>
         ))}
       </div>
@@ -95,7 +111,7 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
                         {w?.completed ? (
                           <Badge variant="secondary" className="shrink-0"><CheckCircle2 className="h-3 w-3 mr-1" /> Feito</Badge>
                         ) : (
-                          <Button variant="outline" size="sm" onClick={() => { setLogDialog(w); setLogForm({ actualDuration: String(w?.duration ?? ''), actualDistance: '', rpe: '', weight: '', notes: '' }); }}>
+                          <Button variant="outline" size="sm" onClick={() => { setLogDialog(w); setLogError(''); setLogForm({ actualDuration: String(w?.duration ?? ''), actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '' }); }}>
                             <ClipboardEdit className="h-4 w-4 mr-1" /> Registrar
                           </Button>
                         )}
@@ -110,18 +126,29 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
       )}
 
       <Dialog open={!!logDialog} onOpenChange={(o: boolean) => !o && setLogDialog(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Registrar Treino: {logDialog?.title}</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm font-medium">Rever a prescrição antes de registrar</summary><div className="mt-3"><WorkoutStructure value={logDialog?.structure} description={logDialog?.description} /></div></details>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Duração Real (min)</Label><Input type="number" value={logForm.actualDuration} onChange={(e: any) => setLogForm((p: any) => ({ ...p, actualDuration: e?.target?.value ?? '' }))} /></div>
               <div className="space-y-2"><Label>Distância (km)</Label><Input type="number" step="0.1" value={logForm.actualDistance} onChange={(e: any) => setLogForm((p: any) => ({ ...p, actualDistance: e?.target?.value ?? '' }))} /></div>
             </div>
+            <fieldset className="space-y-3 rounded-lg border p-3">
+              <legend className="px-1 text-sm font-semibold">Check-in de recuperação — opcional</legend>
+              <p className="text-xs text-muted-foreground">Registre o que observou hoje, sem preencher o que não souber. As informações ajudam o coach a revisar a carga; não são um diagnóstico.</p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="space-y-2"><Label htmlFor="log-sleep">Sono (horas)</Label><Input id="log-sleep" type="number" min="0" max="24" step="0.5" value={logForm.sleepHours} onChange={event => setLogForm(previous => ({ ...previous, sleepHours: event.target.value }))} /></div>
+                <div className="space-y-2"><Label htmlFor="log-fatigue">Fadiga (0–10)</Label><Input id="log-fatigue" type="number" min="0" max="10" step="1" value={logForm.fatigueScore} onChange={event => setLogForm(previous => ({ ...previous, fatigueScore: event.target.value }))} /><p className="text-xs text-muted-foreground">0 descansado; 10 exausto</p></div>
+                <div className="space-y-2"><Label htmlFor="log-pain">Dor (0–10)</Label><Input id="log-pain" type="number" min="0" max="10" step="1" value={logForm.painScore} onChange={event => setLogForm(previous => ({ ...previous, painScore: event.target.value }))} /><p className="text-xs text-muted-foreground">0 sem dor; 10 dor máxima</p></div>
+              </div>
+            </fieldset>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>RPE (1-10)</Label><Input type="number" min="1" max="10" value={logForm.rpe} onChange={(e: any) => setLogForm((p: any) => ({ ...p, rpe: e?.target?.value ?? '' }))} /></div>
               <div className="space-y-2"><Label>Peso do Dia (kg)</Label><Input type="number" step="0.1" value={logForm.weight} onChange={(e: any) => setLogForm((p: any) => ({ ...p, weight: e?.target?.value ?? '' }))} /></div>
             </div>
             <div className="space-y-2"><Label>Observações</Label><Textarea value={logForm.notes} onChange={(e: any) => setLogForm((p: any) => ({ ...p, notes: e?.target?.value ?? '' }))} rows={2} /></div>
+            {logError && <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{logError}</p>}
             <Button onClick={handleLog} loading={saving} className="w-full">Salvar Registro</Button>
           </div>
         </DialogContent>

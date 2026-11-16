@@ -9,6 +9,27 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
   turbopack: { root: __dirname },
   images: { unoptimized: true },
+  async headers() {
+    return [
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, max-age=0' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
+        source: '/manifest.json',
+        headers: [{ key: 'Cache-Control', value: 'no-cache, max-age=0' }],
+      },
+      {
+        source: '/offline.html',
+        headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }],
+      },
+    ];
+  },
   // Origens extras do servidor local devem ser configuradas explicitamente.
   allowedDevOrigins: ['127.0.0.1', ...(process.env.DEV_ALLOWED_ORIGINS || '').split(',').map((host) => host.trim()).filter(Boolean)],
 };

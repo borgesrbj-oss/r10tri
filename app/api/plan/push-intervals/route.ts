@@ -2,7 +2,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
-import { intervalsStartLocal, DEFAULT_WORKOUT_TIME } from '@/lib/export-builders';
+import { describeWorkoutForExport, intervalsStartLocal, DEFAULT_WORKOUT_TIME } from '@/lib/export-builders';
+import { readWorkoutStructure } from '@/lib/training-structure';
 
 // Envia os treinos do plano DIRETO para o calendario do Intervals.icu, ja com data E horario (04:30),
 // via a API gratuita do Intervals.icu (POST /events/bulk?upsert=true, Basic auth API_KEY:chave).
@@ -45,6 +46,12 @@ export async function POST(req: NextRequest) {
   if (modality !== 'todos') where.modality = modality;
   const workouts = await prisma.workout.findMany({ where, orderBy: { date: 'asc' } });
   if (workouts.length === 0) return NextResponse.json({ error: 'Nenhum treino para enviar' }, { status: 404 });
+  for (const workout of workouts) {
+    const structure = readWorkoutStructure(workout.structure);
+    if (workout.structure != null && (!structure || structure.modality !== workout.modality)) {
+      return NextResponse.json({ error: 'ESTRUTURA_INVALIDA', message: 'Revise a estrutura dos treinos antes de enviar ao Intervals.icu.' }, { status: 422 });
+    }
+  }
 
   // Monta os eventos do calendario. start_date_local carrega a data + horario 04:30 (local).
   const events = workouts
@@ -53,15 +60,16 @@ export async function POST(req: NextRequest) {
       if (!start) return null;
       const type = TYPE_MAP[w.modality] ?? 'Other';
       const isRest = w.modality === 'descanso';
+      const structure = readWorkoutStructure(w.structure);
       return {
         external_id: `r10tri_${w.id}`,
         start_date_local: start,
         category: isRest ? 'NOTE' : 'WORKOUT',
         type,
         name: w.title || 'Treino',
-        description: w.description || '',
+        description: describeWorkoutForExport(w),
         // duracao planejada em segundos (aparece como carga/tempo no calendario)
-        ...(isRest ? {} : { moving_time: (w.duration || 0) * 60 }),
+        ...(isRest ? {} : { moving_time: structure?.durationSeconds ?? (w.duration || 0) * 60 }),
       };
     })
     .filter(Boolean);

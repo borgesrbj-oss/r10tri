@@ -119,3 +119,46 @@
       radial-gradient(ellipse 40% 30% at 20% 10%, hsl(35 92% 55% / 0.08), transparent);
   }
 }
+
+/* A altura acompanha as barras móveis; 100vh permanece como alternativa. */
+body,
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+html { scroll-padding-top: calc(4rem + env(safe-area-inset-top, 0px)); }
+.app-topbar { padding-top: env(safe-area-inset-top, 0px); }
+.app-topbar-inner,
+.app-content,
+.pwa-utility {
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+}
+.app-content { padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px)); }
+.pwa-utility { padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px)); }
+.app-mobile-menu {
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  max-height: calc(100vh - 3.5rem - env(safe-area-inset-top, 0px));
+  max-height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+.hero-gradient.min-h-screen {
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+}
+
+/* Controles legíveis em telas estreitas, sem bloquear o zoom de acessibilidade. */
+@media (max-width: 1023px) {
+  body input[class], body select[class], body textarea[class] { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .sport-anim { animation: none; }
+}

@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { FadeIn } from '@/components/ui/animate';
+import { formatRaceTime, parseRaceTime } from '@/lib/race-prediction';
+import Link from 'next/link';
+import { SafeDate } from '@/components/safe-format';
 
 const STEPS = [
   { key: 'modalidade', icon: Layers, title: 'Modalidade', subtitle: 'Escolha o foco do seu treino' },
@@ -53,22 +56,33 @@ function TestProtocolBox({ title, children }: { title: string; children: React.R
   );
 }
 
-export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onComplete: (opts?: { startDate?: string; weeks?: number }) => void }) {
+function dateField(value: unknown): string {
+  if (!(value instanceof Date) && typeof value !== 'string') return '';
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : '';
+}
+
+export function CoachQuestionnaire({ profile, races = [], generationErrors = [], onComplete }: { profile: any; races?: { name: string; date: string | Date; distance?: string }[]; generationErrors?: string[]; onComplete: (opts?: { startDate?: string; weeks?: number }) => Promise<void> | void }) {
+  const confirmedProfile = Boolean(profile?.coachAssessmentDone || profile?.profileCompleted);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const [planStartDate, setPlanStartDate] = useState('');
   const [planWeeks, setPlanWeeks] = useState('');
   const todayStr = useLocalDate();
   const [form, setForm] = useState({
     // Step 0 - Modalidade
-    modality: profile?.modality ?? 'triatlo',
+    modality: confirmedProfile ? profile?.modality ?? '' : '',
     // Step 1 - Experiência
     trainingYears: profile?.trainingYears ?? '',
-    level: profile?.level ?? 'intermediario',
+    level: confirmedProfile ? profile?.level ?? '' : '',
     previousPlanExp: profile?.previousPlanExp ?? '',
     raceHistory: profile?.raceHistory ?? '',
+    recentRaceDistanceKm: profile?.recentRaceDistanceKm ?? '',
+    recentRaceTime: profile?.recentRaceTimeSeconds ? formatRaceTime(profile.recentRaceTimeSeconds) : '',
+    recentRaceDate: dateField(profile?.recentRaceDate),
     // Step 2 - Nível por modalidade
-    canSwim: profile?.canSwim ?? true,
+    canSwim: confirmedProfile ? profile?.canSwim ?? null : null,
     swimLevel: profile?.swimLevel ?? '',
     bikeLevel: profile?.bikeLevel ?? '',
     runLevel: profile?.runLevel ?? '',
@@ -90,6 +104,12 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
     vo2max: profile?.vo2max ?? '',
     swimPace: profile?.swimPace ?? '',
     runPace: profile?.runPace ?? '',
+    birthDate: dateField(profile?.birthDate),
+    maxHeartRate: profile?.maxHeartRate ?? '',
+    restingHeartRate: profile?.restingHeartRate ?? '',
+    thresholdHeartRate: profile?.thresholdHeartRate ?? '',
+    runThresholdPace: profile?.runThresholdPace ?? profile?.testRunPace ?? '',
+    swimCssPace: profile?.swimCssPace ?? profile?.testCSSPace ?? '',
     // Step 5 - Objetivos
     goalType: profile?.goalType ?? '',
     goalTime: profile?.goalTime ?? '',
@@ -103,14 +123,14 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
     // Step 7 - Logística
     weeklyHours: profile?.weeklyHours ?? '',
     currentWeeklyVol: profile?.currentWeeklyVol ?? '',
-    availableDays: profile?.availableDays ?? ['seg', 'qua', 'sex'],
+    availableDays: Array.isArray(profile?.availableDays) ? profile.availableDays : [],
     workSchedule: profile?.workSchedule ?? '',
     travelFrequency: profile?.travelFrequency ?? '',
-    hasPoolAccess: profile?.hasPoolAccess ?? true,
+    hasPoolAccess: confirmedProfile ? profile?.hasPoolAccess ?? false : false,
     poolSize: profile?.poolSize ?? '',
     hasTrainer: profile?.hasTrainer ?? false,
     hasPowerMeter: profile?.hasPowerMeter ?? false,
-    hasHRM: profile?.hasHRM ?? true,
+    hasHRM: confirmedProfile ? profile?.hasHRM ?? false : false,
     bikeType: profile?.bikeType ?? '',
     limitations: profile?.limitations ?? '',
   });
@@ -127,14 +147,10 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
   // Calcular CSS automaticamente
   const cssCalc = useMemo(() => {
     if (!form.testCSS400 || !form.testCSS200) return null;
-    const toSec = (t: string) => { const p = t.split(':'); return p.length === 2 ? Number(p[0]) * 60 + Number(p[1]) : NaN; };
-    const s400 = toSec(form.testCSS400);
-    const s200 = toSec(form.testCSS200);
-    if (isNaN(s400) || isNaN(s200) || s400 <= s200) return null;
-    const cssSec = (s400 - s200) / 2;
-    const m = Math.floor(cssSec / 60);
-    const s = Math.round(cssSec % 60);
-    return `${m}:${String(s).padStart(2, '0')}`;
+    const s400 = parseRaceTime(form.testCSS400);
+    const s200 = parseRaceTime(form.testCSS200);
+    if (s400 === null || s200 === null || s400 <= s200) return null;
+    return formatRaceTime((s400 - s200) / 2);
   }, [form.testCSS400, form.testCSS200]);
 
   // Calcular FTP estimado
@@ -143,15 +159,49 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
     return Math.round(Number(form.testFTP20min) * 0.95);
   }, [form.testFTP20min]);
 
+  function stepErrors(key: string): string[] {
+    const messages: string[] = [];
+    if (key === 'modalidade' && !form.modality) messages.push('Escolha a modalidade que deseja treinar.');
+    if (key === 'experiencia') {
+      if (!form.level) messages.push('Escolha seu nível de experiência; o app não presume um nível inicial.');
+      const hasRace = [form.recentRaceDistanceKm, form.recentRaceTime, form.recentRaceDate].some(value => value !== '');
+      if (hasRace && (!(Number(form.recentRaceDistanceKm) > 0) || !parseRaceTime(form.recentRaceTime) || !form.recentRaceDate)) messages.push('Para registrar uma prova de corrida, informe distância, tempo válido e data.');
+      if (form.recentRaceDate && todayStr && form.recentRaceDate > todayStr) messages.push('A prova de referência deve estar concluída, com data até hoje.');
+    }
+    if (key === 'nivel' && showSwim && form.canSwim === null) messages.push('Informe se você sabe nadar antes de continuar.');
+    if (key === 'testes' && ((form.testCSS400 || form.testCSS200) && !cssCalc)) messages.push('Confira os tempos CSS: use m:ss, com o tempo de 400 m maior que o de 200 m.');
+    if (key === 'metricas') {
+      if (!form.birthDate || !Number.isFinite(new Date(`${form.birthDate}T00:00:00Z`).getTime()) || (todayStr && form.birthDate >= todayStr)) messages.push('Informe uma data de nascimento válida para a triagem.');
+      for (const [label, value] of [['Limiar de corrida', form.runThresholdPace], ['CSS de natação', form.swimCssPace]] as const) if (value && !parseRaceTime(String(value))) messages.push(`${label}: use o formato m:ss com segundos de 00 a 59.`);
+      if (form.maxHeartRate && form.restingHeartRate && Number(form.restingHeartRate) >= Number(form.maxHeartRate)) messages.push('A FC de repouso deve ser menor que a FC máxima informada.');
+      if (form.thresholdHeartRate && form.maxHeartRate && Number(form.thresholdHeartRate) >= Number(form.maxHeartRate)) messages.push('A FC de limiar deve ser menor que a FC máxima informada.');
+    }
+    if (key === 'logistica') {
+      if (!form.availableDays.length) messages.push('Selecione pelo menos um dia disponível para treinar.');
+      if (!Number.isFinite(Number(form.weeklyHours)) || Number(form.weeklyHours) <= 0) messages.push('Informe suas horas efetivamente disponíveis por semana.');
+      if (form.currentWeeklyVol === '' || !Number.isFinite(Number(form.currentWeeklyVol)) || Number(form.currentWeeklyVol) < 0) messages.push('Informe o volume semanal atual; digite 0 apenas se ainda não está treinando.');
+    }
+    return messages;
+  }
+
   const handleSaveAndGenerate = async () => {
+    const invalid = STEPS.map((entry, index) => ({ index, messages: stepErrors(entry.key) })).filter(entry => entry.messages.length);
+    if (invalid.length) { setErrors(invalid.flatMap(entry => entry.messages)); setStep(invalid[0].index); return; }
+    setErrors([]);
     setSaving(true);
     try {
       const payload = {
-        ...form,
-        testCSSPace: cssCalc || undefined,
-        testFTPEstimated: ftpCalc || undefined,
-        ftp: ftpCalc || (form.ftp ? Number(form.ftp) : undefined),
-        swimPace: cssCalc || form.swimPace || undefined,
+        ...Object.fromEntries(Object.entries(form).filter(([key]) => key !== 'recentRaceTime').map(([key, value]) => [key, value === '' ? null : value])),
+        birthDate: form.birthDate || null,
+        recentRaceDate: form.recentRaceDate || null,
+        canSwim: form.canSwim === null ? undefined : form.canSwim,
+        recentRaceTimeSeconds: form.recentRaceTime ? parseRaceTime(form.recentRaceTime) : null,
+        testCSSPace: cssCalc || null,
+        testFTPEstimated: ftpCalc || null,
+        ftp: form.ftp !== '' ? Number(form.ftp) : ftpCalc,
+        swimPace: form.swimPace || cssCalc || null,
+        swimCssPace: form.swimCssPace || cssCalc || null,
+        runThresholdPace: form.runThresholdPace || form.testRunPace || null,
         testsCompleted: !!(form.testCSS400 || form.testFTP20min || form.testRun3km || form.testRun30min),
       };
       const res = await fetch('/api/profile/assessment', {
@@ -159,10 +209,15 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) { toast.error('Erro ao salvar avaliação'); return; }
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
+        const message = data?.error || 'Não foi possível salvar a avaliação.';
+        setErrors([message, ...details]); toast.error(message); return;
+      }
       toast.success('Avaliação salva! Gerando plano personalizado...');
-      onComplete({ startDate: planStartDate || undefined, weeks: planWeeks ? Number(planWeeks) : undefined });
-    } catch { toast.error('Erro ao salvar avaliação'); }
+      await onComplete({ startDate: planStartDate || undefined, weeks: planWeeks ? Number(planWeeks) : undefined });
+    } catch { setErrors(['Não foi possível conectar ao servidor. Confira a conexão antes de tentar novamente.']); toast.error('Erro ao salvar avaliação'); }
     finally { setSaving(false); }
   };
 
@@ -275,6 +330,15 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                   <Textarea value={form.raceHistory} onChange={e => set('raceHistory', e.target.value)} placeholder={"Ex.: Ironman 70.3 Floripa 2024 - 6h30min\nSprint Santos 2023 - 1h25\nMeia Maratona SP 2024 - 1h55"} rows={4} />
                   <p className="text-xs text-muted-foreground">Inclua distância, tempo e data — isso ajuda muito a calibrar os treinos</p>
                 </div>
+                <fieldset className="space-y-3 rounded-lg border p-4">
+                  <legend className="px-1 text-sm font-semibold">Resultado recente de CORRIDA — opcional</legend>
+                  <p className="text-xs text-muted-foreground">Informe uma prova de corrida independente já concluída. Não use o tempo total de triatlo. Esses dados alimentam a estimativa matemática de prova; deixar em branco não cria resultados presumidos.</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1"><Label htmlFor="recent-race-distance">Distância (km)</Label><Input id="recent-race-distance" type="number" step="0.001" min="3" max="42.195" value={form.recentRaceDistanceKm} onChange={event => set('recentRaceDistanceKm', event.target.value)} placeholder="Ex.: 5" /></div>
+                    <div className="space-y-1"><Label htmlFor="recent-race-time">Tempo (m:ss ou h:mm:ss)</Label><Input id="recent-race-time" value={form.recentRaceTime} onChange={event => set('recentRaceTime', event.target.value)} placeholder="Ex.: 24:30" /></div>
+                    <div className="space-y-1"><Label htmlFor="recent-race-date">Data da prova</Label><Input id="recent-race-date" type="date" max={todayStr || undefined} value={form.recentRaceDate} onChange={event => set('recentRaceDate', event.target.value)} /></div>
+                  </div>
+                </fieldset>
               </>
             )}
 
@@ -291,9 +355,9 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                         <OptionButton selected={form.canSwim === true} onClick={() => set('canSwim', true)}>Sim, sei nadar</OptionButton>
                         <OptionButton selected={form.canSwim === false} onClick={() => { set('canSwim', false); set('swimLevel', 'nenhuma'); }}>Não sei / muito básico</OptionButton>
                       </div>
-                      {!form.canSwim && (
+                      {form.canSwim === false && (
                         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-300">
-                          ⚠️ Sem problema! O plano incluirá aulas de adaptação ao meio aquático antes de treinos de natação propriamente ditos. Recomendamos buscar um professor de natação em paralelo.
+                          Antes de executar treinos na água, procure orientação de um professor. O plano não substitui a avaliação presencial das suas habilidades aquáticas.
                         </div>
                       )}
                     </div>
@@ -359,7 +423,7 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
             {current.key === 'testes' && (
               <>
                 <div className="bg-primary/5 border-2 border-primary/20 rounded-xl p-4 mb-2">
-                  <p className="text-sm font-medium">🧪 Os melhores treinadores do mundo usam testes de limiar para definir zonas de treino precisas. Faça {isTri ? 'os testes abaixo' : 'o teste abaixo'} e registre seus resultados. Se ainda não fez, pode deixar em branco — estimaremos pelo seu nível.</p>
+                  <p className="text-sm font-medium">Registre apenas resultados de testes que você já realizou com segurança e orientação. Se não tem uma referência, deixe em branco: a prescrição usará esforço percebido (RPE) e avisos, sem inventar FC, pace ou FTP.</p>
                 </div>
 
                 {/* CSS - Natação */}
@@ -387,7 +451,7 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                     </div>
                     {cssCalc && (
                       <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                        <p className="text-sm font-semibold text-green-400">✅ Seu CSS: {cssCalc} por 100m — esse será seu pace de referência Z2/Z3 nos treinos de natação</p>
+                        <p className="text-sm font-semibold text-green-400">Seu CSS calculado: {cssCalc} por 100m — referência de limiar; cada bloco terá sua intensidade própria.</p>
                       </div>
                     )}
                   </div>
@@ -405,7 +469,7 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                         <li>Desaqueça 10min em Z1</li>
                       </ol>
                       <p className="mt-2 font-medium">FTP estimado = Potência média × 0,95</p>
-                      <p className="text-xs">Pode ser feito no rolo ou na estrada (plano, sem paradas). Se não tem medidor de potência, informe a FC média.</p>
+                      <p className="text-xs">Registre somente um teste que já realizou com orientação. Se não tem medidor de potência, a FC pode ser informada separadamente, mas não será convertida automaticamente em FTP.</p>
                     </TestProtocolBox>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
@@ -431,7 +495,7 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                     <Label className="text-base font-semibold">🏃 Teste de Limiar de Corrida</Label>
                     <TestProtocolBox title="Escolha um dos protocolos">
                       <div className="space-y-2">
-                        <p><strong>Opção A — Teste de 3km:</strong> Aqueça 10-15min. Corra 3km o mais rápido que conseguir manter. O limiar fica em ~90% desse ritmo.</p>
+                        <p><strong>Opção A — Teste de 3km:</strong> registre o tempo de um teste de 3 km que já realizou com orientação. O resultado não é automaticamente sua FC ou seu pace de limiar; confira a referência com seu treinador.</p>
                         <p><strong>Opção B — Teste de 30min:</strong> Aqueça 10-15min. Corra 30min no maior ritmo sustentável. O pace médio dos últimos 20min é seu pace de limiar.</p>
                       </div>
                       <p className="text-xs mt-2">Faça em pista ou percurso plano. Registre pace, FC média e distância total.</p>
@@ -464,7 +528,8 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
             {/* ===== STEP: Métricas ===== */}
             {current.key === 'metricas' && (
               <>
-                <p className="text-sm text-muted-foreground">Preencha o que souber — se não tiver algum dado, pode deixar em branco. Isso calibra as zonas de treino.</p>
+                <p className="text-sm text-muted-foreground">Informe sua data de nascimento. As demais referências medidas são opcionais: deixe em branco o que não souber, sem estimar números.</p>
+                <div className="space-y-2"><Label htmlFor="assessment-birth-date">Data de nascimento</Label><Input id="assessment-birth-date" type="date" max={todayStr || undefined} value={form.birthDate} onChange={event => set('birthDate', event.target.value)} /><p className="text-xs text-muted-foreground">Usada na triagem; o app não estima sua FC máxima a partir da idade.</p></div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Peso atual (kg)</Label>
@@ -474,6 +539,18 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                     <Label>Peso meta (kg) <span className="text-muted-foreground text-xs">(opcional)</span></Label>
                     <Input type="number" step="0.1" value={form.targetWeight} onChange={e => set('targetWeight', e.target.value)} placeholder="70.0" />
                   </div>
+                </div>
+                <fieldset className="space-y-3 rounded-lg border p-4">
+                  <legend className="px-1 text-sm font-semibold">Frequência cardíaca medida — opcional</legend>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1"><Label htmlFor="max-heart-rate">FC máxima (bpm)</Label><Input id="max-heart-rate" type="number" min="30" max="250" value={form.maxHeartRate} onChange={event => set('maxHeartRate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="resting-heart-rate">FC de repouso (bpm)</Label><Input id="resting-heart-rate" type="number" min="25" max="150" value={form.restingHeartRate} onChange={event => set('restingHeartRate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="threshold-heart-rate">FC de limiar (bpm)</Label><Input id="threshold-heart-rate" type="number" min="30" max="250" value={form.thresholdHeartRate} onChange={event => set('thresholdHeartRate', event.target.value)} /></div>
+                  </div>
+                </fieldset>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {showRun && <div className="space-y-2"><Label htmlFor="run-threshold-pace">Pace de limiar confirmado (m:ss/km)</Label><Input id="run-threshold-pace" value={form.runThresholdPace} onChange={event => set('runThresholdPace', event.target.value)} placeholder="Somente se conhecido" /></div>}
+                  {showSwim && <div className="space-y-2"><Label htmlFor="swim-css-pace">CSS confirmado (m:ss/100 m)</Label><Input id="swim-css-pace" value={form.swimCssPace} onChange={event => set('swimCssPace', event.target.value)} placeholder={cssCalc || 'Somente se conhecido'} /></div>}
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {showBike && (
@@ -507,6 +584,10 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
             {/* ===== STEP: Objetivos ===== */}
             {current.key === 'objetivos' && (
               <>
+                <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+                  {races[0] ? <p>Prova principal cadastrada: <strong>{races[0].name}</strong> — <SafeDate date={races[0].date} options={{ day: 'numeric', month: 'long', year: 'numeric' }} locale="pt-BR" />.</p> : <p>Ainda não há prova principal com data cadastrada. Cadastre o evento para periodizar até a prova; sem evento, escolha um ciclo de treino por semanas.</p>}
+                  <Link href="/provas" className="mt-2 inline-block text-primary underline">Cadastrar ou revisar objetivo e data em Provas</Link>
+                </div>
                 <div className="space-y-2">
                   <Label className="text-base">Qual o seu principal objetivo com o treinamento?</Label>
                   <div className="grid sm:grid-cols-2 gap-2">
@@ -573,12 +654,12 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-base">Horas DISPONÍVEIS por semana para treino</Label>
-                    <Input type="number" step="0.5" min={2} max={30} value={form.weeklyHours} onChange={e => set('weeklyHours', e.target.value)} placeholder="10" />
-                    <p className="text-xs text-muted-foreground">Inclua deslocamento até o local de treino</p>
+                    <Input type="number" step="0.5" min={0.5} max={40} value={form.weeklyHours} onChange={e => set('weeklyHours', e.target.value)} placeholder="Informe seu tempo disponível" />
+                    <p className="text-xs text-muted-foreground">Informe tempo efetivo de treino; não some deslocamentos.</p>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-base">Quantas horas você treina HOJE por semana?</Label>
-                    <Input type="number" step="0.5" min={0} max={30} value={form.currentWeeklyVol} onChange={e => set('currentWeeklyVol', e.target.value)} placeholder="6" />
+                    <Input type="number" step="0.5" min={0} max={40} value={form.currentWeeklyVol} onChange={e => set('currentWeeklyVol', e.target.value)} placeholder="0 se ainda não está treinando" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -607,6 +688,7 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
                 </div>
                 <div className="border-t pt-4 mt-2">
                   <Label className="text-base mb-3 block">Equipamento e acesso</Label>
+                  <p className="mb-3 text-xs text-muted-foreground">Marque apenas o que está disponível e confira os dados existentes. Opções desmarcadas serão consideradas indisponíveis.</p>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {[
                       ...(showSwim ? [{ key: 'hasPoolAccess', label: '🏊 Acesso a piscina', val: form.hasPoolAccess }] : []),
@@ -670,6 +752,8 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
         </Card>
       </FadeIn>
 
+      {(errors.length > 0 || generationErrors.length > 0) && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Revise os dados da triagem</p><ul className="mt-2 list-disc space-y-1 pl-4">{[...errors, ...generationErrors].map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
+
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 0}>
@@ -681,7 +765,7 @@ export function CoachQuestionnaire({ profile, onComplete }: { profile: any; onCo
             <Sparkles className="mr-2 h-4 w-4" /> Gerar Plano Personalizado
           </Button>
         ) : (
-          <Button onClick={() => setStep(s => s + 1)}>
+          <Button onClick={() => { const messages = stepErrors(current.key); setErrors(messages); if (!messages.length) setStep(s => s + 1); }}>
             Próximo <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         )}
