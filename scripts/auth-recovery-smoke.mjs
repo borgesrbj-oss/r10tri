@@ -149,7 +149,7 @@ try {
     // A CA adicional existe apenas no processo filho que se conecta à fixture TLS.
     app = spawn(process.execPath, [nativeRequire.resolve('next/dist/bin/next'), 'start', '--port', base.port, '--hostname', '127.0.0.1'], {
       cwd: process.cwd(), windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, NODE_EXTRA_CA_CERTS: certPath, NEXT_DIST_DIR: process.env.AUTH_RECOVERY_DIST_DIR || '.build', NEXTAUTH_URL: base.origin, APP_ORIGIN: base.origin, NEXT_TELEMETRY_DISABLED: '1', SMTP_HOST: '127.0.0.1', SMTP_PORT: String(smtp.port), SMTP_SECURE: 'true', SMTP_FROM: 'remetente@example.invalid', SMTP_USER: smtp.username, SMTP_PASSWORD: smtp.password },
+      env: { ...process.env, NODE_EXTRA_CA_CERTS: certPath, NEXT_DIST_DIR: process.env.AUTH_RECOVERY_DIST_DIR || process.env.NEXT_DIST_DIR || '.next', NEXTAUTH_URL: base.origin, APP_ORIGIN: base.origin, NEXT_TELEMETRY_DISABLED: '1', SMTP_HOST: '127.0.0.1', SMTP_PORT: String(smtp.port), SMTP_SECURE: 'true', SMTP_FROM: 'remetente@example.invalid', SMTP_USER: smtp.username, SMTP_PASSWORD: smtp.password },
     });
     // Consome a saída sem publicar logs que possam conter dados de requisições.
     app.stdout.on('data', () => {}); app.stderr.on('data', () => {});

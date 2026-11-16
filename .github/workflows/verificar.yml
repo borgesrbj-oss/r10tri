@@ -77,4 +77,5 @@ jobs:
             -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1'
           export AUTH_RECOVERY_TLS_CERT="$RUNNER_TEMP/smtp-cert.pem"
           export AUTH_RECOVERY_TLS_KEY="$RUNNER_TEMP/smtp-key.pem"
+          export AUTH_RECOVERY_DIST_DIR='.next'
           npm run test:auth
