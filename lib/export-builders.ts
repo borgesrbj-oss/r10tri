@@ -3,15 +3,102 @@
 // buildZwo -> MyWhoosh / Zwift / Rouvy (.ZWO, ciclismo e corrida).
 // Determinístico, sem IA/créditos. Reutilizado pela exportação individual e pela do plano completo.
 import { Encoder, Profile } from '@garmin/fitsdk';
+import type { FileIdMesg, WorkoutMesg, WorkoutStepMesg } from '@garmin/fitsdk';
+import { describeStructure, readWorkoutStructure } from './training-structure';
+import type { TrainingStep, WorkoutStructure } from './training-types';
 
 const M = Profile.MesgNum;
 
-const sportMap: Record<string, string> = {
+export class WorkoutExportError extends Error {}
+
+const sportMap: Record<string, WorkoutMesg['sport']> = {
   ciclismo: 'cycling',
   corrida: 'running',
   natacao: 'swimming',
   forca: 'training',
 };
+
+// Estrutura presente e inválida deve ser revisada; nunca substituir seus intervalos por blocos genéricos.
+function structureForExport(workout: any): WorkoutStructure | null {
+  if (workout?.structure == null) return null;
+  const structure = readWorkoutStructure(workout.structure);
+  if (!structure || structure.modality !== workout.modality) {
+    throw new WorkoutExportError('Estrutura do treino inválida. Peça ao treinador para revisar antes de exportar.');
+  }
+  return structure;
+}
+
+function xmlEscape(value: unknown): string {
+  return String(value ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g, '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function fitText(value: string, maxBytes = 240): string {
+  let result = '';
+  for (const character of value) {
+    if (Buffer.byteLength(result + character, 'utf8') > maxBytes) break;
+    result += character;
+  }
+  return result;
+}
+
+function stepNotes(step: TrainingStep): string {
+  return `${step.zone ?? 'Repouso'}; ${step.target.text}; ${step.target.source}${step.rest ? `; recuperação ${step.rest === 'passivo' ? 'passiva' : 'ativa'}` : ''}`;
+}
+
+function structuredDescription(structure: WorkoutStructure): string {
+  return `${structure.requiresCoachReview ? 'REVISÃO DO TREINADOR NECESSÁRIA.\n' : ''}${describeStructure(structure)}`;
+}
+
+export function describeWorkoutForExport(workout: any): string {
+  const structure = structureForExport(workout);
+  if (!structure) return String(workout?.description ?? '');
+  // As instruções de ambiente são complementares; tempos e zonas sempre vêm da estrutura validada.
+  const environment = String(workout?.description ?? '').split(/\r?\n/).filter(line => /^Ambiente informado:/.test(line));
+  return [structuredDescription(structure), ...new Set(environment)].join('\n');
+}
+
+function speedRange(step: TrainingStep): [number, number] | null {
+  const { target } = step;
+  if (step.rest === 'passivo' || target.low <= 0 || target.high <= 0) return null;
+  const meters = target.basis === 'run_threshold' && target.unit === 's/km' ? 1000
+    : target.basis === 'css' && target.unit === 's/100m' ? 100 : null;
+  return meters == null ? null : [meters / target.high, meters / target.low];
+}
+
+function buildStructuredFit(workout: any, structure: WorkoutStructure, mode: 'zona' | 'km'): Buffer {
+  const steps = structure.steps.map((step, messageIndex): WorkoutStepMesg => {
+    const speed = speedRange(step);
+    const paceDistance = step.target.basis === 'run_threshold' && step.target.low > 0
+      ? step.durationSeconds / ((step.target.low + step.target.high) / 2) * 1000 : null;
+    // Somente o principal de corrida usa a estimativa de distância calculada pelo motor com pace informado.
+    const estimatedDistance = mode === 'km' && structure.modality === 'corrida' && step.kind === 'principal'
+      && speed != null && step.distanceMeters != null && paceDistance != null && Math.abs(step.distanceMeters - paceDistance) <= 5.01;
+    const target: Pick<WorkoutStepMesg, 'targetType' | 'targetValue' | 'customTargetValueLow' | 'customTargetValueHigh'> = step.target.basis === 'ftp' && step.target.unit === 'W' && step.rest !== 'passivo'
+      ? { targetType: 'power', targetValue: 0, customTargetValueLow: 1000 + Math.round(step.target.low), customTargetValueHigh: 1000 + Math.round(step.target.high) }
+      : step.target.basis === 'threshold_hr' && step.target.unit === 'bpm' && step.rest !== 'passivo'
+      ? { targetType: 'heartRate', targetValue: 0, customTargetValueLow: 100 + Math.round(step.target.low), customTargetValueHigh: 100 + Math.round(step.target.high) }
+      : speed ? { targetType: 'speed', targetValue: 0, customTargetValueLow: Math.round(speed[0] * 1000), customTargetValueHigh: Math.round(speed[1] * 1000) }
+      : { targetType: 'open' };
+    const intensity = step.kind === 'aquecimento' ? 'warmup' : step.kind === 'desaquecimento' ? 'cooldown'
+      : step.rest === 'passivo' ? 'rest' : step.kind === 'recuperacao' ? 'recovery' : 'active';
+    const notes = `${estimatedDistance ? `DISTÂNCIA ESTIMADA: ${step.distanceMeters} m; prescrição original ${step.durationSeconds} s. ` : ''}${stepNotes(step)}`;
+    return {
+      messageIndex, wktStepName: fitText(`${step.label} · ${step.zone ?? 'repouso'}`, 100),
+      durationType: estimatedDistance ? 'distance' : 'time',
+      // O Encoder recebe os campos-base sem aplicar as escalas dos subcampos: tempo em ms; distância em cm.
+      durationValue: estimatedDistance ? Math.round(step.distanceMeters! * 100) : step.durationSeconds * 1000,
+      ...target, intensity, notes: fitText(notes),
+    };
+  });
+  const encoder = new Encoder();
+  const fileId: FileIdMesg = { type: 'workout', manufacturer: 'development', product: 0, timeCreated: scheduledAt(workout), serialNumber: 10001 };
+  const summary: WorkoutMesg = { sport: sportMap[structure.modality], numValidSteps: steps.length, wktName: fitText(workout.title || 'Treino', 200), wktDescription: fitText(describeWorkoutForExport(workout)) };
+  encoder.onMesg(M.FILE_ID, fileId);
+  encoder.onMesg(M.WORKOUT, summary);
+  for (const step of steps) encoder.onMesg(M.WORKOUT_STEP, step);
+  return Buffer.from(encoder.close());
+}
 
 export function slugify(s: string) {
   return (s ?? 'treino').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').toLowerCase();
@@ -53,6 +140,8 @@ const FIT_RUN_OFFSETS: Record<string, [number, number]> = { Z1: [60, 90], Z2: [3
 //   caso contrário recai para o modo por tempo (arquivo sempre válido).
 export function buildFit(workout: any, opts?: { mode?: 'zona' | 'km'; thresholdPaceSec?: number | null }): Buffer {
   const mode = opts?.mode === 'km' ? 'km' : 'zona';
+  const structure = structureForExport(workout);
+  if (structure) return buildStructuredFit(workout, structure, mode);
   const thr = opts?.thresholdPaceSec ?? null;
   const sport = sportMap[workout.modality] ?? 'generic';
   const dur = workout.duration || 60;
@@ -101,7 +190,72 @@ export function buildFit(workout: any, opts?: { mode?: 'zona' | 'km'; thresholdP
 // para treinos PLANEJADOS. Estrutura: TrainingCenterDatabase > Workouts > Workout > Step (1..n).
 // Determinístico, sem IA/créditos.
 const TCX_SPORT: Record<string, string> = { corrida: 'Running', ciclismo: 'Biking', natacao: 'Other', forca: 'Other' };
+
+function repeatLabel(label: string): string {
+  return label.replace(/^Bloco \d+\/\d+ controlado$/, 'Bloco controlado').replace(/^Recuperação \d+\/\d+$/, 'Recuperação');
+}
+
+function tcxGroups(steps: TrainingStep[]): { steps: TrainingStep[]; repetitions: number }[] {
+  if (steps.length <= 20) return steps.map(step => ({ steps: [step], repetitions: 1 }));
+  // TCX limita StepId a 20 e Repetitions a 99. Repetições equivalentes mantêm duração/alvos e ordem.
+  const keys = steps.map(step => JSON.stringify({ ...step, label: repeatLabel(step.label) }));
+  const costs = Array<number>(steps.length + 1).fill(Infinity);
+  const choices: { length: number; count: number }[] = [];
+  costs[steps.length] = 0;
+  for (let index = steps.length - 1; index >= 0; index--) {
+    costs[index] = 1 + costs[index + 1];
+    choices[index] = { length: 1, count: 1 };
+    for (let length = 1; length <= Math.floor((steps.length - index) / 2); length++) {
+      let count = 1;
+      while (count < 99 && index + (count + 1) * length <= steps.length
+        && keys.slice(index, index + length).every((key, offset) => key === keys[index + count * length + offset])) {
+        count++;
+        const cost = length + 1 + costs[index + count * length];
+        if (cost < costs[index]) { costs[index] = cost; choices[index] = { length, count }; }
+      }
+    }
+  }
+  const groups: { steps: TrainingStep[]; repetitions: number }[] = [];
+  for (let index = 0; index < steps.length;) {
+    const { length, count } = choices[index];
+    groups.push({ steps: steps.slice(index, index + length), repetitions: count });
+    index += length * count;
+  }
+  const identifiers = groups.reduce((total, group) => total + (group.repetitions > 1 ? 1 : 0) + group.steps.length, 0);
+  if (identifiers > 20) throw new WorkoutExportError('O TCX aceita no máximo 20 identificadores de etapas. Este treino não cabe nesse formato sem alterar os intervalos. Exporte FIT ou TXT para preservar o treino completo.');
+  return groups;
+}
+
 export function buildTcx(workout: any): string {
+  const structure = structureForExport(workout);
+  if (structure) {
+    const name = xmlEscape(Array.from(String(workout.title || 'Treino')).slice(0, 15).join(''));
+    let nextId = 1;
+    const renderStep = (step: TrainingStep, tag = 'Step', repeating = false) => {
+      const speed = speedRange(step);
+      // O schema TCX não prevê alvo de potência/RPE. Esses alvos ficam nas notas completas do treino.
+      const target = speed
+        ? `<Target xsi:type="Speed_t"><SpeedZone xsi:type="CustomSpeedZone_t"><ViewAs>Pace</ViewAs><LowInMetersPerSecond>${speed[0].toFixed(6)}</LowInMetersPerSecond><HighInMetersPerSecond>${speed[1].toFixed(6)}</HighInMetersPerSecond></SpeedZone></Target>`
+        : step.target.basis === 'threshold_hr' && step.target.unit === 'bpm' && step.rest !== 'passivo'
+        ? `<Target xsi:type="HeartRate_t"><HeartRateZone xsi:type="CustomHeartRateZone_t"><Low xsi:type="HeartRateInBeatsPerMinute_t"><Value>${Math.round(step.target.low)}</Value></Low><High xsi:type="HeartRateInBeatsPerMinute_t"><Value>${Math.round(step.target.high)}</Value></High></HeartRateZone></Target>`
+        : '<Target xsi:type="None_t" />';
+      const label = Array.from(`${step.zone ?? 'Repouso'} ${repeating ? repeatLabel(step.label) : step.label}`).slice(0, 15).join('');
+      return `      <${tag} xsi:type="Step_t"><StepId>${nextId++}</StepId><Name>${xmlEscape(label)}</Name><Duration xsi:type="Time_t"><Seconds>${step.durationSeconds}</Seconds></Duration><Intensity>${step.rest === 'passivo' ? 'Resting' : 'Active'}</Intensity>${target}</${tag}>`;
+    };
+    const steps = tcxGroups(structure.steps).map(group => {
+      if (group.repetitions === 1) return renderStep(group.steps[0]);
+      const id = nextId++;
+      return `      <Step xsi:type="Repeat_t"><StepId>${id}</StepId><Repetitions>${group.repetitions}</Repetitions>${group.steps.map(step => renderStep(step, 'Child', true)).join('')}</Step>`;
+    }).join('\n');
+    const ds = dateStr(workout);
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">
+  <Workouts><Workout Sport="${TCX_SPORT[structure.modality]}"><Name>${name}</Name>
+${steps}${ds ? `\n      <ScheduledOn>${ds}</ScheduledOn>` : ''}
+      <Notes>${xmlEscape(describeWorkoutForExport(workout))}</Notes>
+  </Workout></Workouts>
+</TrainingCenterDatabase>`;
+  }
   const esc = (s: string) => (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const sport = TCX_SPORT[workout?.modality] ?? 'Other';
   const dur = workout?.duration || 60;
@@ -143,7 +297,34 @@ ${steps}${ds ? `
 }
 
 // Gera um arquivo .ZWO (Zwift/MyWhoosh/Rouvy). Ciclismo usa potência (%FTP); corrida usa Duration com nota de pace.
-export function buildZwo(workout: any): string {
+export function buildZwo(workout: any, opts?: { ftp?: number | null }): string {
+  const structure = structureForExport(workout);
+  if (structure) {
+    if (structure.modality !== 'corrida' && structure.modality !== 'ciclismo') {
+      throw new WorkoutExportError('O formato ZWO é destinado a corrida e ciclismo. Para natação ou força, exporte FIT, TCX ou TXT.');
+    }
+    const ftp = opts?.ftp;
+    const hasFtp = typeof ftp === 'number' && Number.isFinite(ftp) && ftp > 0;
+    const instructions = 'Alvos em watts requerem o mesmo FTP no aplicativo de destino. Blocos livres preservam pace/percepção nas instruções, sem controle automático de potência.';
+    const steps = structure.steps.map(step => {
+      const note = `<textevent timeoffset="0" message="${xmlEscape(`${step.label}: ${stepNotes(step)}`)}"/>`;
+      if (hasFtp && step.target.basis === 'ftp' && step.target.unit === 'W' && step.rest !== 'passivo') {
+        // ZWO trabalha com fração do FTP; o centro da faixa é o alvo executável, com a faixa original nas notas.
+        const power = ((step.target.low + step.target.high) / 2 / ftp).toFixed(6);
+        return `    <SteadyState Duration="${step.durationSeconds}" Power="${power}">${note}</SteadyState>`;
+      }
+      return `    <FreeRide Duration="${step.durationSeconds}" FlatRoad="1">${note}</FreeRide>`;
+    }).join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<workout_file>
+  <author>R10 TRI</author><name>${xmlEscape(workout.title || 'Treino')}</name>
+  <description>${xmlEscape(`${describeWorkoutForExport(workout)}\n${instructions}`)}</description>
+  <sportType>${structure.modality === 'corrida' ? 'run' : 'bike'}</sportType><tags/>
+  <workout>
+${steps}
+  </workout>
+</workout_file>`;
+  }
   const dur = workout?.duration ?? 60;
   const isRun = workout?.modality === 'corrida';
   const sportType = isRun ? 'run' : 'bike';
@@ -167,16 +348,17 @@ export function buildZwo(workout: any): string {
 
 // Texto estruturado de fallback (natação/força no MyWhoosh, ou quando não há formato nativo).
 export function buildTxt(workout: any): string {
+  const structure = structureForExport(workout);
   const modLabels: Record<string, string> = { natacao: 'Natação', ciclismo: 'Ciclismo', corrida: 'Corrida', forca: 'Força' };
   const mod = modLabels[workout?.modality] ?? workout?.modality ?? 'Treino';
   return `=== ${mod}: ${workout?.title ?? 'Treino'} ===
 Data: ${workout?.date ? new Date(workout.date).toLocaleDateString('pt-BR') : ''}
-Duração: ${workout?.duration ?? 0} min
+Duração: ${structure ? `${structure.durationSeconds} s (${structure.durationSeconds / 60} min)` : `${workout?.duration ?? 0} min`}
 Zona-alvo: ${workout?.targetZone ?? 'N/A'}
 Semana: ${workout?.weekNumber ?? ''}
 
 --- DESCRIÇÃO ---
-${workout?.description ?? ''}
+${describeWorkoutForExport(workout)}
 
 Gerado por R10 TRI
 `;

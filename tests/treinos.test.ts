@@ -5,7 +5,7 @@ import { generateFallbackPlan, thresholdFrom3k } from '../lib/plan-engine';
 import { buildFit, buildTcx, buildZwo, intervalsStartLocal } from '../lib/export-builders';
 
 test('plano respeita modalidade única, agenda explícita e adaptação inicial', () => {
-  const profile = { modality: 'corrida', daySchedule: JSON.stringify({ seg: ['corrida'], qua: ['corrida'] }) };
+  const profile = { modality: 'corrida', weeklyHours: 4, currentWeeklyVol: 3, daySchedule: JSON.stringify({ seg: ['corrida'], qua: ['corrida'] }) };
   const plan = generateFallbackPlan(profile, [], ['seg', 'qua'], '2026-11-16T12:00:00Z', 4);
   assert.ok(plan.length > 0);
   assert.ok(plan.every(w => w.modality === 'corrida'));
@@ -15,7 +15,7 @@ test('plano respeita modalidade única, agenda explícita e adaptação inicial'
 });
 
 test('plano sem natação respeita perfil e não gera sessões de piscina', () => {
-  const plan = generateFallbackPlan({ canSwim: false }, [], ['seg', 'qua', 'sex'], '2026-11-16T12:00:00Z', 4);
+  const plan = generateFallbackPlan({ canSwim: false, weeklyHours: 4, currentWeeklyVol: 3 }, [], ['seg', 'qua', 'sex'], '2026-11-16T12:00:00Z', 4);
   assert.ok(plan.length > 0);
   assert.ok(plan.every(w => w.modality !== 'natacao'));
 });

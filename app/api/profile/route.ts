@@ -1,4 +1,5 @@
 import { publicProfile } from '@/lib/profile-public';
+import { assessmentData } from '@/lib/assessment-validation';
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
@@ -14,10 +15,29 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
-  const data = await req.json();
+  const raw = await req.json().catch(() => null);
+  const previous = await prisma.athleteProfile.findUnique({ where: { userId: session.user.id } });
+  const validated = assessmentData(raw, previous);
+  if (!validated.ok) return NextResponse.json({ error: 'Confira os dados do perfil.', details: validated.errors }, { status: 422 });
+  // Campos da triagem entram somente pelo resultado validado. Os demais
+  // pertencem ao formulário legado e mantêm seu comportamento existente.
+  const data = {
+    ...validated.data,
+    sex: raw.sex,
+    nickname: raw.nickname,
+    photoUrl: raw.photoUrl,
+    daySchedule: raw.daySchedule,
+    bikeEnvByDay: raw.bikeEnvByDay,
+    runEnvByDay: raw.runEnvByDay,
+    whatsapp: raw.whatsapp,
+    runStructure: raw.runStructure,
+    dashboardPrefs: raw.dashboardPrefs,
+    aboutMe: raw.aboutMe,
+  };
   const profile = await prisma.athleteProfile.upsert({
     where: { userId: session.user.id },
     update: {
+      ...validated.data,
       currentWeight: data.currentWeight,
       targetWeight: data.targetWeight,
       level: data.level,
@@ -43,6 +63,7 @@ export async function POST(req: NextRequest) {
       ...(data.aboutMe !== undefined ? { aboutMe: data.aboutMe || null } : {}),
     },
     create: {
+      ...validated.data,
       userId: session.user.id,
       currentWeight: data.currentWeight,
       targetWeight: data.targetWeight,

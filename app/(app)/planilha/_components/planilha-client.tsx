@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FadeIn } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
+import { WorkoutStructure as WorkoutStructureView, TrainingDistributionSummary, getWorkoutStructure, formatTrainingDuration } from '@/components/workout-structure';
 import Link from 'next/link';
 
 const modLabels: Record<string, string> = { natacao: 'Natação', ciclismo: 'Ciclismo', corrida: 'Corrida', forca: 'Força', descanso: 'Descanso' };
 const modIcons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
 const modColors: Record<string, string> = { natacao: '#3B82F6', ciclismo: '#F97316', corrida: '#22C55E', forca: '#A855F7', descanso: '#6B7280' };
-const phaseLabels: Record<string, string> = { base: 'Base', construcao: 'Construção', pico: 'Pico', polimento: 'Polimento' };
+const phaseLabels: Record<string, string> = { base: 'Base', build: 'Construção', peak: 'Pico', race: 'Prova', transition: 'Transição', construcao: 'Construção', pico: 'Pico', polimento: 'Polimento' };
+const stepLabels: Record<string, string> = { aquecimento: 'Aquecimento', principal: 'Bloco principal', recuperacao: 'Recuperação', desaquecimento: 'Desaquecimento' };
 
 function slugify(s: string) {
   return (s ?? 'planilha').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').toLowerCase();
@@ -49,6 +51,25 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
   const [savingKey, setSavingKey] = useState<boolean>(false);
   const [pushing, setPushing] = useState<boolean>(false);
   const [pushMsg, setPushMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  const summary = plan?.summary && typeof plan.summary === 'object' && !Array.isArray(plan.summary) ? plan.summary : null;
+  const requiresCoachReview = summary?.requiresCoachReview === true || (workouts ?? []).some(workout => getWorkoutStructure(workout?.structure)?.requiresCoachReview === true);
+  const planWarnings = [...new Set<string>([
+    ...(Array.isArray(summary?.warnings) ? summary.warnings : []),
+    ...(Array.isArray(summary?.weeks) ? summary.weeks.flatMap((week: any) => Array.isArray(week?.warnings) ? week.warnings : []) : []),
+  ].filter((warning: unknown): warning is string => typeof warning === 'string' && warning.trim().length > 0))];
+
+  const workoutExportDescription = (workout: any) => {
+    const structure = getWorkoutStructure(workout?.structure);
+    const lines = [String(workout?.description ?? '').trim()];
+    if (structure) {
+      lines.push('Blocos estruturados:');
+      structure.steps.forEach((step, index) => lines.push(`${index + 1}. ${stepLabels[step.kind]}: ${step.label} · ${formatTrainingDuration(step.durationSeconds)} · ${step.rest === 'passivo' ? 'pausa passiva' : step.zone || 'força/técnica'} · ${step.target.text}${step.rest === 'ativo' ? ' · recuperação ativa' : ''}`));
+      lines.push(...(Array.isArray(structure.warnings) ? structure.warnings.filter((warning: unknown) => typeof warning === 'string').map(warning => `Atenção: ${warning}`) : []));
+    }
+    if (requiresCoachReview) lines.unshift('REVISÃO DO COACH NECESSÁRIA antes de executar este plano.');
+    return lines.filter(Boolean).join('\n');
+  };
 
   const saveIntervalsKey = async () => {
     if (!apiKeyInput.trim()) return;
@@ -127,17 +148,29 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
       w?.date ? new Date(w.date).toLocaleDateString('pt-BR') : '',
       modLabels[w?.modality] ?? w?.modality ?? '',
       w?.title ?? '',
-      (w?.description ?? '').trim(),
+      workoutExportDescription(w),
       w?.duration ? `${w.duration}min` : '',
       w?.targetZone ?? '',
       w?.tssEstimate != null ? String(Math.round(Number(w.tssEstimate))) : '',
       phaseLabels[w?.phase] ?? w?.phase ?? '',
       w?.completed ? 'Sim' : 'Não',
     ]);
+    let startY = 32;
+    if (requiresCoachReview || planWarnings.length > 0) {
+      autoTable(doc, {
+        body: [[[
+          ...(requiresCoachReview ? ['REVISÃO DO COACH NECESSÁRIA: revise este plano com o treinador antes de executar os treinos.'] : []),
+          ...planWarnings.map(warning => `Atenção: ${warning}`),
+        ].join('\n')]],
+        startY,
+        styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak', textColor: [100, 65, 10], fillColor: [255, 248, 230] },
+      });
+      startY = (doc as any).lastAutoTable.finalY + 6;
+    }
     autoTable(doc, {
       head: [['Sem.', 'Data', 'Modalidade', 'Treino', 'Descrição detalhada', 'Duração', 'Zona', 'TSS', 'Fase', 'OK']],
       body,
-      startY: 32,
+      startY,
       styles: { fontSize: 7.5, cellPadding: 2, valign: 'top', overflow: 'linebreak' },
       headStyles: { fillColor: [26, 138, 125], halign: 'left' },
       columnStyles: {
@@ -163,19 +196,22 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
   };
 
   const exportCsv = () => {
-    const header = ['Semana', 'Data', 'Modalidade', 'Título', 'Duração (min)', 'Zona', 'Fase', 'TSS', 'Concluído'];
+    const header = ['Semana', 'Data', 'Modalidade', 'Título', 'Duração (min)', 'Zona', 'Fase', 'TSS', 'Concluído', 'Descrição detalhada', 'Revisão do coach', 'Avisos do plano'];
     const rows = (workouts ?? []).map((w: any) => [
       w?.weekNumber ?? '',
       w?.date ? new Date(w.date).toLocaleDateString('pt-BR') : '',
       modLabels[w?.modality] ?? w?.modality ?? '',
-      (w?.title ?? '').replace(/"/g, '""'),
+      w?.title ?? '',
       w?.duration ?? '',
       w?.targetZone ?? '',
       phaseLabels[w?.phase] ?? w?.phase ?? '',
       w?.tssEstimate ?? '',
       w?.completed ? 'Sim' : 'Não',
+      workoutExportDescription(w),
+      requiresCoachReview ? 'Necessária antes da execução' : '',
+      planWarnings.join('\n'),
     ]);
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
+    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -220,6 +256,12 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
         </CardContent></Card>
       ) : (
         <>
+          {(requiresCoachReview || planWarnings.length > 0) && (
+            <section role={requiresCoachReview ? 'alert' : 'status'} className="rounded-xl border border-amber-500/50 bg-amber-50 p-4 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100 space-y-2" aria-label="Avisos do plano">
+              {requiresCoachReview && <p className="font-semibold">Revisão do coach necessária antes de executar este plano. Converse com seu treinador sobre as condições e limitações informadas.</p>}
+              {planWarnings.length > 0 && <ul className="list-disc space-y-1 pl-5">{planWarnings.map(warning => <li key={warning}>{warning}</li>)}</ul>}
+            </section>
+          )}
           <FadeIn>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatTile icon={CalendarCheck} label="Treinos" value={String(numTreinos)} color="#1A8A7D" />
@@ -228,6 +270,8 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
               <StatTile icon={Flame} label="Carga (TSS)" value={String(totalTss)} color="#EF4444" />
             </div>
           </FadeIn>
+
+          <TrainingDistributionSummary workouts={workouts ?? []} title="Distribuição real do plano por tempo ativo" />
 
           <FadeIn>
             <Card className="border-primary/30">
@@ -252,7 +296,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                   <p className="text-[11px] font-semibold text-foreground/80 mb-1">Garmin · .FIT <span className="font-normal text-muted-foreground">(para o relógio via USB)</span></p>
                   <div className="flex gap-2 flex-wrap mb-3">
                     <Button variant="secondary" size="sm" onClick={() => downloadFullPlan('garmin', { format: 'fit', mode: 'zona' })} className="bg-accent text-accent-foreground">
-                      <Download className="mr-1.5 h-4 w-4" /> .FIT · por zona de FC
+                      <Download className="mr-1.5 h-4 w-4" /> .FIT · blocos e alvos
                     </Button>
                     <Button variant="secondary" size="sm" onClick={() => downloadFullPlan('garmin', { format: 'fit', mode: 'km' })} className="bg-accent text-accent-foreground">
                       <Download className="mr-1.5 h-4 w-4" /> .FIT · por distância (km)
@@ -262,7 +306,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                   <p className="text-[11px] font-semibold text-foreground/80 mb-1">Garmin · .TCX <span className="font-normal text-muted-foreground">(para o TrainingPeaks)</span></p>
                   <div className="flex gap-2 flex-wrap mb-3">
                     <Button variant="secondary" size="sm" onClick={() => downloadFullPlan('garmin', { format: 'tcx' })} className="bg-accent text-accent-foreground">
-                      <Download className="mr-1.5 h-4 w-4" /> .TCX · por zona de FC
+                      <Download className="mr-1.5 h-4 w-4" /> .TCX · blocos e alvos
                     </Button>
                   </div>
 
@@ -272,7 +316,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                       <Download className="mr-1.5 h-4 w-4" /> MyWhoosh / Zwift (.ZWO)
                     </Button>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-2">Cada download traz <strong>um único formato</strong> (sem arquivos repetidos). No Garmin, "por km" aplica-se à corrida (passos por distância; requer seu pace no perfil); as demais modalidades saem por zona de FC. Natação e Força saem como arquivos de texto (.txt) com as instruções, pois não têm formato estruturado nessas plataformas.</p>
+                  <p className="text-[11px] text-muted-foreground mt-2">Cada download mantém os blocos e alvos disponíveis. No FIT, “por km” aplica distância estimada ao principal da corrida quando o plano contém pace e distância; os demais passos continuam por tempo. No ZIP Garmin, força sai em TXT e natação em FIT/TCX. No ZIP ZWO, natação e força saem em TXT. Alvos que o formato não suporta ficam nas notas. Se um treino exceder o limite de etapas do TCX, escolha FIT ou TXT.</p>
                   <p className="text-[11px] text-amber-500 mt-2"><strong>Atenção (Garmin):</strong> o site do Garmin Connect não importa treinos por arquivo — o menu Exercícios só permite criar à mão e a página "Importar Dados" é só para atividades concluídas. Use: <strong>(1)</strong> cabo USB — copie os <strong>.FIT</strong> para a pasta <strong>GARMIN/NewFiles</strong> do relógio (recomendado); ou <strong>(2) TrainingPeaks</strong> — importe o <strong>.TCX</strong> e sincronize com o Garmin; ou <strong>(3)</strong> recrie à mão em Treinam. e Planej. &gt; Exercícios. Passo a passo completo no arquivo COMO_IMPORTAR.txt dentro do ZIP.</p>
                 </div>
               </CardContent>
@@ -359,7 +403,14 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                                 <span className="hidden sm:inline">{modLabels[w?.modality] ?? w?.modality}</span>
                               </span>
                             </td>
-                            <td className="px-4 py-2 min-w-[180px]">{w?.title}</td>
+                            <td className="px-4 py-2 min-w-[280px] max-w-xl">
+                              <p className="font-medium">{w?.title}</p>
+                              {getWorkoutStructure(w?.structure)?.requiresCoachReview && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">Revisar com o coach antes da execução.</p>}
+                              <details className="mt-2">
+                                <summary className="cursor-pointer text-xs text-primary">Ver blocos, zonas e descansos</summary>
+                                <div className="mt-3"><WorkoutStructureView value={w?.structure} description={w?.description} /></div>
+                              </details>
+                            </td>
                             <td className="px-4 py-2 text-center whitespace-nowrap font-mono">{w?.duration}min</td>
                             <td className="px-4 py-2 text-center">{w?.targetZone ? <Badge variant="outline">{w.targetZone}</Badge> : '-'}</td>
                             <td className="px-4 py-2 text-muted-foreground">{phaseLabels[w?.phase] ?? w?.phase ?? '-'}</td>

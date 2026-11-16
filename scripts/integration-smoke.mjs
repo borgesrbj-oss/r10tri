@@ -150,7 +150,7 @@ try {
     assert.equal(await prisma.user.count({ where: { email: identities.convite.email } }), 0);
   });
   await check(async () => {
-    const response = await atletaA.request('/api/profile/assessment', { method: 'POST', body: { level: 'intermediario', modality: 'triatlo', weeklyHours: 6, availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'], ftp: 200, runPace: '06:00', swimPace: '02:10' } });
+    const response = await atletaA.request('/api/profile/assessment', { method: 'POST', body: { birthDate: '1990-01-01', currentWeight: 70, currentWeeklyVol: 5, level: 'intermediario', modality: 'triatlo', weeklyHours: 6, availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'], canSwim: true, hasPoolAccess: true, ftp: 200, runThresholdPace: '06:00', swimCssPace: '02:10' } });
     assert.equal(response.status, 200);
   });
   await check(async () => {
@@ -163,6 +163,9 @@ try {
     workout = workouts.data.find((entry) => entry.planId === planId);
     assert.ok(workout?.id);
     assert.ok(workouts.data.every((entry) => entry.userId === identities.atletaA.id));
+    assert.ok(workouts.data.every((entry) => entry.structure?.version === 1));
+    assert.ok(workouts.data.every((entry) => entry.structure.steps.reduce((sum, step) => sum + step.durationSeconds, 0) === entry.duration * 60));
+    assert.equal(response.data.summary.basis, 'tempo_aerobico_ativo');
   });
   await check(async () => {
     denied(await atletaB.request('/api/workouts', { method: 'POST', body: { id: workout.id, title: 'Alteração indevida' } }));
@@ -182,9 +185,13 @@ try {
     assert.equal(await prisma.workout.count({ where: { planId, userId: identities.atletaB.id } }), 0);
   });
   await check(async () => {
-    const response = await atletaA.request('/api/workouts/log', { method: 'POST', body: { workoutId: workout.id, actualDuration: 30, actualDistance: 4, rpe: 5 } });
+    const invalid = await atletaA.request('/api/workouts/log', { method: 'POST', body: { workoutId: workout.id, painScore: 11 } });
+    assert.equal(invalid.status, 422);
+    const response = await atletaA.request('/api/workouts/log', { method: 'POST', body: { workoutId: workout.id, actualDuration: 30, actualDistance: 4, rpe: 5, sleepHours: 8, fatigueScore: 0, painScore: 0 } });
     assert.equal(response.status, 200);
     assert.equal(response.data.userId, identities.atletaA.id);
+    assert.equal(response.data.painScore, 0);
+    assert.equal(response.data.fatigueScore, 0);
     assert.equal((await prisma.workout.findUnique({ where: { id: workout.id } })).completed, true);
   });
   await check(async () => {

@@ -35,9 +35,8 @@ export default function DashboardPage() {
   gradients, particles or count-up wrappers around the dashboard; the kit owns the hierarchy. Filters are the
   manifest's tabs; if the brief needs a server-side control (date range, account picker), put it in the page
   header and pass it to the route as a query parameter.
-- `components/viz/examples/saas_revenue.json` is a complete manifest at the quality bar — read it before writing
-  yours. In the reference below, `data/<key>.json` means the `<key>` entry of the route's `data` object; `query`
-  is optional text shown in the tile's "View query" drawer (the SQL / Prisma call behind the rows).
+- Os exemplos de demonstração foram removidos na limpeza aprovada; o componente de visualização e seus recursos públicos permanecem disponíveis.
+  Na referência abaixo, `data/<key>.json` corresponde à entrada `<key>` no objeto `data` da rota; `query` é um texto opcional com a consulta de origem.
 
 # dashboard.json reference
 Top level: `title` (the headline insight, a full sentence with the number in it — never "Sales Dashboard"),

@@ -13,6 +13,7 @@ declare module 'next-auth' {
   interface User {
     id: string;
     role?: string;
+    authVersion?: number;
     // Mirror any fields added to Session['user'] above
   }
 }
@@ -21,5 +22,6 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
     role?: string;
+    authVersion?: number;
   }
 }
