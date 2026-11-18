@@ -1,0 +1,32 @@
+[
+  {
+    "dominio": "cadorya.com",
+    "status": 404,
+    "consulta": "RDAP Verisign",
+    "verificadoEm": "2026-11-16T23:23:33.0092514Z"
+  },
+  {
+    "dominio": "r10vertice.com",
+    "status": 404,
+    "consulta": "RDAP Verisign",
+    "verificadoEm": "2026-11-16T23:23:33.8839519Z"
+  },
+  {
+    "dominio": "r10limiar.com",
+    "status": 404,
+    "consulta": "RDAP Verisign",
+    "verificadoEm": "2026-11-16T23:23:34.7235432Z"
+  },
+  {
+    "dominio": "r10prisma.com",
+    "status": 404,
+    "consulta": "RDAP Verisign",
+    "verificadoEm": "2026-11-16T23:23:35.4572835Z"
+  },
+  {
+    "dominio": "nivorya.com",
+    "status": 200,
+    "consulta": "RDAP Verisign",
+    "verificadoEm": "2026-11-16T23:23:36.1970987Z"
+  }
+]

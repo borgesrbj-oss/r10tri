@@ -1,0 +1,122 @@
+[
+  {
+    "perfil": "Sedentário iniciante",
+    "antesMin": 72,
+    "depoisMin": 72,
+    "antesIntenso": 0,
+    "depoisIntenso": 0,
+    "revisao": false,
+    "caminhada": true,
+    "tecnica": false
+  },
+  {
+    "perfil": "Primeiros 5 km",
+    "antesMin": 60,
+    "depoisMin": 60,
+    "antesIntenso": 0,
+    "depoisIntenso": 0,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Intermediário 10 km",
+    "antesMin": 240,
+    "depoisMin": 240,
+    "antesIntenso": 14940,
+    "depoisIntenso": 13980,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Meia maratona",
+    "antesMin": 360,
+    "depoisMin": 360,
+    "antesIntenso": 30240,
+    "depoisIntenso": 28140,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Maratonista experiente",
+    "antesMin": 600,
+    "depoisMin": 600,
+    "antesIntenso": 30240,
+    "depoisIntenso": 30240,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Ciclista iniciante",
+    "antesMin": 60,
+    "depoisMin": 60,
+    "antesIntenso": 0,
+    "depoisIntenso": 0,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Nadador pouco experiente",
+    "antesMin": 60,
+    "depoisMin": 60,
+    "antesIntenso": 0,
+    "depoisIntenso": 0,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": true
+  },
+  {
+    "perfil": "Triatleta iniciante",
+    "antesMin": 180,
+    "depoisMin": 180,
+    "antesIntenso": 6750,
+    "depoisIntenso": 5310,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": true
+  },
+  {
+    "perfil": "Triatleta longa distância",
+    "antesMin": 600,
+    "depoisMin": 600,
+    "antesIntenso": 37800,
+    "depoisIntenso": 37800,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Histórico de lesão no joelho",
+    "antesMin": 240,
+    "depoisMin": 240,
+    "antesIntenso": 14940,
+    "depoisIntenso": 13980,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Disponibilidade limitada",
+    "antesMin": 30,
+    "depoisMin": 15,
+    "antesIntenso": 0,
+    "depoisIntenso": 0,
+    "revisao": false,
+    "caminhada": false,
+    "tecnica": false
+  },
+  {
+    "perfil": "Objetivo incompatível com prazo",
+    "antesMin": 45,
+    "depoisMin": 45,
+    "antesIntenso": 0,
+    "depoisIntenso": 0,
+    "revisao": true,
+    "caminhada": false,
+    "tecnica": false
+  }
+]

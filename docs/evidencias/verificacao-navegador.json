@@ -1,0 +1,363 @@
+{
+  "data": "2026-11-18",
+  "browser": "Chrome Windows, viewport redimensionado",
+  "viewportAudit": [
+    {
+      "overflow": false,
+      "page": "login",
+      "scrollWidth": 314,
+      "submit": {
+        "bottom": 702.59375,
+        "height": 40,
+        "left": 45,
+        "right": 269,
+        "top": 662.59375,
+        "width": 224,
+        "x": 45,
+        "y": 662.59375
+      },
+      "width": 320
+    },
+    {
+      "overflow": false,
+      "page": "login",
+      "scrollWidth": 369,
+      "submit": {
+        "bottom": 685.59375,
+        "height": 40,
+        "left": 45,
+        "right": 324,
+        "top": 645.59375,
+        "width": 279,
+        "x": 45,
+        "y": 645.59375
+      },
+      "width": 375
+    },
+    {
+      "overflow": false,
+      "page": "login",
+      "scrollWidth": 384,
+      "submit": {
+        "bottom": 685.59375,
+        "height": 40,
+        "left": 45,
+        "right": 339,
+        "top": 645.59375,
+        "width": 294,
+        "x": 45,
+        "y": 645.59375
+      },
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "page": "login",
+      "scrollWidth": 424,
+      "submit": {
+        "bottom": 700.59375,
+        "height": 40,
+        "left": 45,
+        "right": 379,
+        "top": 660.59375,
+        "width": 334,
+        "x": 45,
+        "y": 660.59375
+      },
+      "width": 430
+    },
+    {
+      "overflow": false,
+      "page": "login",
+      "scrollWidth": 762,
+      "submit": {
+        "bottom": 1026.609375,
+        "height": 40,
+        "left": 182,
+        "right": 580,
+        "top": 986.609375,
+        "width": 398,
+        "x": 182,
+        "y": 986.609375
+      },
+      "width": 768
+    },
+    {
+      "overflow": false,
+      "page": "login",
+      "scrollWidth": 1274,
+      "submit": {
+        "bottom": 587,
+        "height": 40,
+        "left": 715.296875,
+        "right": 1113.296875,
+        "top": 547,
+        "width": 398,
+        "x": 715.296875,
+        "y": 547
+      },
+      "width": 1280
+    },
+    {
+      "overflow": false,
+      "page": "dashboard",
+      "scrollWidth": 314,
+      "width": 320
+    },
+    {
+      "overflow": false,
+      "page": "dashboard",
+      "scrollWidth": 384,
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "page": "dashboard",
+      "scrollWidth": 762,
+      "width": 768
+    },
+    {
+      "overflow": false,
+      "page": "dashboard",
+      "scrollWidth": 1274,
+      "width": 1280
+    },
+    {
+      "overflow": false,
+      "page": "calendario",
+      "scrollWidth": 384,
+      "width": 390
+    },
+    {
+      "overflow": true,
+      "page": "triagem-logistica",
+      "scrollWidth": 426,
+      "width": 390
+    },
+    {
+      "overflow": false,
+      "page": "provas",
+      "scrollWidth": 384,
+      "width": 390
+    }
+  ],
+  "correctedViewport": [
+    {
+      "excess": [],
+      "overflow": false,
+      "page": "triagem-logistica-final",
+      "scrollWidth": 314,
+      "width": 320
+    },
+    {
+      "excess": [],
+      "overflow": false,
+      "page": "triagem-logistica-final",
+      "scrollWidth": 384,
+      "width": 390
+    },
+    {
+      "excess": [],
+      "overflow": false,
+      "page": "triagem-logistica-final",
+      "scrollWidth": 762,
+      "width": 768
+    }
+  ],
+  "navigationAudit": [
+    {
+      "acao": "Desempenho",
+      "url": "http://localhost:3000/evolucao",
+      "titulo": [
+        " Evolução",
+        " Evolução de Peso",
+        " Carga Semanal (min)"
+      ]
+    },
+    {
+      "acao": "Perfil",
+      "url": "http://localhost:3000/perfil",
+      "titulo": [
+        " Perfil do Atleta",
+        " Dados Físicos",
+        " Disponibilidade",
+        " Métricas de Performance",
+        "Histórico de Provas"
+      ]
+    },
+    {
+      "acao": "Disponibilidade",
+      "url": "http://localhost:3000/configurar-treino",
+      "titulo": [
+        " Configurar Treino",
+        " Volume Semanal",
+        "Modalidades por Dia0 dia(s) ativo(s)"
+      ]
+    },
+    {
+      "acao": "Planilha e exportações",
+      "url": "http://localhost:3000/planilha",
+      "titulo": [
+        " Planilha de Treinos",
+        "Distribuição real do plano por tempo ativo",
+        " Enviar plano completo para MyWhoosh ou Garmin",
+        " Enviar direto para o Intervals.icu",
+        "54 treino(s)"
+      ]
+    },
+    {
+      "acao": "Força e mobilidade",
+      "url": "http://localhost:3000/exercicios",
+      "titulo": [
+        " Mobilidade & Força",
+        "Prancha Isométrica",
+        "Prancha Lateral",
+        "Abdominal Bicicleta",
+        "Dead Bug",
+        "Bird Dog",
+        "Agachamento Livre",
+        "Afundo (Lunge)",
+        "Stiff (Levantamento Terra Romeno)",
+        "Elevação de Panturrilha",
+        "Ponte de Glúteo",
+        "Agachamento Búlgaro",
+        "Step Up",
+        "Flexão de Braço",
+        "Remada Curvada",
+        "Rotação Externa de Ombro",
+        "Elevação Lateral",
+        "Mobilidade de Quadril",
+        "Mobilidade Torácica",
+        "Alongamento de Posteriores",
+        "Alongamento de Panturrilha",
+        "Mobilidade de Tornozelo",
+        "Gato-Camelo"
+      ]
+    },
+    {
+      "acao": "Integrações",
+      "url": "http://localhost:3000/strava",
+      "titulo": [
+        " Integração Strava",
+        "Modo Simulação",
+        "Como Conectar ao Strava",
+        "Funcionalidades com Strava"
+      ]
+    },
+    {
+      "acao": "Guias",
+      "url": "http://localhost:3000/guias",
+      "titulo": [
+        "Guias & Tutoriais",
+        "Instalar o App (APK Android)",
+        "Conectar ao Strava",
+        "Conectar ao Garmin Connect",
+        "Conectar ao MyWhoosh",
+        "Teste de CSS (Natação)",
+        "Teste de FTP (Ciclismo)",
+        "Teste de Limiar (Corrida)"
+      ]
+    },
+    {
+      "acao": "Alimentação",
+      "url": "http://localhost:3000/nutricao",
+      "titulo": [
+        " Plano Alimentar"
+      ]
+    },
+    {
+      "acao": "Atletas",
+      "url": "http://localhost:3000/atletas",
+      "titulo": [
+        " Gerenciar Atletas",
+        " Cadastrar novo atleta",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de autenticação",
+        "Conta temporária de autenticação",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de autenticação",
+        "Conta temporária de autenticação",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de autenticação",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de autenticação",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de autenticação",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de autenticação",
+        "Conta temporária de autenticação",
+        "Diagnóstico de login temporário",
+        "Diagnóstico de login temporário",
+        "Diagnóstico de login temporário",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Conta temporária de integração",
+        "Smoke Test"
+      ]
+    }
+  ],
+  "contrastAudit": [
+    {
+      "samples": [
+        {
+          "ratio": 12.74,
+          "selector": "main h1"
+        },
+        {
+          "ratio": 5.3,
+          "selector": "main p.text-muted-foreground"
+        },
+        {
+          "ratio": 7.83,
+          "selector": "main a.text-primary"
+        }
+      ],
+      "theme": "light"
+    },
+    {
+      "samples": [
+        {
+          "ratio": 12.02,
+          "selector": "main h1"
+        },
+        {
+          "ratio": 6.11,
+          "selector": "main p.text-muted-foreground"
+        },
+        {
+          "ratio": 8.26,
+          "selector": "main a.text-primary"
+        }
+      ],
+      "theme": "dark"
+    }
+  ],
+  "limites": "Sem Safari ou aparelhos físicos; ações destrutivas não exercitadas"
+}
