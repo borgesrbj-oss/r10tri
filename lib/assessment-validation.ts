@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRAINING_GOALS } from './training-goals';
 
 const text = (max = 2000) => z.string().trim().max(max).nullable().optional();
 const number = (min: number, max: number, integer = false) => z.preprocess(value => {
@@ -15,6 +16,10 @@ const date = z.preprocess(value => value === '' ? null : value, z.string().regex
 
 export const assessmentSchema = z.object({
   birthDate: date,
+  heightCm: number(80, 250),
+  inactivityWeeks: number(0, 104, true),
+  strengthAvailable: z.boolean().nullable().optional(),
+  dailyMinutes: z.preprocess(value => value == null ? undefined : value, z.record(z.enum(['seg','ter','qua','qui','sex','sab','dom']), number(0,480,true)).optional()),
   currentWeight: number(1, 500), targetWeight: number(1, 500),
   level: option(['iniciante', 'intermediario', 'avancado']),
   modality: option(['triatlo', 'natacao', 'ciclismo', 'corrida']),
@@ -25,16 +30,18 @@ export const assessmentSchema = z.object({
   runThresholdPace: pace, swimCssPace: pace,
   recentRaceDistanceKm: number(0.1, 500), recentRaceTimeSeconds: number(1, 259200, true), recentRaceDate: date,
   goalType: text(80), goalTime: text(80),
+  trainingGoal:text(40),
   testCSS400: pace, testCSS200: pace, testCSSPace: pace,
   testFTP20min: number(1, 1500), testFTPEstimated: number(1, 1500), testFTPHR: number(30, 260, true),
   testRun30min: number(0.1, 20), testRunPace: pace, testRunHR: number(30, 260, true), testRun3km: pace,
   canSwim: z.boolean().optional(), testsCompleted: z.boolean().optional(),
   injuryHistory: text(), currentInjuries: text(), medicalConditions: text(), sleepHours: number(0, 24), stressLevel: text(80), dietaryNotes: text(),
-  weeklyHours: number(0, 168), currentWeeklyVol: number(0, 168),
+  weeklyHours: number(0, 40), currentWeeklyVol: number(0, 40),
   availableDays: z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7).transform(days => [...new Set(days)]).optional(),
   workSchedule: text(100), travelFrequency: text(100), hasPoolAccess: z.boolean().optional(), poolSize: text(80),
   hasTrainer: z.boolean().optional(), hasPowerMeter: z.boolean().optional(), hasHRM: z.boolean().optional(), bikeType: text(80), limitations: text(),
 }).superRefine((data, context) => {
+  if(data.trainingGoal && (data.modality ? !Object.prototype.hasOwnProperty.call(TRAINING_GOALS[data.modality]??{},data.trainingGoal) : !Object.values(TRAINING_GOALS).some(goals=>Object.prototype.hasOwnProperty.call(goals,data.trainingGoal!))))context.addIssue({code:'custom',path:['trainingGoal'],message:'Escolha um foco compatível com a modalidade.'});
   if (data.maxHeartRate && data.restingHeartRate && data.restingHeartRate >= data.maxHeartRate) context.addIssue({ code:'custom', path:['restingHeartRate'], message:'A FC de repouso deve ser menor que a FC máxima informada.' });
   if (data.thresholdHeartRate && data.maxHeartRate && data.thresholdHeartRate > data.maxHeartRate) context.addIssue({ code:'custom', path:['thresholdHeartRate'], message:'A FC de limiar não pode superar a FC máxima informada.' });
   for (const key of ['birthDate','recentRaceDate'] as const) {

@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Direção provisória Mineral: superfície calma, hierarquia por contraste e espaço. */
+
 @layer base {
   :root {
     --background: 210 20% 98%;
@@ -162,3 +164,42 @@ html { scroll-padding-top: calc(4rem + env(safe-area-inset-top, 0px)); }
   html { scroll-behavior: auto; }
   .sport-anim { animation: none; }
 }
+
+@layer base {
+  :root {
+    --background: 40 23% 97%; --foreground: 240 16% 17%;
+    --card: 0 0% 100%; --card-foreground: 240 16% 17%;
+    --popover: 0 0% 100%; --popover-foreground: 240 16% 17%;
+    --primary: 256 26% 39%; --primary-foreground: 0 0% 100%;
+    --secondary: 260 24% 93%; --secondary-foreground: 252 23% 28%;
+    --muted: 40 14% 93%; --muted-foreground: 240 8% 40%;
+    --accent: 25 72% 88%; --accent-foreground: 22 48% 24%;
+    --destructive: 0 65% 40%; --destructive-foreground: 0 0% 100%;
+    --border: 250 13% 86%; --input: 250 13% 80%; --ring: 256 26% 39%;
+    --radius: 1rem; --chart-1: 256 26% 39%; --chart-2: 25 65% 45%; --chart-3: 195 50% 36%;
+  }
+  .dark {
+    --background: 235 18% 9%; --foreground: 260 24% 94%;
+    --card: 235 17% 13%; --card-foreground: 260 24% 94%;
+    --popover: 235 17% 13%; --popover-foreground: 260 24% 94%;
+    --primary: 258 75% 81%; --primary-foreground: 252 35% 18%;
+    --secondary: 247 19% 20%; --secondary-foreground: 258 35% 90%;
+    --muted: 235 14% 18%; --muted-foreground: 245 13% 70%;
+    --accent: 25 34% 23%; --accent-foreground: 25 80% 81%;
+    --destructive: 0 72% 73%; --destructive-foreground: 0 44% 13%;
+    --border: 240 14% 26%; --input: 240 14% 34%; --ring: 258 75% 81%;
+    --chart-1: 258 75% 81%; --chart-2: 25 80% 72%; --chart-3: 195 60% 65%;
+  }
+  h1,h2,h3 { text-wrap: balance; }
+  summary { border-radius: .5rem; }
+  summary:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 4px; }
+}
+.hero-gradient,.dark .hero-gradient { background: hsl(var(--secondary)); }
+.eyebrow { font-size: .65rem; font-weight: 700; letter-spacing: .16em; color: hsl(var(--muted-foreground)); }
+.next-session { border-top: 3px solid hsl(var(--primary)); }
+.mobile-bottom-nav { padding-bottom: env(safe-area-inset-bottom,0px); }
+.pwa-utility { margin-left: 0; }
+@media(min-width:1024px){.pwa-utility{margin-left:14rem;}}
+@media(max-width:1023px){.app-content{padding-bottom:calc(6rem + env(safe-area-inset-bottom,0px));}.pwa-utility{padding-bottom:calc(5rem + env(safe-area-inset-bottom,0px));}}
+@media(pointer:coarse){button:not([role='switch']),a.nav-item{min-height:44px;}}
+.sport-anim { animation:none; }

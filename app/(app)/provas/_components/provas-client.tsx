@@ -24,6 +24,7 @@ export function ProvasClient({ races }: { races: any[] }) {
   const [date, setDate] = useState('');
   const [distance, setDistance] = useState('olimpico');
   const [notes, setNotes] = useState('');
+  const [priority,setPriority]=useState('A');
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -31,7 +32,7 @@ export function ProvasClient({ races }: { races: any[] }) {
     if (!name || !date) { toast.error('Preencha nome e data'); return; }
     setSaving(true);
     try {
-      const res = await fetch('/api/races', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, date, distance, notes }) });
+      const res = await fetch('/api/races', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, date, distance, notes, priority }) });
       if (res.ok) { toast.success('Prova cadastrada!'); setOpen(false); setName(''); setDate(''); setNotes(''); router.refresh(); }
       else toast.error('Erro ao cadastrar');
     } catch { toast.error('Erro ao cadastrar'); }
@@ -76,6 +77,7 @@ export function ProvasClient({ races }: { races: any[] }) {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2"><Label htmlFor="race-priority">Prioridade da competição</Label><select id="race-priority" className="w-full rounded-lg border bg-background px-3 py-3 text-sm" value={priority} onChange={event=>setPriority(event.target.value)}><option value="A">A — principal do ciclo</option><option value="B">B — secundária</option><option value="C">C — participação/experiência</option></select><p className="text-xs text-muted-foreground">O planejamento prioriza a próxima prova A; sem prioridade, usa a próxima prova cadastrada.</p></div>
                 <div className="space-y-2"><Label>Observações</Label><Input value={notes} onChange={(e: any) => setNotes(e?.target?.value ?? '')} placeholder="Opcional" /></div>
                 <Button onClick={handleAdd} loading={saving} className="w-full">Cadastrar</Button>
               </div>
@@ -99,7 +101,7 @@ export function ProvasClient({ races }: { races: any[] }) {
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between mb-3">
                           <Badge className={distanceColors?.[race?.distance] ?? ''}>{distanceLabels?.[race?.distance] ?? race?.distance}</Badge>
-                          <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(race?.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <span className="text-xs text-muted-foreground">{race.priority?`Prioridade ${race.priority}`:'Sem prioridade'}</span><Button aria-label={`Excluir prova ${race.name}`} variant="ghost" size="icon-sm" onClick={() => handleDelete(race?.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                         <h3 className="font-semibold text-lg mb-1">{race?.name}</h3>
                         <p className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> <SafeDate date={race?.date} options={{ dateStyle: 'long' }} locale="pt-BR" /></p>

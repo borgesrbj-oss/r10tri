@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import * as training from '../lib/training-structure';
 import { assessmentReadiness } from '../lib/assessment-validation';
+import { trainingFeedback } from '../lib/training-feedback';
+import { TRAINING_GOALS } from '../lib/training-goals';
 import type { TrainingProfile } from '../lib/training-types';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -22,12 +24,13 @@ function endpoint({ savedProfile = profile as TrainingProfile, user = { id: 'atl
       findUnique: async () => savedProfile,
       update: async ({ data }: any) => { state.profileUpdate = data; return data; },
     },
-    targetRace: { findMany: async () => [{ id: 'prova-a', name: 'Prova-alvo', date: new Date('2027-04-05T12:00:00Z'), distance: '42k' }] },
+    targetRace: { findMany: async () => [{id:'prova-b',name:'Prova secundária',date:new Date('2026-12-01T12:00:00Z'),distance:'5k',priority:'B'}, { id: 'prova-a', name: 'Prova-alvo', date: new Date('2027-04-05T12:00:00Z'), distance: '42k',priority:'A' }] },
     trainingPlan: {
       updateMany: async () => { state.archives++; return { count: 1 }; },
       create: async ({ data }: any) => { state.createdPlan = { id: 'novo-plano', ...data }; return state.createdPlan; },
     },
-    workout: { createMany: async ({ data }: any) => { state.savedWorkouts = data; return { count: data.length }; } },
+    workoutLog:{findMany:async()=>[]},
+    workout: {findMany:async()=>[], createMany: async ({ data }: any) => { state.savedWorkouts = data; return { count: data.length }; } },
   };
   const prisma = { ...database, $transaction: async (callback: (transaction: typeof database) => Promise<unknown>) => callback(database) };
   const dependencies: Record<string, unknown> = {
@@ -36,6 +39,8 @@ function endpoint({ savedProfile = profile as TrainingProfile, user = { id: 'atl
     '@/lib/db': { prisma },
     '@/lib/plan-engine': { generateNutrition: () => 'Orientações gerais de alimentação.' },
     '@/lib/assessment-validation': { assessmentReadiness },
+    '@/lib/training-feedback':{trainingFeedback},
+    '@/lib/training-goals':{TRAINING_GOALS},
     '@/lib/training-structure': { ...training, generateStructuredPlan: (...args: Parameters<typeof training.generateStructuredPlan>) => { state.generationArguments = args; return training.generateStructuredPlan(...args); } },
   };
   const sandboxModule = { exports: {} };
@@ -61,6 +66,7 @@ test('handler preserva Auto omitido e salva prova, transição e resumo de 22 se
   assert.ok(route.state.savedWorkouts.some(workout => workout.phase === 'race'));
   assert.ok(route.state.savedWorkouts.some(workout => workout.phase === 'transition'));
   assert.equal(route.state.createdPlan.summary.weeks.length, 22);
+  assert.equal(route.state.createdPlan.raceId,'prova-a');
   assert.equal(route.state.archives, 1);
   assert.equal(response.headers.get('Cache-Control'), 'no-store');
 });
@@ -75,9 +81,17 @@ test('handler passa objetivo e modo FC antes de gerar e persiste os blocos em bp
   assert.equal(body.summary.goal, '5k');
   assert.equal(route.state.createdPlan.summary.goal, '5k');
   assert.equal(route.state.profileUpdate.runStructure, 'zona');
+  assert.equal(route.state.profileUpdate.trainingGoal,'5k');
   const running = route.state.savedWorkouts.filter(workout => workout.modality === 'corrida');
   assert.ok(running.length > 0);
   assert.ok(running.every(workout => workout.structure.steps.every((step: any) => step.target.unit === 'bpm' && step.distanceMeters == null)));
+});
+
+test('geração após triagem reutiliza foco salvo sem exigir seleção novamente',async()=>{
+  const route=endpoint({savedProfile:{...profile,trainingGoal:'5k'}});
+  assert.equal((await route.post({weeks:4,startDate:'2026-11-16'})).status,200);
+  assert.equal(route.state.createdPlan.summary.goal,'5k');
+  assert.equal(route.state.generationArguments?.[0]?.trainingGoal,'5k');
 });
 
 test('handler passa modo distância e mantém estimativas coerentes com o limiar de pace', async () => {

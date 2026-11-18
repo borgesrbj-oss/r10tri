@@ -14,8 +14,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-background">
       <AppNav />
-      <Script src="https://apps.abacus.ai/chatllm/appllm-lib.js" strategy="afterInteractive" />
-      <main className="app-content mx-auto max-w-[1200px] px-4 py-6">{children}</main>
+      {process.env.ENABLE_ABACUS_WIDGET==='true' && <Script src="https://apps.abacus.ai/chatllm/appllm-lib.js" strategy="afterInteractive" />}
+      <main id="conteudo" className="app-content mx-auto max-w-[1440px] px-4 py-6 lg:ml-56 lg:max-w-none lg:pl-8 lg:pr-8 lg:py-10">{children}</main>
     </div>
   );
 }

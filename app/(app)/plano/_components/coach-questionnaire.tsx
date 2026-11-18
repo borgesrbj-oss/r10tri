@@ -12,6 +12,7 @@ import { FadeIn } from '@/components/ui/animate';
 import { formatRaceTime, parseRaceTime } from '@/lib/race-prediction';
 import Link from 'next/link';
 import { SafeDate } from '@/components/safe-format';
+import { TRAINING_GOALS } from '@/lib/training-goals';
 
 const STEPS = [
   { key: 'modalidade', icon: Layers, title: 'Modalidade', subtitle: 'Escolha o foco do seu treino' },
@@ -112,6 +113,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     swimCssPace: profile?.swimCssPace ?? profile?.testCSSPace ?? '',
     // Step 5 - Objetivos
     goalType: profile?.goalType ?? '',
+    trainingGoal:profile?.trainingGoal ?? '',
     goalTime: profile?.goalTime ?? '',
     // Step 6 - Saúde
     injuryHistory: profile?.injuryHistory ?? '',
@@ -123,6 +125,10 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     // Step 7 - Logística
     weeklyHours: profile?.weeklyHours ?? '',
     currentWeeklyVol: profile?.currentWeeklyVol ?? '',
+    heightCm: profile?.heightCm ?? '',
+    inactivityWeeks: profile?.inactivityWeeks ?? '',
+    strengthAvailable: profile?.strengthAvailable ?? false,
+    dailyMinutes: (profile?.dailyMinutes ?? {}) as Record<string,number | string>,
     availableDays: Array.isArray(profile?.availableDays) ? profile.availableDays : [],
     workSchedule: profile?.workSchedule ?? '',
     travelFrequency: profile?.travelFrequency ?? '',
@@ -193,6 +199,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
       const payload = {
         ...Object.fromEntries(Object.entries(form).filter(([key]) => key !== 'recentRaceTime').map(([key, value]) => [key, value === '' ? null : value])),
         birthDate: form.birthDate || null,
+        dailyMinutes:Object.fromEntries(Object.entries(form.dailyMinutes).filter(([,value])=>value!=='' && value!=null).map(([day,value])=>[day,Number(value)])),
         recentRaceDate: form.recentRaceDate || null,
         canSwim: form.canSwim === null ? undefined : form.canSwim,
         recentRaceTimeSeconds: form.recentRaceTime ? parseRaceTime(form.recentRaceTime) : null,
@@ -244,7 +251,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
           {STEPS.map((s, i) => {
             const SIcon = s.icon;
             return (
-              <button key={s.key} onClick={() => setStep(i)} className={`flex flex-col items-center gap-1 transition-colors ${i <= step ? 'text-primary' : 'text-muted-foreground/40'}`}>
+              <button key={s.key} type="button" aria-label={`Etapa ${i + 1}: ${s.title}`} aria-current={i===step?'step':undefined} onClick={() => setStep(i)} className={`flex flex-col items-center gap-1 transition-colors ${i <= step ? 'text-primary' : 'text-muted-foreground/40'}`}>
                 <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
                   i < step ? 'bg-primary text-primary-foreground border-primary' : i === step ? 'border-primary text-primary bg-primary/10' : 'border-muted-foreground/20'
                 }`}>
@@ -282,7 +289,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     const MIcon = m.icon;
                     const selected = form.modality === m.k;
                     return (
-                      <button key={m.k} type="button" onClick={() => set('modality', m.k)}
+                      <button key={m.k} type="button" onClick={() => { set('modality', m.k); set('trainingGoal',''); }}
                         className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${selected ? 'border-primary bg-primary/10 shadow-sm' : 'border-border hover:border-primary/40 hover:bg-muted/50'}`}>
                         <div className={`w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0`}>
                           <MIcon className={`h-6 w-6 ${m.color}`} />
@@ -351,7 +358,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   <>
                     <div className="space-y-2">
                       <Label className="text-base">🏊 Você sabe nadar?</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <OptionButton selected={form.canSwim === true} onClick={() => set('canSwim', true)}>Sim, sei nadar</OptionButton>
                         <OptionButton selected={form.canSwim === false} onClick={() => { set('canSwim', false); set('swimLevel', 'nenhuma'); }}>Não sei / muito básico</OptionButton>
                       </div>
@@ -400,7 +407,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-base">Qual é sua modalidade mais FRACA?</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {[{ k: 'natacao', l: '🏊 Natação' }, { k: 'ciclismo', l: '🚴 Ciclismo' }, { k: 'corrida', l: '🏃 Corrida' }].map(o => (
                           <OptionButton key={o.k} selected={form.weakestSport === o.k} onClick={() => set('weakestSport', o.k)}>{o.l}</OptionButton>
                         ))}
@@ -408,7 +415,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     </div>
                     <div className="space-y-2">
                       <Label className="text-base">Qual é sua modalidade mais FORTE?</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {[{ k: 'natacao', l: '🏊 Natação' }, { k: 'ciclismo', l: '🚴 Ciclismo' }, { k: 'corrida', l: '🏃 Corrida' }].map(o => (
                           <OptionButton key={o.k} selected={form.strongestSport === o.k} onClick={() => set('strongestSport', o.k)}>{o.l}</OptionButton>
                         ))}
@@ -584,6 +591,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {/* ===== STEP: Objetivos ===== */}
             {current.key === 'objetivos' && (
               <>
+                <div className="space-y-2"><Label htmlFor="training-focus">Foco específico da modalidade (opcional)</Label><select id="training-focus" value={form.trainingGoal} onChange={event=>set('trainingGoal',event.target.value)} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">Preparação geral, sem distância presumida</option>{Object.entries(TRAINING_GOALS[form.modality]??{}).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><p className="text-xs text-muted-foreground">O foco fica salvo e influencia as próximas gerações. Confira também a data e a prioridade das provas.</p></div>
                 <div className="rounded-lg border bg-muted/30 p-4 text-sm">
                   {races[0] ? <p>Prova principal cadastrada: <strong>{races[0].name}</strong> — <SafeDate date={races[0].date} options={{ day: 'numeric', month: 'long', year: 'numeric' }} locale="pt-BR" />.</p> : <p>Ainda não há prova principal com data cadastrada. Cadastre o evento para periodizar até a prova; sem evento, escolha um ciclo de treino por semanas.</p>}
                   <Link href="/provas" className="mt-2 inline-block text-primary underline">Cadastrar ou revisar objetivo e data em Provas</Link>
@@ -606,7 +614,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Tempo-alvo na próxima prova <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                  <Input value={form.goalTime} onChange={e => set('goalTime', e.target.value)} placeholder="Ex.: sub-6h no 70.3, sub-13h no Ironman, sub-1h20 no Sprint" />
+                  <Input aria-label="Tempo-alvo na próxima prova" value={form.goalTime} onChange={e => set('goalTime', e.target.value)} placeholder="Ex.: 45:00 ou 1:40:00" />
+                  <p className="text-xs text-muted-foreground">Para comparação numérica na corrida, use m:ss ou h:mm:ss e registre um resultado recente. No triatlo, não comparamos o tempo total com previsão de corrida isolada.</p>
                 </div>
               </>
             )}
@@ -634,7 +643,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   </div>
                   <div className="space-y-2">
                     <Label>Nível de estresse no dia a dia</Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {[{ k: 'baixo', l: '😌 Baixo' }, { k: 'moderado', l: '😐 Moderado' }, { k: 'alto', l: '😰 Alto' }].map(o => (
                         <OptionButton key={o.k} selected={form.stressLevel === o.k} onClick={() => set('stressLevel', o.k)}>{o.l}</OptionButton>
                       ))}
@@ -651,6 +660,10 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {/* ===== STEP: Logística ===== */}
             {current.key === 'logistica' && (
               <>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label htmlFor="height-cm">Altura em cm (opcional)</Label><Input id="height-cm" type="number" min={80} max={250} value={form.heightCm} onChange={event=>set('heightCm',event.target.value)} placeholder="Pode preencher depois" /></div>
+                  <div className="space-y-2"><Label htmlFor="inactivity-weeks">Semanas afastado dos treinos</Label><Input id="inactivity-weeks" type="number" min={0} max={104} value={form.inactivityWeeks} onChange={event=>set('inactivityWeeks',event.target.value)} placeholder="0 se não houve afastamento" /></div>
+                </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-base">Horas DISPONÍVEIS por semana para treino</Label>
@@ -672,6 +685,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Sua rotina de trabalho</Label>
+                  <fieldset className="rounded-xl border p-4 space-y-3"><legend className="px-2 text-sm font-medium">Limite de treino por dia, em minutos</legend><p className="text-xs text-muted-foreground">Inclui todas as modalidades e força. 0 reserva o dia para descanso; vazio mantém o limite operacional por experiência. O limite semanal também será respeitado.</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{DAYS.filter(day=>form.availableDays.includes(day.key)).map(day=><div key={day.key}><Label htmlFor={`limit-${day.key}`}>{day.label}</Label><Input id={`limit-${day.key}`} type="number" min={0} max={480} value={form.dailyMinutes[day.key]??''} onChange={event=>set('dailyMinutes',{...form.dailyMinutes,[day.key]:event.target.value})} placeholder="Não informado" /></div>)}</div><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.strengthAvailable} onChange={event=>set('strengthAvailable',event.target.checked)} /> Tenho disponibilidade para força e mobilidade</label></fieldset>
                   <div className="flex flex-wrap gap-2">
                     {[{ k: 'flexivel', l: '🏠 Flexível/Remoto' }, { k: 'fixo_comercial', l: '🏢 Horário comercial' }, { k: 'turnos', l: '🔄 Turnos/Escalas' }].map(o => (
                       <OptionButton key={o.k} selected={form.workSchedule === o.k} onClick={() => set('workSchedule', o.k)}>{o.l}</OptionButton>
@@ -680,7 +694,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Viaja a trabalho com frequência?</Label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {[{ k: 'raro', l: 'Raramente' }, { k: 'mensal', l: 'Mensalmente' }, { k: 'semanal', l: 'Semanalmente' }].map(o => (
                       <OptionButton key={o.k} selected={form.travelFrequency === o.k} onClick={() => set('travelFrequency', o.k)}>{o.l}</OptionButton>
                     ))}
@@ -708,7 +722,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 {showSwim && form.hasPoolAccess && (
                   <div className="space-y-2">
                     <Label>Tamanho da piscina</Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {[{ k: '25m', l: '25m' }, { k: '50m', l: '50m' }, { k: 'mar_aberto', l: 'Mar aberto' }].map(o => (
                         <OptionButton key={o.k} selected={form.poolSize === o.k} onClick={() => set('poolSize', o.k)}>{o.l}</OptionButton>
                       ))}
@@ -743,7 +757,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                         <OptionButton key={n} selected={planWeeks === String(n)} onClick={() => setPlanWeeks(String(n))}>{n} semanas</OptionButton>
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground">Em “Automático”, o plano vai até a data da sua próxima prova (ou 12 semanas se não houver prova).</p>
+                    <p className="text-xs text-muted-foreground">Em “Automático”, o plano considera a prova prioritária e mais duas semanas de transição, limitado a 52 semanas; sem prova, usa 12 semanas.</p>
                   </div>
                 </div>
               </>
@@ -755,7 +769,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
       {(errors.length > 0 || generationErrors.length > 0) && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Revise os dados da triagem</p><ul className="mt-2 list-disc space-y-1 pl-4">{[...errors, ...generationErrors].map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 0}>
           <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
         </Button>

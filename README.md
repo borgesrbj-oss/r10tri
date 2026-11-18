@@ -6,6 +6,8 @@ O motor principal de planos é determinístico e funciona sem serviços pagos de
 
 - Repositório: [borgesrbj-oss/r10tri](https://github.com/borgesrbj-oss/r10tri)
 - Portfólio: [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/)
+- Aplicativo: [acessar R10 TRI](https://r10tri-production.up.railway.app/login)
+- Auditoria científica, redesign e entregáveis de novembro: [docs/ENTREGA_AUDITORIA_2026.md](docs/ENTREGA_AUDITORIA_2026.md)
 - Histórico de correções e verificações: [docs/DIAGNOSTICO.md](docs/DIAGNOSTICO.md)
 - Metodologia, parâmetros e limites: [docs/METODOLOGIA_TREINOS.md](docs/METODOLOGIA_TREINOS.md)
 - Testes por fluxo, navegador e dispositivo: [docs/CHECKLIST_ENDURANCE.md](docs/CHECKLIST_ENDURANCE.md)
@@ -24,7 +26,7 @@ A distribuição 80/20 é calculada pelos passos aeróbicos ativos; força e pau
 | --- | --- |
 | Node.js | Faixas aceitas: `^20.19.0 \|\| ^22.13.0 \|\| >=24.0.0`; ambiente validado: `24.14.0` |
 | npm | `11.9.0`, registrado em `packageManager` |
-| Next.js | `16.4.1`, com App Router |
+| Next.js | `16.4.6`, com App Router |
 | React / React DOM | `19.2.8` |
 | TypeScript | `5.6.3` |
 | Prisma / Prisma Client | `6.7.0` |
@@ -259,13 +261,13 @@ r10tri/
 └── package-lock.json       Versões resolvidas
 ```
 
-Os guias técnicos úteis ao funcionamento foram preservados. A limpeza foi autorizada somente para os componentes ociosos AppShell, AuthLayout e ThemeToggle e para a pasta de exemplos de visualização; não há aprovação para remover outras funcionalidades. As dez opções de nomes e paletas estão em [docs/OPCOES_IDENTIDADE.md](docs/OPCOES_IDENTIDADE.md), sem mudança automática da marca.
+Os guias técnicos úteis ao funcionamento foram preservados. A limpeza anterior foi autorizada somente para componentes ociosos e exemplos. A auditoria atual não removeu funcionalidades. As 20 novas sugestões e cinco finalistas estão em [docs/BENCHMARK_E_MARCA_2026.md](docs/BENCHMARK_E_MARCA_2026.md); R10 TRI permanece provisoriamente, sem mudança automática da marca.
 
 ## Publicação do aplicativo
 
 O aplicativo precisa de uma hospedagem com Node.js e PostgreSQL. `railway.json` descreve a compilação, a preparação do banco, a inicialização e a verificação de saúde em `/api/health`. As variáveis do ambiente definitivo devem ser preenchidas no painel privado da hospedagem, com origem HTTPS consistente.
 
-O projeto, o banco e o domínio do serviço Railway foram preparados. No último estado confirmado deste documento, a publicação do aplicativo ainda estava em andamento; portanto, o domínio reservado não é apresentado como link de acesso funcional. O portfólio estático do GitHub Pages permanece independente do servidor do app.
+O aplicativo está hospedado no Railway, com PostgreSQL e HTTPS, no endereço acima. O portfólio estático do GitHub Pages permanece independente do servidor do app. A auditoria nova usa migração aditiva; não execute reset do banco. O motor incorpora limites por dia, afastamento, prioridade de prova e feedback recente, sem alterar planos antigos silenciosamente.
 
 ## Proteção de credenciais
 
@@ -275,6 +277,6 @@ O projeto, o banco e o domínio do serviço Railway foram preparados. No último
 
 - Receber e revisar os arquivos complementares da integração Strava.
 - Configurar as integrações opcionais desejadas no ambiente definitivo, sem compartilhar segredos em texto aberto.
-- Configurar e verificar entrega SMTP real para recuperação por e-mail.
-- Concluir e conferir o deploy HTTPS do aplicativo e registrar o link confirmado.
+- Verificar entrega real de recuperação: Resend está configurado sem domínio próprio, limitado ao e-mail associado à conta. Envio geral a atletas requer remetente autorizado, conforme [guia de e-mail](docs/CONFIGURAR_EMAIL.md).
+- Aprovar nome definitivo; nenhuma sugestão equivale a liberação jurídica de marca.
 - Executar o checklist no Safari e em aparelhos Android/iPhone reais; esses ambientes não estavam disponíveis para validação física.

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { BrandLogo } from '@/components/brand-logo';
+import { ThemePreference } from '@/components/theme-preference';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -40,16 +41,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center hero-gradient p-4">
-      <Card className="w-full max-w-md overflow-hidden">
-        <div className="relative flex items-center justify-center gap-6 py-8 bg-gradient-to-br from-[#1A8A7D]/20 via-background to-background border-b">
-          <Waves className="h-10 w-10 sport-anim" style={{ color: '#3B82F6', animationDelay: '0s' }} />
-          <Bike className="h-10 w-10 sport-anim" style={{ color: '#F97316', animationDelay: '1s' }} />
-          <Timer className="h-10 w-10 sport-anim" style={{ color: '#22C55E', animationDelay: '2s' }} />
-        </div>
+    <div className="min-h-screen grid items-center gap-6 sm:gap-10 bg-background px-5 py-6 sm:py-12 lg:grid-cols-2 lg:px-[8vw]">
+      <section className="mx-auto w-full max-w-lg"><div className="flex justify-between items-center"><BrandLogo /><ThemePreference /></div><p className="eyebrow mt-6 sm:mt-12 mb-3 sm:mb-5">CORRIDA · CICLISMO · NATAÇÃO</p><h1 className="font-display text-3xl sm:text-6xl font-semibold leading-[1.08] tracking-tight">Seu esforço.<br /><span className="text-primary">Uma direção clara.</span></h1><p className="hidden sm:block mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">Planejamento que parte da sua rotina. Treinos com propósito, recuperação em vista e espaço para evoluir.</p><div className="mt-9 hidden sm:flex gap-5 text-primary" aria-hidden="true"><Waves className="h-7 w-7" /><Bike className="h-7 w-7" /><Timer className="h-7 w-7" /></div><p className="hidden sm:block mt-6 text-xs text-muted-foreground">R10 TRI · identidade provisória</p></section>
+      <Card className="w-full max-w-md mx-auto overflow-hidden shadow-sm">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-1"><BrandLogo variant="stacked" showSlogan /></div>
-          <CardDescription className="pt-1">Seu coach pessoal de triathlon com IA</CardDescription>
+          <h2 className="font-display text-2xl font-semibold">Entre no seu espaço</h2>
+          <CardDescription className="pt-1">Seu próximo treino começa com contexto.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-1 p-1 mb-4 rounded-lg bg-muted">

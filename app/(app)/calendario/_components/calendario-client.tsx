@@ -13,27 +13,27 @@ import { useRouter } from 'next/navigation';
 import { FadeIn } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
 import { WorkoutStructure } from '@/components/workout-structure';
+import { inCalendarPeriod, weekStart, type CalendarView } from '@/lib/calendar-period';
 
 const icons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
 const colors: Record<string, string> = { natacao: 'bg-blue-50 dark:bg-blue-950', ciclismo: 'bg-orange-50 dark:bg-orange-950', corrida: 'bg-green-50 dark:bg-green-950', forca: 'bg-purple-50 dark:bg-purple-950' };
 
 export function CalendarioClient({ workouts }: { workouts: any[] }) {
   const [filter, setFilter] = useState('todos');
+  const [view,setView]=useState<CalendarView>('todos');
+  const [anchor,setAnchor]=useState(()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()));
   const [logDialog, setLogDialog] = useState<any>(null);
   const [logForm, setLogForm] = useState({ actualDuration: '', actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '' });
   const [logError, setLogError] = useState('');
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
-  const filtered = filter === 'todos' ? workouts : (workouts ?? []).filter((w: any) => w?.modality === filter);
+  const filtered = (workouts ?? []).filter(w=>(filter==='todos'||w.modality===filter)&&inCalendarPeriod(String(w.date),anchor,view));
 
   // Group by week
   const byWeek = new Map<string, any[]>();
   for (const w of filtered ?? []) {
-    const d = new Date(w?.date);
-    const ws = new Date(d);
-    ws.setDate(d.getDate() - d.getDay() + 1);
-    const key = ws.toISOString().slice(0, 10);
+    const key = weekStart(String(w.date));
     if (!byWeek.has(key)) byWeek.set(key, []);
     byWeek.get(key)!.push(w);
   }
@@ -78,9 +78,16 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
       <FadeIn>
         <div>
           <h1 className="font-display text-2xl md:text-3xl tracking-tight font-bold flex items-center gap-2"><Calendar className="h-7 w-7 text-primary" /> Calendário de Treinos</h1>
-          <p className="text-muted-foreground">Visualize e registre seus treinos semanais</p>
+          <p className="text-muted-foreground">Sua agenda por dia, semana ou mês. Abra o treino para rever a prescrição e registrar como se sentiu.</p>
         </div>
       </FadeIn>
+
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4">
+        <div className="flex flex-wrap gap-1" role="group" aria-label="Período da agenda">
+          {([['dia','Dia'],['semana','Semana'],['mes','Mês'],['todos','Todos os períodos']] as const).map(([key,label])=><Button key={key} variant={view===key?'default':'outline'} size="sm" aria-pressed={view===key} onClick={()=>setView(key)}>{label}</Button>)}
+        </div>
+        <div className="space-y-1"><Label htmlFor="calendar-anchor">Data de referência</Label><Input id="calendar-anchor" type="date" value={anchor} onChange={event=>{if(event.target.value)setAnchor(event.target.value);}} className="w-auto" /></div>
+      </div>
 
       <div className="flex gap-2 flex-wrap">
         {[{ key: 'todos', label: 'Todos' }, { key: 'natacao', label: 'Natação' }, { key: 'ciclismo', label: 'Ciclismo' }, { key: 'corrida', label: 'Corrida' }, { key: 'forca', label: 'Força' }].map((f: any) => (

@@ -18,7 +18,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: '#1A8A7D',
-  colorScheme: 'dark',
+  colorScheme: 'light dark',
 }
 
 export const metadata = {
@@ -27,7 +27,7 @@ export const metadata = {
     template: '%s | R10 TRI',
   },
   description:
-    'R10 TRI é seu coach pessoal de triathlon com inteligência artificial. Planos de treino personalizados de natação, ciclismo e corrida, com periodização avançada, acompanhamento de evolução e exportação para Garmin, Strava e MyWhoosh.',
+    'R10 TRI organiza treinos de corrida, ciclismo e natação a partir da sua rotina, com sessões estruturadas, acompanhamento e exportação de arquivos compatíveis.',
   applicationName: 'R10 TRI',
   keywords: [
     'triathlon',
@@ -107,7 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${jakartaSans.variable} ${jetbrainsMono.variable} font-sans`}>
         <SessionProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             {children}
             <Toaster />
             <ChunkLoadErrorHandler />
