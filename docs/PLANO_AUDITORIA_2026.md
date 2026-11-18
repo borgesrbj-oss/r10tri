@@ -22,3 +22,5 @@ Ponto de recuperação: tag local `resgate/antes-auditoria-2026-11-16`, commit `
 Nenhuma função importante será apagada. Redundâncias de navegação serão agrupadas mantendo as rotas e acessos. Integrações incompletas serão identificadas como tais.
 
 Complementos durante a implementação: `lib/workout-edit.ts` e API de edição para corrigir a divergência dos blocos; `lib/calendar-period.ts` e calendário para filtros e domingo; `openapi.json` e README para documentar contratos. Nenhuma dessas mudanças exige exclusão de dados ou aprovação de nome.
+
+No rastreamento final de 18/11, acrescentados `lib/training-goals.ts`, campo opcional `trainingGoal` e segunda migração aditiva: o foco passa a persistir entre triagem e gerações. Fonte das opções compartilhada com validação; disponibilidade de força desconhecida começa desmarcada no questionário, para confirmação consciente.

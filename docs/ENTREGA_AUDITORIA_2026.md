@@ -21,7 +21,7 @@ Implementação incremental na aplicação existente. A marca permanece R10 TRI;
 |---|---|
 | 1. Diagnóstico | Arquitetura, APIs, banco, autenticação, telas e integrações existentes inventariados; checkpoint de código e preservação aditiva. |
 | 2. Pesquisa | Sínteses, estudos e consensos comparados; 80/20 tratado como política ajustável, sem alegação de superioridade universal. |
-| 3. Triagem | Altura opcional, afastamento, força, minutos por dia e prioridade de prova; dados desconhecidos continuam opcionais. |
+| 3. Triagem | Altura opcional, afastamento, força, minutos por dia, foco específico persistido e prioridade de prova; dados desconhecidos continuam opcionais. |
 | 4. Algoritmos | Rastreado o percurso triagem → alvo → carga → fases → blocos → registros → revisão. |
 | 5. Correções | Limites agregados por dia, iniciação, técnica, retorno, edição coerente, alertas de meta/prazo e prova prioritária. |
 | 6. Perfis | Doze casos sintéticos e extremos com comparação real contra o commit-base; testes de regressão. |

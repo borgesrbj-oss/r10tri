@@ -19,6 +19,13 @@ for(const item of auditProfiles)test(`perfil fictício: ${item.name}`,()=>{
  if(item.name==='Disponibilidade limitada')assert.ok(plan.summary.weeks.every(week=>week.plannedMinutes<=15));
 });
 const baseline=auditProfiles[2].profile, now=new Date(auditStart+'T12:00:00Z');
+test('intenção completar reduz intensidade e foco incompatível é rejeitado',()=>{
+ const complete=generateStructuredPlan({...baseline,goalType:'completar'},[],baseline.availableDays!,auditStart,8);
+ const performance=generateStructuredPlan({...baseline,goalType:'competir'},[],baseline.availableDays!,auditStart,8);
+ assert.ok(complete.summary.distribution.highSeconds<performance.summary.distribution.highSeconds);
+ assert.equal(assessmentData({modality:'corrida',trainingGoal:'ironman'}).ok,false);
+ assert.equal(assessmentData({trainingGoal:'5k'},{modality:'corrida'}).ok,true);
+});
 test('feedback recente reduz volume e intensidade sem compensar faltas',()=>{
  const normal=generateStructuredPlan(baseline,[],baseline.availableDays!,auditStart,4);
  for(const log of [{painScore:2},{fatigueScore:9},{sleepHours:4}]){

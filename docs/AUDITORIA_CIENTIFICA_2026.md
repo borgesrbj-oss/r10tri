@@ -38,3 +38,5 @@ Triagem validada → prontidão mínima → limiares específicos ou PSE → cap
 ## O que não foi validado
 
 Não houve ensaio prospectivo com atletas, calibração clínica das faixas, teste de lactato/VO2máx, verificação em Garmin real ou validação de retorno a lesões. O motor não otimiza por HRV porque não há série histórica disponível, não estima risco de lesão e não diagnostica. Periodização reversa, em blocos concentrados e uma variante piramidal explícita permanecem decisões do treinador; não são recursos automáticos declarados. O sistema atual não substitui equipe técnica, avaliação médica ou acompanhamento nutricional.
+
+Complemento de 18/11: foco específico fica salvo e reaparece nas novas gerações. A intenção de apenas completar limita a parcela intensa a 10% como decisão operacional conservadora; não há evidência de que esse número seja ideal para cada pessoa. Meta em texto livre não é convertida silenciosamente em um tempo numérico.

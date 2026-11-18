@@ -12,6 +12,7 @@ import { FadeIn } from '@/components/ui/animate';
 import { formatRaceTime, parseRaceTime } from '@/lib/race-prediction';
 import Link from 'next/link';
 import { SafeDate } from '@/components/safe-format';
+import { TRAINING_GOALS } from '@/lib/training-goals';
 
 const STEPS = [
   { key: 'modalidade', icon: Layers, title: 'Modalidade', subtitle: 'Escolha o foco do seu treino' },
@@ -112,6 +113,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     swimCssPace: profile?.swimCssPace ?? profile?.testCSSPace ?? '',
     // Step 5 - Objetivos
     goalType: profile?.goalType ?? '',
+    trainingGoal:profile?.trainingGoal ?? '',
     goalTime: profile?.goalTime ?? '',
     // Step 6 - Saúde
     injuryHistory: profile?.injuryHistory ?? '',
@@ -125,7 +127,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     currentWeeklyVol: profile?.currentWeeklyVol ?? '',
     heightCm: profile?.heightCm ?? '',
     inactivityWeeks: profile?.inactivityWeeks ?? '',
-    strengthAvailable: profile?.strengthAvailable ?? true,
+    strengthAvailable: profile?.strengthAvailable ?? false,
     dailyMinutes: (profile?.dailyMinutes ?? {}) as Record<string,number | string>,
     availableDays: Array.isArray(profile?.availableDays) ? profile.availableDays : [],
     workSchedule: profile?.workSchedule ?? '',
@@ -287,7 +289,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     const MIcon = m.icon;
                     const selected = form.modality === m.k;
                     return (
-                      <button key={m.k} type="button" onClick={() => set('modality', m.k)}
+                      <button key={m.k} type="button" onClick={() => { set('modality', m.k); set('trainingGoal',''); }}
                         className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${selected ? 'border-primary bg-primary/10 shadow-sm' : 'border-border hover:border-primary/40 hover:bg-muted/50'}`}>
                         <div className={`w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0`}>
                           <MIcon className={`h-6 w-6 ${m.color}`} />
@@ -589,6 +591,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {/* ===== STEP: Objetivos ===== */}
             {current.key === 'objetivos' && (
               <>
+                <div className="space-y-2"><Label htmlFor="training-focus">Foco específico da modalidade (opcional)</Label><select id="training-focus" value={form.trainingGoal} onChange={event=>set('trainingGoal',event.target.value)} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">Preparação geral, sem distância presumida</option>{Object.entries(TRAINING_GOALS[form.modality]??{}).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><p className="text-xs text-muted-foreground">O foco fica salvo e influencia as próximas gerações. Confira também a data e a prioridade das provas.</p></div>
                 <div className="rounded-lg border bg-muted/30 p-4 text-sm">
                   {races[0] ? <p>Prova principal cadastrada: <strong>{races[0].name}</strong> — <SafeDate date={races[0].date} options={{ day: 'numeric', month: 'long', year: 'numeric' }} locale="pt-BR" />.</p> : <p>Ainda não há prova principal com data cadastrada. Cadastre o evento para periodizar até a prova; sem evento, escolha um ciclo de treino por semanas.</p>}
                   <Link href="/provas" className="mt-2 inline-block text-primary underline">Cadastrar ou revisar objetivo e data em Provas</Link>
@@ -611,7 +614,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Tempo-alvo na próxima prova <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                  <Input value={form.goalTime} onChange={e => set('goalTime', e.target.value)} placeholder="Ex.: sub-6h no 70.3, sub-13h no Ironman, sub-1h20 no Sprint" />
+                  <Input aria-label="Tempo-alvo na próxima prova" value={form.goalTime} onChange={e => set('goalTime', e.target.value)} placeholder="Ex.: 45:00 ou 1:40:00" />
+                  <p className="text-xs text-muted-foreground">Para comparação numérica na corrida, use m:ss ou h:mm:ss e registre um resultado recente. No triatlo, não comparamos o tempo total com previsão de corrida isolada.</p>
                 </div>
               </>
             )}

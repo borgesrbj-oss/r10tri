@@ -286,6 +286,11 @@
           "strengthAvailable": {
             "type": "boolean",
             "nullable": true
+          },
+          "trainingGoal": {
+            "type": "string",
+            "nullable": true,
+            "description": "Foco específico salvo por modalidade. A geração sem goal explícito reutiliza este valor."
           }
         }
       },
@@ -1566,6 +1571,11 @@
                   "strengthAvailable": {
                     "type": "boolean",
                     "nullable": true
+                  },
+                  "trainingGoal": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Foco específico salvo por modalidade. A geração sem goal explícito reutiliza este valor."
                   }
                 }
               }

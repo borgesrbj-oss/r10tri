@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRAINING_GOALS } from './training-goals';
 
 const text = (max = 2000) => z.string().trim().max(max).nullable().optional();
 const number = (min: number, max: number, integer = false) => z.preprocess(value => {
@@ -29,6 +30,7 @@ export const assessmentSchema = z.object({
   runThresholdPace: pace, swimCssPace: pace,
   recentRaceDistanceKm: number(0.1, 500), recentRaceTimeSeconds: number(1, 259200, true), recentRaceDate: date,
   goalType: text(80), goalTime: text(80),
+  trainingGoal:text(40),
   testCSS400: pace, testCSS200: pace, testCSSPace: pace,
   testFTP20min: number(1, 1500), testFTPEstimated: number(1, 1500), testFTPHR: number(30, 260, true),
   testRun30min: number(0.1, 20), testRunPace: pace, testRunHR: number(30, 260, true), testRun3km: pace,
@@ -39,6 +41,7 @@ export const assessmentSchema = z.object({
   workSchedule: text(100), travelFrequency: text(100), hasPoolAccess: z.boolean().optional(), poolSize: text(80),
   hasTrainer: z.boolean().optional(), hasPowerMeter: z.boolean().optional(), hasHRM: z.boolean().optional(), bikeType: text(80), limitations: text(),
 }).superRefine((data, context) => {
+  if(data.trainingGoal && (data.modality ? !Object.prototype.hasOwnProperty.call(TRAINING_GOALS[data.modality]??{},data.trainingGoal) : !Object.values(TRAINING_GOALS).some(goals=>Object.prototype.hasOwnProperty.call(goals,data.trainingGoal!))))context.addIssue({code:'custom',path:['trainingGoal'],message:'Escolha um foco compatível com a modalidade.'});
   if (data.maxHeartRate && data.restingHeartRate && data.restingHeartRate >= data.maxHeartRate) context.addIssue({ code:'custom', path:['restingHeartRate'], message:'A FC de repouso deve ser menor que a FC máxima informada.' });
   if (data.thresholdHeartRate && data.maxHeartRate && data.thresholdHeartRate > data.maxHeartRate) context.addIssue({ code:'custom', path:['thresholdHeartRate'], message:'A FC de limiar não pode superar a FC máxima informada.' });
   for (const key of ['birthDate','recentRaceDate'] as const) {

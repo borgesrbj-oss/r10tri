@@ -131,6 +131,7 @@ model AthleteProfile {
   weakestSport      String?  // natacao, ciclismo, corrida
   strongestSport    String?  // natacao, ciclismo, corrida
   goalType          String?  // completar, melhorar_tempo, competir, top_age_group
+  trainingGoal      String?  // foco específico, validado por modalidade
   goalTime          String?  // tempo-alvo se aplicável
   injuryHistory     String?  // histórico detalhado de lesões
   currentInjuries   String?  // lesões atuais

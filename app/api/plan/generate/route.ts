@@ -6,6 +6,7 @@ import { generateNutrition } from '@/lib/plan-engine';
 import { calendarDay, generateStructuredPlan } from '@/lib/training-structure';
 import { assessmentReadiness } from '@/lib/assessment-validation';
 import { trainingFeedback } from '@/lib/training-feedback';
+import { TRAINING_GOALS } from '@/lib/training-goals';
 
 export const dynamic='force-dynamic';
 const options={headers:{'Cache-Control':'no-store'}};
@@ -20,10 +21,9 @@ export async function POST(req:NextRequest) {
   const profile=await prisma.athleteProfile.findUnique({where:{userId}});
   const modality=body.modality ?? profile?.modality;
   if(!['triatlo','natacao','ciclismo','corrida'].includes(modality))return NextResponse.json({error:'Escolha uma modalidade válida.'},{status:422,...options});
-  const goals:Record<string,string[]>={corrida:['iniciacao','retorno','pace','5k','10k','15k','21k','42k'],ciclismo:['base','ftp','endurance'],natacao:['tecnica','css','velocidade','aguas_abertas'],triatlo:['supersprint','sprint','olimpica','70.3','ironman']};
-  if(body.goal!==undefined && (typeof body.goal!=='string'||!goals[modality]?.includes(body.goal)))return NextResponse.json({error:'Escolha um objetivo compatível com a modalidade.'},{status:422,...options});
+  if(body.goal!==undefined && (typeof body.goal!=='string'||!Object.prototype.hasOwnProperty.call(TRAINING_GOALS[modality]??{},body.goal)))return NextResponse.json({error:'Escolha um objetivo compatível com a modalidade.'},{status:422,...options});
   if(body.structure!==undefined && !['zona','distancia'].includes(body.structure))return NextResponse.json({error:'Escolha estrutura por FC ou distância.'},{status:422,...options});
-  const selected={...profile,modality,trainingGoal:body.goal ?? null,runStructure:body.structure ?? profile?.runStructure};
+  const selected={...profile,modality,trainingGoal:body.goal ?? (modality===profile?.modality?profile?.trainingGoal:null) ?? null,runStructure:body.structure ?? profile?.runStructure};
   const readiness=assessmentReadiness(selected);
   if(!readiness.complete)return NextResponse.json({error:`Complete a triagem antes de gerar: ${readiness.missing.join(', ')}.`,missing:readiness.missing},{status:422,...options});
   const weeks=body.weeks===undefined ? undefined : Number(body.weeks);
@@ -47,7 +47,7 @@ export async function POST(req:NextRequest) {
     await tx.trainingPlan.updateMany({where:{userId,status:'active'},data:{status:'archived'}});
     const created=await tx.trainingPlan.create({data:{userId,name:`Plano ${modality} — ${new Date(workouts[0].date).toLocaleDateString('pt-BR',{timeZone:'UTC'})}`,startDate:new Date(workouts[0].date),endDate:new Date(workouts[workouts.length-1].date),raceId:targetRace?.id || null,generatedBy:'app-estruturado',nutritionPlan:generateNutrition(selected),summary:JSON.parse(JSON.stringify(generated.summary)) as Prisma.InputJsonValue}});
     await tx.workout.createMany({data:workouts.map(workout=>({userId,planId:created.id,date:new Date(workout.date),modality:workout.modality,title:workout.title,description:workout.description,duration:workout.duration,targetZone:workout.targetZone,tssEstimate:workout.tssEstimate,phase:workout.phase,weekNumber:workout.weekNumber,structure:JSON.parse(JSON.stringify(workout.structure)) as Prisma.InputJsonValue}))});
-    await tx.athleteProfile.update({where:{userId},data:{modality,...(['zona','distancia'].includes(body.structure)?{runStructure:body.structure}: {})}});
+    await tx.athleteProfile.update({where:{userId},data:{modality,trainingGoal:selected.trainingGoal,...(['zona','distancia'].includes(body.structure)?{runStructure:body.structure}: {})}});
     return created;
   },{timeout:20000});
   return NextResponse.json({planId:plan.id,workoutsCount:workouts.length,generatedBy:'app-estruturado',warnings:generated.warnings,summary:generated.summary},options);

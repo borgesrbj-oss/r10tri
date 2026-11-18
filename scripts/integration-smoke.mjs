@@ -59,6 +59,7 @@ const scenarioNames = [
   'feedback-isolado-por-atleta',
   'orcamento-diario-em-todas-as-modalidades',
   'edicao-atualiza-blocos-e-preserva-observacao',
+  'objetivo-salvo-na-triagem-influencia-geracao',
 ];
 
 function client() {
@@ -309,6 +310,13 @@ try {
     assert.equal(response.status,200);const updated=response.data.workout;
     assert.equal(updated.structure.steps.reduce((sum,step)=>sum+step.durationSeconds,0),updated.duration*60);
     assert.equal(updated.structure.requiresCoachReview,true);assert.ok(updated.description.includes('Orientação manual preservada'));
+  });
+  await check(async()=>{
+    const saved=await atletaA.request('/api/profile/assessment',{method:'POST',body:{modality:'triatlo',trainingGoal:'sprint',goalType:'completar'}});
+    assert.equal(saved.status,200);
+    const generated=await atletaA.request('/api/plan/generate',{method:'POST',body:{weeks:2}});
+    assert.equal(generated.status,200);assert.equal(generated.data.summary.goal,'sprint');
+    const profile=await atletaA.request('/api/profile');assert.equal(profile.data.trainingGoal,'sprint');
   });
   console.log(JSON.stringify({ cenarios: scenario, aprovados: passed, falhas: 0, contasTemporarias: 4 }));
 } catch (error) {

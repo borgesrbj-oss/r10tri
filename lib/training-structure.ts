@@ -315,10 +315,12 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   const goalKm:Record<string,number>={'5k':5,'10k':10,'15k':15,'21k':21.0975,'42k':42.195};
   if(selected==='corrida' && goal && goalKm[goal] && profile?.goalTime) {
     const desired=parseRaceTime(profile.goalTime);
+    if(!desired)warnings.push('Tempo-alvo em texto livre: informe m:ss ou h:mm:ss para comparar com o resultado recente. Nenhuma meta numérica foi presumida.');
     const estimate=predictRaceTime({...profile,targetDistanceKm:goalKm[goal]},start);
     if(desired && estimate.available && desired<estimate.seconds*.85) {requiresCoachReview=true;warnings.push('Meta de tempo mais de 15% abaixo da estimativa recente: referência de triagem do produto, não limite fisiológico. Rever prazo e objetivo com o coach.');}
   }
   const shortGoal = ['pace', '5k', '10k', 'supersprint', 'sprint','velocidade'].includes(goal || '');
+  if(profile?.goalType==='completar')warnings.push('Objetivo de completar: teto operacional de intensidade reduzido a 10%, sem compensação; revisar com o coach. Não é prescrição universal.');
   if (goal) warnings.push(`Objetivo ${goal}: ${shortGoal ? 'blocos curtos de intensidade no Build/Peak' : 'prioridade de duração aeróbica na última sessão disponível e blocos sustentados'}. O volume continua limitado pela triagem; esta escolha não comprova prontidão para a prova.`);
   if (selected === 'corrida' && profile?.runStructure === 'distancia' && !runThreshold(profile)) warnings.push('Distâncias não estimadas: informe um limiar de pace. Os blocos permanecem por tempo e percepção.');
   const modalities: TrainingModality[] = selected === 'corrida' ? ['corrida'] : selected === 'ciclismo' ? ['ciclismo'] : selected === 'natacao' ? (swimming ? ['natacao'] : []) : (swimming ? ['natacao', 'ciclismo', 'corrida'] : ['ciclismo', 'corrida']);
@@ -379,6 +381,7 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
     if(requiresCoachReview || returning)targetHigh=0;
     if(goal==='tecnica' || goal==='iniciacao')targetHigh=0;
     if(goal==='base')targetHigh=Math.min(targetHigh,.05);
+    if(profile?.goalType==='completar')targetHigh=Math.min(targetHigh,.1);
     if(week===0)targetHigh=Math.min(targetHigh,feedback.highFraction);
     if (targetHigh < 0.2) weekWarnings.push('Menos de 20% intenso nesta semana por adaptação, recuperação, prova, disponibilidade ou necessidade de revisão; não compensar com intensidade extra.');
     const aerobic = sessions.filter(session => session.modality !== 'forca');

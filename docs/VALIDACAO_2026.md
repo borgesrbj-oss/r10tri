@@ -4,11 +4,11 @@
 
 | Verificação | Resultado observado | Alcance |
 |---|---|---|
-| `npm test` | 150 aprovados, zero falhas | Regressões existentes, 12 perfis, cenários extremos, recuperação, permissões, exportações e paridade das zonas visuais. |
+| `npm test` | 152 aprovados, zero falhas | Regressões existentes, 12 perfis, cenários extremos, recuperação, permissões, exportações e paridade das zonas visuais. |
 | ESLint | Sem erros/avisos na execução final | Análise estática, não auditoria completa de UX. |
 | TypeScript/build | Compilação de produção com Next.js 16.4.6 | Rotas e tipos verificados pelo build. |
 | Prisma validate/migrate | Esquema válido; migração local aditiva aplicada | Altura, limites diários, afastamento, força e prioridade de prova. Sem reset. |
-| Integração HTTP/PostgreSQL | 24/24 aprovados | Quatro contas fictícias, permissões cruzadas, convites, geração, FIT/TCX/ZWO, orçamento diário, feedback isolado e edição de blocos/observação. |
+| Integração HTTP/PostgreSQL | 25/25 aprovados | Quatro contas fictícias, permissões cruzadas, convites, geração, FIT/TCX/ZWO, orçamento diário, feedback isolado e edição de blocos/observação. |
 | Autenticação HTTP sem SMTP | 10/10 aprovados | Normalização de identificador, senha com caracteres/espaços, convite, sessão e indisponibilidade de transporte. |
 | Recuperação com SMTP local TLS | 10/10 aprovados | E-mail capturado em servidor de teste, link de uso único, expiração/invalidação e sessões. Não comprova entrega na internet. |
 | `npm audit` | Zero vulnerabilidades conhecidas após atualização | Snapshot do registro npm; não equivale a pentest nem garantia de ausência de vulnerabilidades. |
@@ -50,3 +50,5 @@ Manifest, service worker, ícones e orientação de instalação existentes fora
 ## Limites de qualidade
 
 Não foram realizados teste clínico, pentest, teste de carga, teste físico de Garmin/piscina, envio automático de WhatsApp, sincronização Strava nem restauração de backup da produção. A migração adiciona colunas opcionais; não elimina riscos operacionais. Revisão especializada, dados humanos e testes em aparelhos reais continuam necessários para anunciar qualidade clínica/comercial ou compatibilidade integral.
+
+O foco específico foi validado de ponta a ponta: salvar triagem, persistir no PostgreSQL e gerar sem repetir o parâmetro. A intenção de completar usa teto de intensidade de 10% como política conservadora, não limiar clínico. O cliente Prisma precisou ser regenerado com o servidor local parado para liberar a DLL no Windows; nenhuma proteção foi desabilitada.
