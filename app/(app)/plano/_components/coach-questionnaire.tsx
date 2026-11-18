@@ -148,7 +148,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     limitations: profile?.limitations ?? '',
   });
 
-  const set = (key: string, val: any) => setForm(p => ({ ...p, [key]: val }));
+  const set = (key: string, val: any) => { setForm(p => ({ ...p, [key]: val })); setErrors([]); };
   const missing=missingAssessmentFields(form);
   const fieldError=(field:string)=>attempted&&missing.some(item=>item.field===field)?missing.find(item=>item.field===field)!.label+' — preencha este campo.':undefined;
   const toggleDay = (d: string) => set('availableDays', form.availableDays.includes(d) ? form.availableDays.filter((x: string) => x !== d) : [...form.availableDays, d]);
