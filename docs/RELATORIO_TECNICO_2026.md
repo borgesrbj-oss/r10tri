@@ -77,7 +77,7 @@ Classificação feita por leitura de componentes/APIs e testes indicados no rela
 
 **Adicionadas:** limites por dia; afastamento/força na triagem; prioridade de prova; corrida/caminhada e técnica inicial; feedback determinístico explicado; próximo treino e resumo semanal; agenda por período; modo claro/escuro e navegação móvel. **Aprimoradas:** metas, alocação, recuperação, edição estruturada e descrição da sessão. **Removidas:** nenhuma funcionalidade; animação decorativa deixou de ser exibida, gradientes do destaque viraram superfície plana e links foram reposicionados.
 
-**Preservadas e avaliadas:** histórico, volume, aderência, gráficos, notificações do coach, exportações FIT/TCX/ZWO/MRC/ERG conforme modalidade e Intervals. **Não simuladas:** início de atividade com gravação GPS, arrastar sessão, recordes automaticamente verificados, curvas longitudinais de FTP/CSS sem dados, HRV, sincronização Garmin/TrainingPeaks/Zwift/MyWhoosh e envio automático de WhatsApp. Compartilhar link abre o WhatsApp sob ação da pessoa; não é API de envio. Benchmark e requisitos oficiais em [BENCHMARK_E_MARCA_2026.md](BENCHMARK_E_MARCA_2026.md).
+**Preservadas e avaliadas:** histórico, volume, aderência, gráficos, notificações do coach, exportações FIT/TCX/ZWO/TXT conforme modalidade e Intervals. **Não simuladas:** início de atividade com gravação GPS, arrastar sessão, recordes automaticamente verificados, curvas longitudinais de FTP/CSS sem dados, HRV, sincronização Garmin/TrainingPeaks/Zwift/MyWhoosh e envio automático de WhatsApp. Compartilhar link abre o WhatsApp sob ação da pessoa; não é API de envio. Benchmark e requisitos oficiais em [BENCHMARK_E_MARCA_2026.md](BENCHMARK_E_MARCA_2026.md).
 
 ## Segurança, dados e desempenho
 
