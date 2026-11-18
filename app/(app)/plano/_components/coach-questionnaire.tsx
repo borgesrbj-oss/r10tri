@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocalDate } from '@/hooks/use-browser-state';
 import { ChevronRight, ChevronLeft, ClipboardCheck, Activity, Target, Heart, Wrench, Dumbbell, Sparkles, CheckCircle2, FlaskConical, Info, Waves, Bike, Timer, Layers } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,7 +74,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-  const [attempted,setAttempted]=useState(false);
+  const [attempted,setAttempted]=useState(generationErrors.length>0);
+  useEffect(()=>{if(attempted)document.getElementById('assessment-errors')?.scrollIntoView({block:'start',behavior:'smooth'});},[attempted,step]);
   const [planStartDate, setPlanStartDate] = useState('');
   const [planWeeks, setPlanWeeks] = useState('');
   const todayStr = useLocalDate();
@@ -278,7 +279,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
         </div>
       </div>
 
-      {attempted&&missing.length>0&&<div role="alert" className="rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive"><p className="font-semibold">Preencha os campos abaixo para gerar o plano:</p><ul className="mt-2 space-y-2">{missing.map(item=><li key={item.field}><button type="button" className="text-left underline font-medium" onClick={()=>setStep(item.step)}>{item.label} — etapa {item.step+1}</button></li>)}</ul></div>}<FadeIn key={step}>
+      {attempted&&missing.length>0&&<div id="assessment-errors" role="alert" className="scroll-mt-24 rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive"><p className="font-semibold">Preencha os campos abaixo para gerar o plano:</p><ul className="mt-2 space-y-2">{missing.map(item=><li key={item.field}><button type="button" className="text-left underline font-medium" onClick={()=>setStep(item.step)}>{item.label} — etapa {item.step+1}</button></li>)}</ul></div>}<FadeIn key={step}>
         <Card className="border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
