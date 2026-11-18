@@ -60,6 +60,14 @@ export interface GeneratedWorkout {
 }
 
 export interface TrainingProfile {
+  heightCm?: number | null;
+  goalTime?: string | null;
+  dailyMinutes?: unknown;
+  inactivityWeeks?: number | null;
+  strengthAvailable?: boolean | null;
+  swimLevel?: string | null;
+  runLevel?: string | null;
+  bikeLevel?: string | null;
   /** Objetivo escolhido para este plano; não substitui a intenção esportiva do perfil. */
   trainingGoal?: string | null;
   runStructure?: string | null;
@@ -106,6 +114,7 @@ export interface TrainingProfile {
 }
 
 export interface TrainingRace {
+  priority?: string | null;
   date: Date | string;
   name?: string | null;
   distance?: string | null;
@@ -126,6 +135,7 @@ export interface StructuredPlan {
   workouts: GeneratedWorkout[];
   warnings: string[];
   summary: {
+    feedback?: { status: string; reasons: string[]; observedSessions: number };
     basis: 'tempo_aerobico_ativo';
     targetHighFraction: 0.2;
     goal: string | null;

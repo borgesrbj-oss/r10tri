@@ -1,89 +1,19 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
-import { Timer, Target, TrendingUp, Calendar, Settings, Menu, X, LogOut, Dumbbell, BookOpen, Activity, Users, Table, Apple } from 'lucide-react';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { BrandLogo } from '@/components/brand-logo';
-
-const navItems = [
-  { href: '/dashboard', label: 'Painel', icon: TrendingUp },
-  { href: '/perfil', label: 'Perfil', icon: Settings },
-  { href: '/provas', label: 'Provas', icon: Target },
-  { href: '/plano', label: 'Plano', icon: Dumbbell },
-  { href: '/planilha', label: 'Planilha', icon: Table },
-  { href: '/nutricao', label: 'Nutrição', icon: Apple },
-  { href: '/exercicios', label: 'Força', icon: Activity },
-  { href: '/calendario', label: 'Calendário', icon: Calendar },
-  { href: '/evolucao', label: 'Evolução', icon: TrendingUp },
-  { href: '/strava', label: 'Strava', icon: Timer },
-  { href: '/guias', label: 'Guias', icon: BookOpen },
-];
-
-export function AppNav() {
-  const [open, setOpen] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null);
-  const pathname = usePathname();
-  const { data: session } = useSession() || {};
-  const isCoach = (session?.user as any)?.role === 'coach';
-  const items = isCoach ? [...navItems, { href: '/atletas', label: 'Atletas', icon: Users }] : navItems;
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        menuButton.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [open]);
-
-  const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-
-  return (
-    <header className="app-topbar sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
-      <div className="app-topbar-inner mx-auto flex min-h-14 max-w-[1200px] items-center justify-between gap-3 px-4">
-        <Link href="/dashboard" className="flex shrink-0 items-center" aria-label="R10 TRI, abrir painel">
-          <BrandLogo variant="inline" />
-        </Link>
-        <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto py-1 xl:flex" aria-label="Navegação principal">
-          {items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} href={item.href} aria-current={active(item.href) ? 'page' : undefined} className={cn(buttonVariants({ variant: active(item.href) ? 'secondary' : 'ghost', size: 'sm' }), 'shrink-0 gap-1.5', active(item.href) && 'bg-accent text-accent-foreground')}>
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <Button variant="ghost" size="sm" className="hidden shrink-0 gap-1.5 text-destructive xl:inline-flex" onClick={() => signOut({ redirectTo: '/login' })}>
-          <LogOut className="h-4 w-4" aria-hidden="true" /> Sair
-        </Button>
-        <Button ref={menuButton} type="button" variant="ghost" size="icon" className="min-h-11 min-w-11 xl:hidden" onClick={() => setOpen(!open)} aria-label={open ? 'Fechar menu' : 'Abrir menu'} aria-expanded={open} aria-controls="app-mobile-navigation">
-          {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
-        </Button>
-      </div>
-      {open && (
-        <nav id="app-mobile-navigation" className="app-mobile-menu flex flex-col gap-1 border-t bg-background p-3 xl:hidden" aria-label="Navegação do celular">
-          {items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} href={item.href} onClick={() => setOpen(false)} aria-current={active(item.href) ? 'page' : undefined} className={cn(buttonVariants({ variant: active(item.href) ? 'secondary' : 'ghost', size: 'sm' }), 'min-h-11 w-full justify-start gap-2')}>
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {item.label}
-              </Link>
-            );
-          })}
-          <Button variant="ghost" size="sm" className="min-h-11 w-full justify-start gap-2 text-destructive" onClick={() => signOut({ redirectTo: '/login' })}>
-            <LogOut className="h-4 w-4" aria-hidden="true" /> Sair
-          </Button>
-        </nav>
-      )}
-    </header>
-  );
+import {usePathname} from 'next/navigation';
+import {signOut,useSession} from 'next-auth/react';
+import {LayoutDashboard,CalendarDays,Dumbbell,ChartNoAxesCombined,UserRound,Flag,Table,Apple,BookOpen,Users,Link2,Menu,X,LogOut,Settings} from 'lucide-react';
+import {BrandLogo} from './brand-logo';
+import {ThemePreference} from './theme-preference';
+import {cn} from '@/lib/utils';
+const primary=[{href:'/dashboard',label:'Visão geral',icon:LayoutDashboard},{href:'/calendario',label:'Calendário',icon:CalendarDays},{href:'/plano',label:'Treinos',icon:Dumbbell},{href:'/evolucao',label:'Desempenho',icon:ChartNoAxesCombined},{href:'/perfil',label:'Perfil',icon:UserRound}];
+const secondary=[{href:'/provas',label:'Competições',icon:Flag},{href:'/planilha',label:'Planilha e exportações',icon:Table},{href:'/configurar-treino',label:'Disponibilidade',icon:Settings},{href:'/nutricao',label:'Alimentação',icon:Apple},{href:'/exercicios',label:'Força e mobilidade',icon:Dumbbell},{href:'/strava',label:'Integrações',icon:Link2},{href:'/guias',label:'Guias',icon:BookOpen}];
+export function AppNav(){
+ const [open,setOpen]=useState(false);const button=useRef<HTMLButtonElement>(null);const pathname=usePathname();const {data:session}=useSession();
+ const items=session?.user?.role==='coach'?[...secondary,{href:'/atletas',label:'Atletas',icon:Users}]:secondary;
+ useEffect(()=>{if(!open)return;const close=(event:KeyboardEvent)=>{if(event.key==='Escape'){setOpen(false);button.current?.focus();}};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close);},[open]);
+ const active=(href:string)=>pathname===href||pathname.startsWith(href+'/');
+ const links=(entries:typeof primary)=>entries.map(({href,label,icon:Icon})=><Link key={href} href={href} onClick={()=>setOpen(false)} aria-current={active(href)?'page':undefined} className={cn('nav-item flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors',active(href)?'bg-primary/10 text-primary font-semibold':'text-muted-foreground hover:bg-muted hover:text-foreground')}><Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />{label}</Link>);
+ return <><a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 z-[100] bg-card text-primary p-3 rounded-lg">Ir para conteúdo</a><header className="app-topbar sticky top-0 z-40 border-b bg-background lg:fixed lg:inset-y-0 lg:left-0 lg:w-56 lg:border-r lg:border-b-0 lg:flex lg:flex-col"><div className="app-topbar-inner flex min-h-16 items-center justify-between gap-2 px-4 lg:px-6 lg:py-4"><Link href="/dashboard" aria-label="R10 TRI, abrir painel"><BrandLogo /></Link><button ref={button} type="button" aria-label={open?'Fechar menu':'Abrir menu'} aria-expanded={open} aria-controls="app-mobile-navigation" className="lg:hidden p-3 rounded-xl hover:bg-muted" onClick={()=>setOpen(!open)}>{open?<X className="h-5 w-5" />:<Menu className="h-5 w-5" />}</button></div><div className={cn('flex-1 overflow-y-auto max-h-[calc(100dvh-8rem)] lg:max-h-none px-4 pb-4',open?'block':'hidden lg:block')} id="app-mobile-navigation"><p className="eyebrow px-3 mt-4 mb-3">SEU TREINAMENTO</p><nav aria-label="Navegação principal" className="space-y-1">{links(primary)}</nav><p className="eyebrow px-3 mt-7 mb-3">FERRAMENTAS</p><nav aria-label="Ferramentas complementares" className="space-y-1">{links(items)}</nav><div className="mt-6 px-2 flex items-center justify-between"><ThemePreference /><button type="button" className="min-h-11 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-destructive" onClick={()=>signOut({redirectTo:'/login'})}><LogOut className="h-4 w-4" />Sair</button></div></div><p className="hidden lg:block px-7 py-5 text-[11px] text-muted-foreground border-t">Consistência. Contexto. Evolução.</p></header><nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background lg:hidden" aria-label="Acesso rápido">{primary.map(({href,label,icon:Icon})=><Link key={href} href={href} onClick={()=>setOpen(false)} aria-current={active(href)?'page':undefined} className={cn('flex flex-col items-center justify-center gap-1 py-3 min-h-16 text-[10px]',active(href)?'text-primary font-semibold':'text-muted-foreground')}><Icon className="h-5 w-5" aria-hidden="true" />{label}</Link>)}</nav></>;
 }

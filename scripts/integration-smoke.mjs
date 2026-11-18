@@ -56,6 +56,9 @@ const scenarioNames = [
   'plano-garmin-fit-valido',
   'plano-garmin-tcx-valido',
   'plano-mywhoosh-valido',
+  'feedback-isolado-por-atleta',
+  'orcamento-diario-em-todas-as-modalidades',
+  'edicao-atualiza-blocos-e-preserva-observacao',
 ];
 
 function client() {
@@ -132,7 +135,7 @@ const privateKey = randomBytes(24).toString('base64url');
 
 try {
   await check(async () => {
-    for (const path of ['/api/profile', '/api/workouts', '/api/dashboard']) denied(await client().request(path));
+    for (const path of ['/api/profile', '/api/workouts', '/api/dashboard','/api/training-feedback']) denied(await client().request(path));
   });
   await check(async () => { await register(identities.atletaA); await register(identities.atletaB); await register(identities.coach); });
   await check(async () => {
@@ -150,7 +153,7 @@ try {
     assert.equal(await prisma.user.count({ where: { email: identities.convite.email } }), 0);
   });
   await check(async () => {
-    const response = await atletaA.request('/api/profile/assessment', { method: 'POST', body: { birthDate: '1990-01-01', currentWeight: 70, currentWeeklyVol: 5, level: 'intermediario', modality: 'triatlo', weeklyHours: 6, availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'], canSwim: true, hasPoolAccess: true, ftp: 200, runThresholdPace: '06:00', swimCssPace: '02:10' } });
+    const response = await atletaA.request('/api/profile/assessment', { method: 'POST', body: { birthDate: '1990-01-01', heightCm:175, dailyMinutes:{seg:45,ter:50,qua:50,qui:50,sex:50,sab:75},strengthAvailable:true, currentWeight: 70, currentWeeklyVol: 5, level: 'intermediario', modality: 'triatlo', weeklyHours: 6, availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'], canSwim: true, hasPoolAccess: true, ftp: 200, runThresholdPace: '06:00', swimCssPace: '02:10' } });
     assert.equal(response.status, 200);
   });
   await check(async () => {
@@ -288,6 +291,25 @@ try {
       }
     });
   }
+  await check(async()=>{
+    const own=await atletaA.request('/api/training-feedback');
+    const other=await atletaB.request('/api/training-feedback');
+    assert.equal(own.status,200);assert.equal(own.data.observedSessions,1);assert.equal(other.data.observedSessions,0);
+    assert.equal(JSON.stringify(own.data).includes(identities.atletaA.email),false);
+    assert.ok(own.data.initialFactor<=1);
+  });
+  await check(async()=>{
+    const all=await atletaA.request('/api/workouts');
+    const totals=new Map();for(const item of all.data)totals.set(item.date,(totals.get(item.date)||0)+item.duration);
+    for(const [date,minutes] of totals){const day=new Date(date).getUTCDay();assert.ok(minutes<=(day===1?45:day===6?75:50));}
+  });
+  await check(async()=>{
+    const all=await atletaA.request('/api/workouts'),item=all.data.find(entry=>!entry.completed && entry.duration>5);
+    const response=await atletaA.request('/api/workouts/update',{method:'POST',body:{id:item.id,duration:item.duration-1,description:'Orientação manual preservada'}});
+    assert.equal(response.status,200);const updated=response.data.workout;
+    assert.equal(updated.structure.steps.reduce((sum,step)=>sum+step.durationSeconds,0),updated.duration*60);
+    assert.equal(updated.structure.requiresCoachReview,true);assert.ok(updated.description.includes('Orientação manual preservada'));
+  });
   console.log(JSON.stringify({ cenarios: scenario, aprovados: passed, falhas: 0, contasTemporarias: 4 }));
 } catch (error) {
   // Não registra corpos HTTP, links de convite, cookies, senhas ou dados do banco.

@@ -36,7 +36,7 @@ export function PerfilClient({ profile }: { profile: any; userName: string }) {
     currentWeight: profile?.currentWeight ?? '',
     targetWeight: profile?.targetWeight ?? '',
     level: profile?.level ?? 'intermediario',
-    availableDays: profile?.availableDays ?? ['seg', 'ter', 'qua', 'qui', 'sex'],
+    availableDays: profile?.availableDays ?? [],
     limitations: profile?.limitations ?? '',
     ftp: profile?.ftp ?? '',
     vo2max: profile?.vo2max ?? '',

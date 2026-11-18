@@ -27,153 +27,132 @@ interface Guide {
 }
 
 const guides: Guide[] = [
-  {
-    id: 'instalar-app',
-    category: 'app',
-    title: 'Instalar o App (APK Android)',
-    subtitle: 'Tenha o TriCoach na tela inicial do seu celular',
-    image: 'https://cdn.abacus.ai/images/3e041c3a-5467-432b-a18a-7f63ba559332.png',
-    duration: '3 min',
-    steps: [
-      {
-        title: '1. Baixe o arquivo APK',
-        detail: 'No navegador do seu celular Android, acesse o link de download do TriCoach fornecido. Toque no arquivo .apk para iniciar o download. Aguarde a conclusão (aparece na barra de notificações).',
-        tip: 'Use o Chrome ou o navegador padrão do Android. O arquivo fica salvo na pasta Downloads.',
-      },
-      {
-        title: '2. Permita instalação de fontes desconhecidas',
-        detail: 'Ao abrir o APK, o Android pode avisar que a instalação de apps de fontes desconhecidas está bloqueada. Toque em "Configurações" e ative "Permitir desta fonte" para o navegador/gerenciador de arquivos.',
-        warning: 'Essa permissão é necessária porque o app é instalado fora da Play Store. É seguro — você está instalando diretamente do TriCoach.',
-      },
-      {
-        title: '3. Instale o aplicativo',
-        detail: 'Volte e toque em "Instalar". Em poucos segundos o TriCoach será instalado. Toque em "Abrir" ao finalizar, ou localize o ícone na gaveta de apps.',
-      },
-      {
-        title: '4. Faça login e comece',
-        detail: 'Abra o app, entre com seu email e senha do TriCoach. Pronto! Você terá acesso ao painel, plano de treino, calendário e tudo mais direto do celular.',
-        tip: 'Alternativa sem APK: abra o TriCoach no navegador, toque no menu (⋮) e escolha "Adicionar à tela inicial" para criar um atalho que funciona como app.',
-      },
-    ],
-  },
-  {
-    id: 'strava',
-    category: 'platform',
-    title: 'Conectar ao Strava',
-    subtitle: 'Sincronize seus treinos automaticamente',
-    image: 'https://cdn.abacus.ai/images/d1e291f7-c135-46b9-b93a-4f74334f3665.png',
-    videoUrl: 'https://cdn.abacus.ai/videos/bc33af80-e430-404c-83c4-171710e0018b.mp4',
-    duration: '5 min',
-    steps: [
-      {
-        title: '1. Crie sua conta no Strava',
-        detail: 'Acesse strava.com ou baixe o app (iOS/Android). Cadastre-se com email ou Google. Complete seu perfil com peso e modalidades.',
-        tip: 'Use o mesmo email que você usa no TriCoach para facilitar a identificação.',
-      },
-      {
-        title: '2. Configure a privacidade',
-        detail: 'Vá em Configurações → Privacidade. Defina quem vê suas atividades. Para sincronizar com apps externos, permita "Acesso de terceiros".',
-      },
-      {
-        title: '3. Conecte ao TriCoach',
-        detail: 'No TriCoach, acesse a aba Strava no menu lateral. Clique em "Conectar Strava". Autorize o TriCoach a acessar seus dados de atividades.',
-        tip: 'A conexão OAuth é segura — o TriCoach nunca vê sua senha do Strava.',
-      },
-      {
-        title: '4. Sincronize seus dispositivos',
-        detail: 'No Strava, vá em Configurações → Conexões. Conecte seu Garmin, Apple Watch, Wahoo ou outro dispositivo. Os treinos sincronizam automaticamente: Dispositivo → Strava → TriCoach.',
-        tip: 'A sincronização normalmente leva de 1 a 5 minutos após encerrar o treino no relógio.',
-      },
-      {
-        title: '5. Verifique a sincronização',
-        detail: 'Faça um treino curto (pode ser 5 min de caminhada). Aguarde aparecer no Strava. Verifique se apareceu no TriCoach em "Calendário".',
-        warning: 'Se não sincronizar em 10 minutos, desconecte e reconecte pelo menu Strava do TriCoach.',
-      },
-    ],
-    links: [
-      { label: 'Site oficial do Strava', url: 'https://www.strava.com' },
-      { label: 'App iOS', url: 'https://apps.apple.com/app/strava/id426826309' },
-      { label: 'App Android', url: 'https://play.google.com/store/apps/details?id=com.strava' },
-    ],
-  },
-  {
-    id: 'garmin',
-    category: 'platform',
-    title: 'Conectar ao Garmin Connect',
-    subtitle: 'Envie treinos direto para seu relógio Garmin',
-    image: 'https://cdn.abacus.ai/images/be104d38-397c-4af9-8bca-951e1e060345.png',
-    videoUrl: 'https://cdn.abacus.ai/videos/49e196e2-7433-48fa-8a62-686b952194f8.mp4',
-    duration: '8 min',
-    steps: [
-      {
-        title: '1. Crie sua conta no Garmin Connect',
-        detail: 'Acesse connect.garmin.com ou baixe o app Garmin Connect (iOS/Android). Crie sua conta e emparelhe seu dispositivo Garmin seguindo as instruções do app.',
-      },
-      {
-        title: '2. Emparelhe seu relógio',
-        detail: 'Abra o Garmin Connect → Dispositivos → Adicionar dispositivo. Ligue Bluetooth no celular. Siga os passos na tela para emparelhar (o relógio exibirá um código).',
-        warning: 'Mantenha o relógio próximo ao celular durante todo o emparelhamento. Pode levar até 3 minutos.',
-      },
-      {
-        title: '3. Conecte o Garmin ao Strava',
-        detail: 'No Garmin Connect → Configurações → Apps conectados → Strava. Autorize a conexão. Isso faz seus treinos do Garmin irem automaticamente para o Strava e depois para o TriCoach.',
-        tip: 'Essa é a maneira mais confiável: Garmin → Strava → TriCoach. Evite conectar diretamente ao TriCoach.',
-      },
-      {
-        title: '4. Envie treinos para o relógio',
-        detail: 'Exporte o treino do TriCoach em formato .FIT ou .ZWO. No Garmin Connect web, vá em Treinamento → Treinos → Importar. Sincronize o relógio para receber o treino.',
-        tip: 'No formato .FIT, o Garmin mostra cada intervalo com alertas de zona. Para ciclismo indoor, use .ZWO no MyWhoosh.',
-      },
-      {
-        title: '5. Execute o treino no relógio',
-        detail: 'No relógio: Menu → Treinamento → Meus Treinos → selecione o treino importado → Iniciar. O relógio vai guiar cada etapa com vibrações e alertas de zona.',
-      },
-    ],
-    links: [
-      { label: 'Garmin Connect Web', url: 'https://connect.garmin.com' },
-      { label: 'App iOS', url: 'https://apps.apple.com/app/garmin-connect/id583446403' },
-      { label: 'App Android', url: 'https://play.google.com/store/apps/details?id=com.garmin.android.apps.connectmobile' },
-    ],
-  },
-  {
-    id: 'mywhoosh',
-    category: 'platform',
-    title: 'Conectar ao MyWhoosh',
-    subtitle: 'Treine ciclismo indoor com seus planos',
-    image: 'https://cdn.abacus.ai/images/c378edcc-f2a6-49d8-b336-a09e69593126.png',
-    videoUrl: 'https://cdn.abacus.ai/videos/81bff6ec-52be-44a9-a2a2-94a5eae9fe7f.mp4',
-    duration: '6 min',
-    steps: [
-      {
-        title: '1. Baixe o MyWhoosh',
-        detail: 'Acesse mywhoosh.com e baixe o app para Windows, Mac, iOS ou Android. Crie sua conta gratuita. O MyWhoosh é 100% gratuito (diferente do Zwift).',
-        tip: 'Para melhor experiência, use no computador com monitor grande. No celular funciona mas a tela é pequena.',
-      },
-      {
-        title: '2. Configure seu rolo/trainer',
-        detail: 'Conecte seu smart trainer (ex: Wahoo Kickr, Tacx, Elite) via Bluetooth ou ANT+. No MyWhoosh, vá em Configurações → Dispositivos → Procurar. Selecione seu trainer na lista.',
-        warning: 'Se usar ANT+, você precisará de um adaptador USB ANT+ no computador. Bluetooth funciona direto.',
-      },
-      {
-        title: '3. Importe o treino .ZWO',
-        detail: 'No TriCoach, exporte o treino de ciclismo em formato .ZWO. No MyWhoosh, vá em Treinos → Treinos Personalizados → Importar ZWO. Selecione o arquivo exportado.',
-        tip: 'O formato .ZWO é compatível com MyWhoosh, Zwift e TrainerRoad. Exporte uma vez, use em qualquer plataforma.',
-      },
-      {
-        title: '4. Inicie o treino estruturado',
-        detail: 'Selecione o treino importado na lista. Escolha uma rota (apenas visual, não afeta a resistência no modo ERG). Clique em "Pedalar". O MyWhoosh ajustará automaticamente a resistência do trainer conforme cada intervalo.',
-      },
-      {
-        title: '5. Sincronize os resultados',
-        detail: 'Ao finalizar, o MyWhoosh pode enviar automaticamente para o Strava. Configure em Configurações → Conexões → Strava. O treino aparecerá no TriCoach via Strava.',
-        tip: 'Ative a sincronização automática para não precisar exportar manualmente o arquivo .FIT após cada treino.',
-      },
-    ],
-    links: [
-      { label: 'Site MyWhoosh', url: 'https://www.mywhoosh.com' },
-      { label: 'Download Windows/Mac', url: 'https://www.mywhoosh.com/download' },
-    ],
-  },
+{
+  "id": "instalar-app",
+  "category": "app",
+  "title": "Instalar o app na tela inicial (PWA)",
+  "subtitle": "R10 TRI no Android e no iPhone, sem APK",
+  "image": "https://cdn.abacus.ai/images/3e041c3a-5467-432b-a18a-7f63ba559332.png",
+  "duration": "3 min",
+  "steps": [
+    {
+      "title": "1. Abra o endereço oficial",
+      "detail": "Acesse o R10 TRI pelo navegador usando HTTPS. Não há APK oficial distribuído por este projeto."
+    },
+    {
+      "title": "2. Android com Chrome",
+      "detail": "No menu do navegador, procure Instalar aplicativo ou Adicionar à tela inicial. O texto depende da versão. Também pode aparecer o botão de instalação no rodapé do app."
+    },
+    {
+      "title": "3. iPhone com Safari",
+      "detail": "Abra Compartilhar e procure Adicionar à Tela de Início. Reabra pelo ícone e faça login normalmente. A disponibilidade depende da versão do iOS."
+    },
+    {
+      "title": "4. Confira a conexão",
+      "detail": "A instalação mantém a experiência web. Consultar e salvar dados pessoais exige internet; o aviso offline não é uma cópia dos seus dados de saúde."
+    }
+  ]
+},
+{
+  "id": "strava",
+  "category": "platform",
+  "title": "Strava: integração pendente",
+  "subtitle": "Requisitos e situação real, sem conexão simulada",
+  "image": "https://cdn.abacus.ai/images/d1e291f7-c135-46b9-b93a-4f74334f3665.png",
+  "duration": "2 min",
+  "steps": [
+    {
+      "title": "1. Situação atual",
+      "detail": "O código desta versão não contém os módulos de OAuth e sincronização Strava. Cadastrar uma chave não ativa a função."
+    },
+    {
+      "title": "2. Uso disponível",
+      "detail": "Registre suas atividades pelo calendário e utilize as exportações da planilha. Nenhuma atividade do Strava entra automaticamente no R10 TRI."
+    },
+    {
+      "title": "3. Implementação futura",
+      "detail": "Depende de aplicação autorizada, consentimento, escopos e módulos revisados. Não envie senha ou segredo do Strava por mensagens."
+    }
+  ],
+  "links": [
+    {
+      "label": "Documentação oficial de autenticação",
+      "url": "https://developers.strava.com/docs/authentication/"
+    }
+  ]
+},
+{
+  "id": "garmin",
+  "category": "platform",
+  "title": "Garmin: exportar treino estruturado",
+  "subtitle": "Arquivo FIT ou TCX; sem sincronização direta de conta",
+  "image": "https://cdn.abacus.ai/images/be104d38-397c-4af9-8bca-951e1e060345.png",
+  "duration": "5 min",
+  "steps": [
+    {
+      "title": "1. Confira os blocos",
+      "detail": "No plano ou na planilha, revise duração, alvos e modalidade antes de baixar. Treinos legados sem estrutura podem não ter exportação estruturada."
+    },
+    {
+      "title": "2. Baixe FIT ou TCX",
+      "detail": "Use as opções oferecidas pela planilha. Arquivo de treino estruturado difere de arquivo de atividade concluída; importar atividades no Connect não garante importar prescrições."
+    },
+    {
+      "title": "3. Consulte o modelo do aparelho",
+      "detail": "O método de transferência e os tipos de treino dependem do relógio, firmware e modalidade. Siga o suporte oficial do modelo e valide uma sessão curta antes de usar em prova."
+    },
+    {
+      "title": "4. Sincronização automática",
+      "detail": "Não há conexão Garmin direta nesta versão. A API de treino exige acesso autorizado ao programa do fornecedor; uma conexão Garmin–Strava não envia dados a este app."
+    }
+  ],
+  "links": [
+    {
+      "label": "Garmin Training API",
+      "url": "https://developer.garmin.com/gc-developer-program/enterprise/training-api/"
+    },
+    {
+      "label": "Suporte Garmin",
+      "url": "https://support.garmin.com/"
+    }
+  ]
+},
+{
+  "id": "mywhoosh",
+  "category": "platform",
+  "title": "MyWhoosh: exportar ciclismo indoor",
+  "subtitle": "Intercâmbio por arquivo, com compatibilidade a conferir",
+  "image": "https://cdn.abacus.ai/images/c378edcc-f2a6-49d8-b336-a09e69593126.png",
+  "duration": "5 min",
+  "steps": [
+    {
+      "title": "1. Confira FTP e equipamento",
+      "detail": "Alvos de potência exigem FTP e equipamento compatível. Percepção de esforço não é convertida em watts inventados."
+    },
+    {
+      "title": "2. Exporte na planilha",
+      "detail": "Baixe o arquivo de ciclismo no formato oferecido. Confira no portal e na documentação atuais do destino quais formatos podem ser importados na sua versão."
+    },
+    {
+      "title": "3. Valide o treino importado",
+      "detail": "Compare número de blocos, duração e intensidade antes de iniciar. ZWO, MRC e ERG não têm suporte idêntico em todas as plataformas; não há garantia de intercâmbio universal."
+    },
+    {
+      "title": "4. Registre o resultado",
+      "detail": "O R10 TRI não recebe automaticamente atividades do MyWhoosh, Zwift ou Strava. Registre a conclusão e o esforço no calendário."
+    }
+  ],
+  "links": [
+    {
+      "label": "MyWhoosh Workout Builder",
+      "url": "https://workout.mywhoosh.com/"
+    },
+    {
+      "label": "Documentação do construtor",
+      "url": "https://www.mywhoosh.com/everything-you-need-to-know-about-the-new-mywhoosh-workout-builder/"
+    }
+  ]
+},
   {
     id: 'test-css',
     category: 'test',
@@ -321,7 +300,7 @@ export function StepCard({ step, index }: { step: Step; index: number }) {
 
 function GuideCard({ guide, onSelect }: { guide: Guide; onSelect: () => void }) {
   return (
-    <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group" onClick={onSelect}>
+    <Card role="button" tabIndex={0} aria-label={`Abrir guia: ${guide.title}`} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onSelect} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();onSelect();}}}>
       <div className="relative aspect-video bg-muted">
         <Image src={guide.image} alt={guide.title} fill className="object-cover" />
         {guide.videoUrl && (
@@ -492,7 +471,7 @@ export function GuiasClient() {
   return (
     <div className="mx-auto max-w-4xl py-6 px-4 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Guias & Tutoriais</h1>
+        <h1 className="text-2xl font-bold">Guias & Tutoriais</h1><p className="text-sm text-muted-foreground">Orientações do app revisadas em novembro de 2026. Testes físicos são opcionais e exigem habilidade, ambiente seguro e orientação; iniciantes ou pessoas com dor podem deixar limiares em branco. Vídeos ilustrativos não substituem acompanhamento nem comprovam integrações.</p>
         <p className="text-muted-foreground">Aprenda a conectar seus dispositivos e fazer os testes físicos</p>
       </div>
 

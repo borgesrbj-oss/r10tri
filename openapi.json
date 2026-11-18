@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "TriCoach API",
+    "title": "R10 TRI API",
     "version": "1.0.0",
-    "description": "API for the TriCoach triathlon coaching application"
+    "description": "API de planejamento e acompanhamento multiesportivo. Marca provisória."
   },
   "servers": [
     {
@@ -259,6 +259,33 @@
             "description": "Indica se há chave Intervals configurada; a credencial nunca é devolvida no perfil.",
             "readOnly": true,
             "type": "boolean"
+          },
+          "heightCm": {
+            "type": "number",
+            "minimum": 80,
+            "maximum": 250,
+            "nullable": true,
+            "description": "Altura opcional, descritiva, em centímetros."
+          },
+          "dailyMinutes": {
+            "type": "object",
+            "nullable": true,
+            "description": "Limites por dia (seg, ter, qua, qui, sex, sab, dom); zero representa descanso.",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 480
+            }
+          },
+          "inactivityWeeks": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 104,
+            "nullable": true
+          },
+          "strengthAvailable": {
+            "type": "boolean",
+            "nullable": true
           }
         }
       },
@@ -292,6 +319,16 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C"
+            ],
+            "nullable": true,
+            "description": "A orienta a periodização; B e C continuam reservadas no calendário."
           }
         }
       },
@@ -1502,6 +1539,33 @@
                   "limitations": {
                     "type": "string",
                     "nullable": true
+                  },
+                  "heightCm": {
+                    "type": "number",
+                    "minimum": 80,
+                    "maximum": 250,
+                    "nullable": true,
+                    "description": "Altura opcional, descritiva, em centímetros."
+                  },
+                  "dailyMinutes": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Limites por dia (seg, ter, qua, qui, sex, sab, dom); zero representa descanso.",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 480
+                    }
+                  },
+                  "inactivityWeeks": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 104,
+                    "nullable": true
+                  },
+                  "strengthAvailable": {
+                    "type": "boolean",
+                    "nullable": true
                   }
                 }
               }
@@ -1678,6 +1742,16 @@
                   "notes": {
                     "type": "string",
                     "nullable": true
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "A",
+                      "B",
+                      "C"
+                    ],
+                    "nullable": true,
+                    "description": "A orienta a periodização; B e C continuam reservadas no calendário."
                   }
                 }
               }
@@ -3999,6 +4073,65 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/training-feedback": {
+      "get": {
+        "operationId": "consultarFeedbackTreinamento",
+        "summary": "Consultar sugestão explicada para a própria sessão autenticada",
+        "description": "Janela de sete dias, sem alterar planos ou diagnosticar. Resposta no-store. Dor na janela mantém revisão; progressão exige registros favoráveis em três dias distintos.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sugestão determinística com fatores operacionais; não é liberação clínica.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "revisar",
+                        "reduzir",
+                        "manter",
+                        "progredir"
+                      ]
+                    },
+                    "reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "observedSessions": {
+                      "type": "integer"
+                    },
+                    "initialFactor": {
+                      "type": "number"
+                    },
+                    "highFraction": {
+                      "type": "number"
+                    },
+                    "growth": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente."
           }
         }
       }

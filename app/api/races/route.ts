@@ -14,6 +14,7 @@ const raceSchema = z.object({
   // Distâncias personalizadas já aceitas pelo app continuam disponíveis.
   distance: z.string().trim().min(1, 'Informe a distância da prova.').max(100),
   notes: z.string().trim().max(4000).nullable().optional(),
+  priority:z.enum(['A','B','C']).nullable().optional(),
 });
 
 export async function GET() {

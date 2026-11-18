@@ -16,6 +16,7 @@ import { useCurrentTime, useStoredNickname } from '@/hooks/use-browser-state';
 import { FadeIn, SlideIn, Stagger, StaggerItem, HoverLift } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
 import { CoachAlerts } from '@/components/coach-alerts';
+import { TrainingOverview } from '@/components/training-overview';
 
 const DEFAULT_PREFS = { stats: true, provas: true, treinos: true, avisos: true, sobre: true };
 const WIDGET_LABELS: { key: keyof typeof DEFAULT_PREFS; label: string }[] = [
@@ -102,6 +103,7 @@ export function DashboardClient({ data }: { data: any }) {
         </div>
       </FadeIn>
 
+      <TrainingOverview next={data?.next} week={data?.week??{minutes:0,completed:0,total:0}} />
       {isCoach && <CoachAlerts />}
 
       {prefs.sobre && profile?.aboutMe && (

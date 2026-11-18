@@ -13,6 +13,7 @@ import { FadeIn } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
 import { CoachQuestionnaire } from './coach-questionnaire';
 import { TrainingDistributionSummary, WorkoutStructure, WorkoutWhatsappLink } from '@/components/workout-structure';
+import { TrainingZonesSummary } from '@/components/training-zones-summary';
 import { RacePrediction } from '@/components/race-prediction';
 
 const icons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
@@ -114,117 +115,7 @@ function download(content: string | Blob, filename: string, mime: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
-/* ─── Zonas de treino (cálculo automático a partir dos testes) ─── */
-function paceToSec(p?: string | null): number | null {
-  if (!p) return null;
-  const parts = String(p).trim().split(':');
-  if (parts.length !== 2) return null;
-  const m = Number(parts[0]); const s = Number(parts[1]);
-  if (isNaN(m) || isNaN(s)) return null;
-  return m * 60 + s;
-}
-function secToPace(sec: number): string {
-  const s = Math.max(0, Math.round(sec));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-}
-function paceRange(a: number, b: number): string {
-  return `${secToPace(Math.min(a, b))}–${secToPace(Math.max(a, b))}`;
-}
-
-type Zone = { z: string; name: string; value: string };
-
-function swimZones(css: number): Zone[] {
-  return [
-    { z: 'Z1', name: 'Recuperação', value: `${secToPace(css + 15)} ou + lento` },
-    { z: 'Z2', name: 'Aeróbico', value: `${paceRange(css + 6, css + 10)} /100m` },
-    { z: 'Z3', name: 'Limiar', value: `${paceRange(css + 1, css + 5)} /100m` },
-    { z: 'Z4', name: 'VO₂máx', value: `${paceRange(css - 4, css)} /100m` },
-    { z: 'Z5', name: 'Velocidade', value: `${secToPace(css - 5)} ou + rápido` },
-  ];
-}
-function bikeZones(ftp: number): Zone[] {
-  const w = (p: number) => Math.round(ftp * p);
-  return [
-    { z: 'Z1', name: 'Recuperação', value: `≤ ${w(0.55)} W` },
-    { z: 'Z2', name: 'Endurance', value: `${w(0.56)}–${w(0.75)} W` },
-    { z: 'Z3', name: 'Tempo', value: `${w(0.76)}–${w(0.90)} W` },
-    { z: 'Z4', name: 'Limiar', value: `${w(0.91)}–${w(1.05)} W` },
-    { z: 'Z5', name: 'VO₂máx', value: `${w(1.06)}–${w(1.20)} W` },
-  ];
-}
-function runZones(t: number): Zone[] {
-  return [
-    { z: 'Z1', name: 'Recuperação', value: `${paceRange(t + 60, t + 90)} /km` },
-    { z: 'Z2', name: 'Fácil/Aeróbico', value: `${paceRange(t + 35, t + 60)} /km` },
-    { z: 'Z3', name: 'Maratona/Tempo', value: `${paceRange(t + 15, t + 35)} /km` },
-    { z: 'Z4', name: 'Limiar', value: `${paceRange(t - 5, t + 15)} /km` },
-    { z: 'Z5', name: 'VO₂máx', value: `${paceRange(t - 35, t - 5)} /km` },
-  ];
-}
-
-function SportZoneCard({ icon: Icon, title, color, refValue, refLabel, zones }: { icon: any; title: string; color: string; refValue: string; refLabel: string; zones: Zone[] }) {
-  return (
-    <div className="rounded-xl border bg-card/50 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderLeft: `4px solid ${color}` }}>
-        <Icon className="h-5 w-5" style={{ color }} />
-        <span className="font-semibold text-sm">{title}</span>
-        <span className="ml-auto text-xs text-muted-foreground">{refLabel}: <span className="font-mono font-semibold text-foreground">{refValue}</span></span>
-      </div>
-      <div className="divide-y">
-        {zones.map(zn => (
-          <div key={zn.z} className="flex items-center gap-3 px-4 py-2 text-sm">
-            <span className="inline-flex items-center justify-center w-9 h-6 rounded text-xs font-bold shrink-0" style={{ backgroundColor: `${color}22`, color }}>{zn.z}</span>
-            <span className="text-muted-foreground w-28 shrink-0">{zn.name}</span>
-            <span className="font-mono text-xs sm:text-sm ml-auto text-right">{zn.value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function ZonesSummary({ profile }: { profile: any }) {
-  const modality = profile?.modality ?? 'triatlo';
-  const showSwim = modality === 'triatlo' || modality === 'natacao';
-  const showBike = modality === 'triatlo' || modality === 'ciclismo';
-  const showRun = modality === 'triatlo' || modality === 'corrida';
-
-  const cssPace = profile?.testCSSPace || profile?.swimPace || null;
-  const cssSec = paceToSec(cssPace);
-  const ftp = Number(profile?.ftp || profile?.testFTPEstimated || 0) || null;
-  const runPace = profile?.testRunPace || profile?.runPace || null;
-  const runSec = paceToSec(runPace);
-
-  const hasAny = (showSwim && cssSec) || (showBike && ftp) || (showRun && runSec);
-  if (!hasAny) return null;
-
-  return (
-    <FadeIn>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg"><Activity className="h-5 w-5 text-primary" /> Resumo da Avaliação & Zonas de Treino</CardTitle>
-          <p className="text-sm text-muted-foreground">Zonas calculadas automaticamente a partir dos seus testes de limiar. Use-as como referência de intensidade nos treinos.</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 lg:grid-cols-3">
-            {showSwim && cssSec && (
-              <SportZoneCard icon={Waves} title="Natação" color="#3B82F6" refValue={`${secToPace(cssSec)}/100m`} refLabel="CSS" zones={swimZones(cssSec)} />
-            )}
-            {showBike && ftp && (
-              <SportZoneCard icon={Bike} title="Ciclismo" color="#F97316" refValue={`${ftp} W`} refLabel="FTP" zones={bikeZones(ftp)} />
-            )}
-            {showRun && runSec && (
-              <SportZoneCard icon={Timer} title="Corrida" color="#22C55E" refValue={`${secToPace(runSec)}/km`} refLabel="Limiar" zones={runZones(runSec)} />
-            )}
-          </div>
-          {((showSwim && !cssSec) || (showBike && !ftp) || (showRun && !runSec)) && (
-            <p className="text-xs text-muted-foreground mt-4">💡 Faltam alguns resultados de teste. Clique em <strong>Refazer Avaliação</strong> e preencha os testes de limiar para ver todas as zonas.</p>
-          )}
-        </CardContent>
-      </Card>
-    </FadeIn>
-  );
-}
+export function ZonesSummary({profile}:{profile:any}) { return <FadeIn><TrainingZonesSummary profile={profile} /></FadeIn>; }
 
 function StatTile({ icon: Icon, label, value, color }: { icon: any; label: string; value: string; color: string }) {
   return (
@@ -335,6 +226,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
   const router = useRouter();
 
   const RUN_GOALS = [
+    {key:'iniciacao',label:'Iniciação'},{key:'retorno',label:'Retorno gradual'},
     { key: 'pace', label: 'Melhorar o pace' },
     { key: '5k', label: '5 km' },
     { key: '10k', label: '10 km' },
@@ -511,11 +403,11 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                 })}
               </div>
             </div>
-            {(genModality === 'corrida' || genModality === 'triatlo') && (
+            {genModality && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">{genModality === 'corrida' ? 'Objetivo da corrida' : 'Tipo de prova'}</p>
+                <p className="text-sm font-medium">Objetivo do planejamento</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {(genModality === 'corrida' ? RUN_GOALS : TRI_GOALS).map((g) => (
+                  {(genModality === 'corrida' ? RUN_GOALS : genModality==='triatlo'?TRI_GOALS:genModality==='ciclismo'?[{key:'base',label:'Base aeróbica'},{key:'ftp',label:'Desenvolver FTP'},{key:'endurance',label:'Longa duração'}]:[{key:'tecnica',label:'Técnica e adaptação'},{key:'css',label:'Desenvolver CSS'},{key:'velocidade',label:'Velocidade'},{key:'aguas_abertas',label:'Águas abertas'}]).map((g) => (
                     <Button key={g.key} type="button" variant={genGoal === g.key ? 'default' : 'outline'} size="sm" onClick={() => setGenGoal(g.key)} className="justify-start">
                       {g.label}
                     </Button>
@@ -561,7 +453,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
               <StatTile icon={CalendarCheck} label="Treinos" value={String(numTreinos)} color="#1A8A7D" />
               <StatTile icon={Clock} label="Volume total" value={`${Math.floor(totalMin / 60)}h ${totalMin % 60}min`} color="#3B82F6" />
               <StatTile icon={CalendarRange} label="Semanas" value={String(numWeeks)} color="#F97316" />
-              <StatTile icon={Flame} label="Carga (TSS)" value={String(totalTss)} color="#EF4444" />
+              <StatTile icon={Flame} label="Carga (TSS)" value={workouts.length>0&&workouts.every(w=>w.tssEstimate!=null)?String(totalTss):'Sem estimativa'} color="#EF4444" />
             </div>
           </FadeIn>
           <TrainingDistributionSummary workouts={workouts} title="Distribuição de intensidade do plano" />

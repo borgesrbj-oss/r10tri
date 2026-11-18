@@ -3,6 +3,7 @@
 import type { WorkoutStructure as StructuredWorkout } from '@/lib/training-types';
 import { buildWaLink } from '@/lib/wa';
 import { Button } from '@/components/ui/button';
+import { effortTarget } from '@/lib/training-zones';
 
 const KINDS: Record<string, string> = { aquecimento: 'Aquecimento', principal: 'Bloco principal', recuperacao: 'Recuperação', desaquecimento: 'Desaquecimento' };
 const MODALITIES = ['corrida', 'ciclismo', 'natacao', 'forca'];
@@ -72,6 +73,7 @@ export function WorkoutStructure({ value, description }: { value: unknown; descr
       {structure.steps.map((step, index) => <li key={index} className="rounded-lg border bg-background/50 p-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2"><strong>{index + 1}. {KINDS[step.kind]}</strong><span className="tabular-nums">{formatTrainingDuration(step.durationSeconds)} · {step.rest === 'passivo' ? 'Pausa passiva' : step.zone || 'Força/técnica'}</span></div>
         {step.label && <p className="mt-1">{step.label}</p>}
+        <p className="mt-1 text-xs text-muted-foreground">{step.rest==='passivo'?'Pausa sem esforço':`PSE: ${effortTarget(step.zone||'Z2').low}–${effortTarget(step.zone||'Z2').high}/10 · escala operacional de esforço`}</p>
         <p className="mt-1 break-words text-muted-foreground">{step.target.text}{step.rest === 'ativo' ? ' · recuperação ativa' : ''}{Number.isFinite(step.distanceMeters) && Number(step.distanceMeters) > 0 ? ` · distância auxiliar ~${Math.round(Number(step.distanceMeters))} m` : ''}</p>
       </li>)}
     </ol>

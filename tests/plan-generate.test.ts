@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import * as training from '../lib/training-structure';
 import { assessmentReadiness } from '../lib/assessment-validation';
+import { trainingFeedback } from '../lib/training-feedback';
 import type { TrainingProfile } from '../lib/training-types';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -22,12 +23,13 @@ function endpoint({ savedProfile = profile as TrainingProfile, user = { id: 'atl
       findUnique: async () => savedProfile,
       update: async ({ data }: any) => { state.profileUpdate = data; return data; },
     },
-    targetRace: { findMany: async () => [{ id: 'prova-a', name: 'Prova-alvo', date: new Date('2027-04-05T12:00:00Z'), distance: '42k' }] },
+    targetRace: { findMany: async () => [{id:'prova-b',name:'Prova secundária',date:new Date('2026-12-01T12:00:00Z'),distance:'5k',priority:'B'}, { id: 'prova-a', name: 'Prova-alvo', date: new Date('2027-04-05T12:00:00Z'), distance: '42k',priority:'A' }] },
     trainingPlan: {
       updateMany: async () => { state.archives++; return { count: 1 }; },
       create: async ({ data }: any) => { state.createdPlan = { id: 'novo-plano', ...data }; return state.createdPlan; },
     },
-    workout: { createMany: async ({ data }: any) => { state.savedWorkouts = data; return { count: data.length }; } },
+    workoutLog:{findMany:async()=>[]},
+    workout: {findMany:async()=>[], createMany: async ({ data }: any) => { state.savedWorkouts = data; return { count: data.length }; } },
   };
   const prisma = { ...database, $transaction: async (callback: (transaction: typeof database) => Promise<unknown>) => callback(database) };
   const dependencies: Record<string, unknown> = {
@@ -36,6 +38,7 @@ function endpoint({ savedProfile = profile as TrainingProfile, user = { id: 'atl
     '@/lib/db': { prisma },
     '@/lib/plan-engine': { generateNutrition: () => 'Orientações gerais de alimentação.' },
     '@/lib/assessment-validation': { assessmentReadiness },
+    '@/lib/training-feedback':{trainingFeedback},
     '@/lib/training-structure': { ...training, generateStructuredPlan: (...args: Parameters<typeof training.generateStructuredPlan>) => { state.generationArguments = args; return training.generateStructuredPlan(...args); } },
   };
   const sandboxModule = { exports: {} };
@@ -61,6 +64,7 @@ test('handler preserva Auto omitido e salva prova, transição e resumo de 22 se
   assert.ok(route.state.savedWorkouts.some(workout => workout.phase === 'race'));
   assert.ok(route.state.savedWorkouts.some(workout => workout.phase === 'transition'));
   assert.equal(route.state.createdPlan.summary.weeks.length, 22);
+  assert.equal(route.state.createdPlan.raceId,'prova-a');
   assert.equal(route.state.archives, 1);
   assert.equal(response.headers.get('Cache-Control'), 'no-store');
 });
