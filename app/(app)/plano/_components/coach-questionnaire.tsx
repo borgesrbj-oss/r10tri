@@ -4,7 +4,8 @@ import { useLocalDate } from '@/hooks/use-browser-state';
 import { ChevronRight, ChevronLeft, ClipboardCheck, Activity, Target, Heart, Wrench, Dumbbell, Sparkles, CheckCircle2, FlaskConical, Info, Waves, Bike, Timer, Layers } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input as BaseInput } from '@/components/ui/input';
+import { missingAssessmentFields } from '@/lib/assessment-missing';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -24,6 +25,11 @@ const STEPS = [
   { key: 'saude', icon: Heart, title: 'Saúde & Recuperação', subtitle: 'Lesões, sono e bem-estar' },
   { key: 'logistica', icon: Wrench, title: 'Logística & Equipamento', subtitle: 'Sua rotina e recursos disponíveis' },
 ];
+
+function Input({error,...props}:React.ComponentProps<typeof BaseInput>&{error?:string}) {
+ const errorId=`${props.id||props.name}-erro`;
+ return <><BaseInput {...props} aria-invalid={!!error} aria-describedby={error?errorId:props['aria-describedby']} className={`${props.className||''} ${error?'border-destructive ring-1 ring-destructive':''}`} />{error&&<p id={errorId} className="text-sm font-medium text-destructive">{error}</p>}</>;
+}
 
 const MODALITIES = [
   { k: 'triatlo', l: 'Triatlo', icon: Layers, d: 'Natação + Ciclismo + Corrida', color: 'text-primary' },
@@ -68,6 +74,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [attempted,setAttempted]=useState(false);
   const [planStartDate, setPlanStartDate] = useState('');
   const [planWeeks, setPlanWeeks] = useState('');
   const todayStr = useLocalDate();
@@ -142,6 +149,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   });
 
   const set = (key: string, val: any) => setForm(p => ({ ...p, [key]: val }));
+  const missing=missingAssessmentFields(form);
+  const fieldError=(field:string)=>attempted&&missing.some(item=>item.field===field)?missing.find(item=>item.field===field)!.label+' — preencha este campo.':undefined;
   const toggleDay = (d: string) => set('availableDays', form.availableDays.includes(d) ? form.availableDays.filter((x: string) => x !== d) : [...form.availableDays, d]);
 
   // Flags de modalidade — definem quais esportes aparecem
@@ -191,6 +200,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   }
 
   const handleSaveAndGenerate = async () => {
+    setAttempted(true);
+    if(missing.length){setErrors([]);setStep(missing[0].step);return;}
     const invalid = STEPS.map((entry, index) => ({ index, messages: stepErrors(entry.key) })).filter(entry => entry.messages.length);
     if (invalid.length) { setErrors(invalid.flatMap(entry => entry.messages)); setStep(invalid[0].index); return; }
     setErrors([]);
@@ -267,7 +278,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
         </div>
       </div>
 
-      <FadeIn key={step}>
+      {attempted&&missing.length>0&&<div role="alert" className="rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive"><p className="font-semibold">Preencha os campos abaixo para gerar o plano:</p><ul className="mt-2 space-y-2">{missing.map(item=><li key={item.field}><button type="button" className="text-left underline font-medium" onClick={()=>setStep(item.step)}>{item.label} — etapa {item.step+1}</button></li>)}</ul></div>}<FadeIn key={step}>
         <Card className="border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
@@ -310,7 +321,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
               <>
                 <div className="space-y-2">
                   <Label className="text-base">Há quantos anos você pratica {isTri ? 'triatlo' : modLabel.toLowerCase()} (ou esportes de endurance)?</Label>
-                  <Input type="number" min={0} value={form.trainingYears} onChange={e => set('trainingYears', e.target.value)} placeholder="Ex.: 3" />
+                  <Input type="number" min={0}  name="trainingYears" error={fieldError('trainingYears')} value={form.trainingYears} onChange={e => set('trainingYears', e.target.value)} placeholder="Ex.: 3" />
                   <p className="text-xs text-muted-foreground">Considere também corrida/ciclismo/natação isolados</p>
                 </div>
                 <div className="space-y-2">
@@ -341,9 +352,9 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   <legend className="px-1 text-sm font-semibold">Resultado recente de CORRIDA — opcional</legend>
                   <p className="text-xs text-muted-foreground">Informe uma prova de corrida independente já concluída. Não use o tempo total de triatlo. Esses dados alimentam a estimativa matemática de prova; deixar em branco não cria resultados presumidos.</p>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-1"><Label htmlFor="recent-race-distance">Distância (km)</Label><Input id="recent-race-distance" type="number" step="0.001" min="3" max="42.195" value={form.recentRaceDistanceKm} onChange={event => set('recentRaceDistanceKm', event.target.value)} placeholder="Ex.: 5" /></div>
-                    <div className="space-y-1"><Label htmlFor="recent-race-time">Tempo (m:ss ou h:mm:ss)</Label><Input id="recent-race-time" value={form.recentRaceTime} onChange={event => set('recentRaceTime', event.target.value)} placeholder="Ex.: 24:30" /></div>
-                    <div className="space-y-1"><Label htmlFor="recent-race-date">Data da prova</Label><Input id="recent-race-date" type="date" max={todayStr || undefined} value={form.recentRaceDate} onChange={event => set('recentRaceDate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="recent-race-distance">Distância (km)</Label><Input id="recent-race-distance" type="number" step="0.001" min="3" max="42.195"  name="recentRaceDistanceKm" error={fieldError('recentRaceDistanceKm')} value={form.recentRaceDistanceKm} onChange={event => set('recentRaceDistanceKm', event.target.value)} placeholder="Ex.: 5" /></div>
+                    <div className="space-y-1"><Label htmlFor="recent-race-time">Tempo (m:ss ou h:mm:ss)</Label><Input id="recent-race-time"  name="recentRaceTime" error={fieldError('recentRaceTime')} value={form.recentRaceTime} onChange={event => set('recentRaceTime', event.target.value)} placeholder="Ex.: 24:30" /></div>
+                    <div className="space-y-1"><Label htmlFor="recent-race-date">Data da prova</Label><Input id="recent-race-date" type="date" max={todayStr || undefined}  name="recentRaceDate" error={fieldError('recentRaceDate')} value={form.recentRaceDate} onChange={event => set('recentRaceDate', event.target.value)} /></div>
                   </div>
                 </fieldset>
               </>
@@ -449,11 +460,11 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <Label>Tempo nos 400m (mm:ss)</Label>
-                        <Input value={form.testCSS400} onChange={e => set('testCSS400', e.target.value)} placeholder="Ex.: 7:20" />
+                        <Input  name="testCSS400" error={fieldError('testCSS400')} value={form.testCSS400} onChange={e => set('testCSS400', e.target.value)} placeholder="Ex.: 7:20" />
                       </div>
                       <div className="space-y-1">
                         <Label>Tempo nos 200m (mm:ss)</Label>
-                        <Input value={form.testCSS200} onChange={e => set('testCSS200', e.target.value)} placeholder="Ex.: 3:30" />
+                        <Input  name="testCSS200" error={fieldError('testCSS200')} value={form.testCSS200} onChange={e => set('testCSS200', e.target.value)} placeholder="Ex.: 3:30" />
                       </div>
                     </div>
                     {cssCalc && (
@@ -481,11 +492,11 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <Label>Potência média 20min (watts)</Label>
-                        <Input type="number" value={form.testFTP20min} onChange={e => set('testFTP20min', e.target.value)} placeholder="Ex.: 210" />
+                        <Input type="number"  name="testFTP20min" error={fieldError('testFTP20min')} value={form.testFTP20min} onChange={e => set('testFTP20min', e.target.value)} placeholder="Ex.: 210" />
                       </div>
                       <div className="space-y-1">
                         <Label>FC média no teste (bpm)</Label>
-                        <Input type="number" value={form.testFTPHR} onChange={e => set('testFTPHR', e.target.value)} placeholder="Ex.: 165" />
+                        <Input type="number"  name="testFTPHR" error={fieldError('testFTPHR')} value={form.testFTPHR} onChange={e => set('testFTPHR', e.target.value)} placeholder="Ex.: 165" />
                       </div>
                     </div>
                     {ftpCalc && (
@@ -510,21 +521,21 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <Label>Tempo nos 3km (mm:ss)</Label>
-                        <Input value={form.testRun3km} onChange={e => set('testRun3km', e.target.value)} placeholder="Ex.: 14:30" />
+                        <Input  name="testRun3km" error={fieldError('testRun3km')} value={form.testRun3km} onChange={e => set('testRun3km', e.target.value)} placeholder="Ex.: 14:30" />
                       </div>
                       <div className="space-y-1">
                         <Label>FC média no teste (bpm)</Label>
-                        <Input type="number" value={form.testRunHR} onChange={e => set('testRunHR', e.target.value)} placeholder="Ex.: 172" />
+                        <Input type="number"  name="testRunHR" error={fieldError('testRunHR')} value={form.testRunHR} onChange={e => set('testRunHR', e.target.value)} placeholder="Ex.: 172" />
                       </div>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <Label>OU distância em 30min (km)</Label>
-                        <Input type="number" step="0.1" value={form.testRun30min} onChange={e => set('testRun30min', e.target.value)} placeholder="Ex.: 5.8" />
+                        <Input type="number" step="0.1"  name="testRun30min" error={fieldError('testRun30min')} value={form.testRun30min} onChange={e => set('testRun30min', e.target.value)} placeholder="Ex.: 5.8" />
                       </div>
                       <div className="space-y-1">
                         <Label>Pace médio de limiar (min/km)</Label>
-                        <Input value={form.testRunPace} onChange={e => set('testRunPace', e.target.value)} placeholder="Ex.: 5:10" />
+                        <Input  name="testRunPace" error={fieldError('testRunPace')} value={form.testRunPace} onChange={e => set('testRunPace', e.target.value)} placeholder="Ex.: 5:10" />
                       </div>
                     </div>
                   </div>
@@ -536,28 +547,28 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {current.key === 'metricas' && (
               <>
                 <p className="text-sm text-muted-foreground">Informe sua data de nascimento. As demais referências medidas são opcionais: deixe em branco o que não souber, sem estimar números.</p>
-                <div className="space-y-2"><Label htmlFor="assessment-birth-date">Data de nascimento</Label><Input id="assessment-birth-date" type="date" max={todayStr || undefined} value={form.birthDate} onChange={event => set('birthDate', event.target.value)} /><p className="text-xs text-muted-foreground">Usada na triagem; o app não estima sua FC máxima a partir da idade.</p></div>
+                <div className="space-y-2"><Label htmlFor="assessment-birth-date">Data de nascimento</Label><Input id="assessment-birth-date" type="date" max={todayStr || undefined}  name="birthDate" error={fieldError('birthDate')} value={form.birthDate} onChange={event => set('birthDate', event.target.value)} /><p className="text-xs text-muted-foreground">Usada na triagem; o app não estima sua FC máxima a partir da idade.</p></div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Peso atual (kg)</Label>
-                    <Input type="number" step="0.1" value={form.currentWeight} onChange={e => set('currentWeight', e.target.value)} placeholder="75.0" />
+                    <Input type="number" step="0.1"  name="currentWeight" error={fieldError('currentWeight')} value={form.currentWeight} onChange={e => set('currentWeight', e.target.value)} placeholder="75.0" />
                   </div>
                   <div className="space-y-2">
                     <Label>Peso meta (kg) <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                    <Input type="number" step="0.1" value={form.targetWeight} onChange={e => set('targetWeight', e.target.value)} placeholder="70.0" />
+                    <Input type="number" step="0.1"  name="targetWeight" error={fieldError('targetWeight')} value={form.targetWeight} onChange={e => set('targetWeight', e.target.value)} placeholder="70.0" />
                   </div>
                 </div>
                 <fieldset className="space-y-3 rounded-lg border p-4">
                   <legend className="px-1 text-sm font-semibold">Frequência cardíaca medida — opcional</legend>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-1"><Label htmlFor="max-heart-rate">FC máxima (bpm)</Label><Input id="max-heart-rate" type="number" min="30" max="250" value={form.maxHeartRate} onChange={event => set('maxHeartRate', event.target.value)} /></div>
-                    <div className="space-y-1"><Label htmlFor="resting-heart-rate">FC de repouso (bpm)</Label><Input id="resting-heart-rate" type="number" min="25" max="150" value={form.restingHeartRate} onChange={event => set('restingHeartRate', event.target.value)} /></div>
-                    <div className="space-y-1"><Label htmlFor="threshold-heart-rate">FC de limiar (bpm)</Label><Input id="threshold-heart-rate" type="number" min="30" max="250" value={form.thresholdHeartRate} onChange={event => set('thresholdHeartRate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="max-heart-rate">FC máxima (bpm)</Label><Input id="max-heart-rate" type="number" min="30" max="250"  name="maxHeartRate" error={fieldError('maxHeartRate')} value={form.maxHeartRate} onChange={event => set('maxHeartRate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="resting-heart-rate">FC de repouso (bpm)</Label><Input id="resting-heart-rate" type="number" min="25" max="150"  name="restingHeartRate" error={fieldError('restingHeartRate')} value={form.restingHeartRate} onChange={event => set('restingHeartRate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="threshold-heart-rate">FC de limiar (bpm)</Label><Input id="threshold-heart-rate" type="number" min="30" max="250"  name="thresholdHeartRate" error={fieldError('thresholdHeartRate')} value={form.thresholdHeartRate} onChange={event => set('thresholdHeartRate', event.target.value)} /></div>
                   </div>
                 </fieldset>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {showRun && <div className="space-y-2"><Label htmlFor="run-threshold-pace">Pace de limiar confirmado (m:ss/km)</Label><Input id="run-threshold-pace" value={form.runThresholdPace} onChange={event => set('runThresholdPace', event.target.value)} placeholder="Somente se conhecido" /></div>}
-                  {showSwim && <div className="space-y-2"><Label htmlFor="swim-css-pace">CSS confirmado (m:ss/100 m)</Label><Input id="swim-css-pace" value={form.swimCssPace} onChange={event => set('swimCssPace', event.target.value)} placeholder={cssCalc || 'Somente se conhecido'} /></div>}
+                  {showRun && <div className="space-y-2"><Label htmlFor="run-threshold-pace">Pace de limiar confirmado (m:ss/km)</Label><Input id="run-threshold-pace"  name="runThresholdPace" error={fieldError('runThresholdPace')} value={form.runThresholdPace} onChange={event => set('runThresholdPace', event.target.value)} placeholder="Somente se conhecido" /></div>}
+                  {showSwim && <div className="space-y-2"><Label htmlFor="swim-css-pace">CSS confirmado (m:ss/100 m)</Label><Input id="swim-css-pace"  name="swimCssPace" error={fieldError('swimCssPace')} value={form.swimCssPace} onChange={event => set('swimCssPace', event.target.value)} placeholder={cssCalc || 'Somente se conhecido'} /></div>}
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {showBike && (
@@ -568,7 +579,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   )}
                   <div className="space-y-2">
                     <Label>VO2max <span className="text-muted-foreground text-xs">(se souber)</span></Label>
-                    <Input type="number" step="0.1" value={form.vo2max} onChange={e => set('vo2max', e.target.value)} placeholder="45" />
+                    <Input type="number" step="0.1"  name="vo2max" error={fieldError('vo2max')} value={form.vo2max} onChange={e => set('vo2max', e.target.value)} placeholder="45" />
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -614,7 +625,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Tempo-alvo na próxima prova <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                  <Input aria-label="Tempo-alvo na próxima prova" value={form.goalTime} onChange={e => set('goalTime', e.target.value)} placeholder="Ex.: 45:00 ou 1:40:00" />
+                  <Input aria-label="Tempo-alvo na próxima prova"  name="goalTime" error={fieldError('goalTime')} value={form.goalTime} onChange={e => set('goalTime', e.target.value)} placeholder="Ex.: 45:00 ou 1:40:00" />
                   <p className="text-xs text-muted-foreground">Para comparação numérica na corrida, use m:ss ou h:mm:ss e registre um resultado recente. No triatlo, não comparamos o tempo total com previsão de corrida isolada.</p>
                 </div>
               </>
@@ -639,7 +650,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Horas de sono por noite</Label>
-                    <Input type="number" step="0.5" min={3} max={12} value={form.sleepHours} onChange={e => set('sleepHours', e.target.value)} placeholder="7" />
+                    <Input type="number" step="0.5" min={3} max={12}  name="sleepHours" error={fieldError('sleepHours')} value={form.sleepHours} onChange={e => set('sleepHours', e.target.value)} placeholder="7" />
                   </div>
                   <div className="space-y-2">
                     <Label>Nível de estresse no dia a dia</Label>
@@ -652,7 +663,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label>Restrições alimentares <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-                  <Input value={form.dietaryNotes} onChange={e => set('dietaryNotes', e.target.value)} placeholder="Ex.: vegetariano, intolerante à lactose, sem glúten..." />
+                  <Input  name="dietaryNotes" error={fieldError('dietaryNotes')} value={form.dietaryNotes} onChange={e => set('dietaryNotes', e.target.value)} placeholder="Ex.: vegetariano, intolerante à lactose, sem glúten..." />
                 </div>
               </>
             )}
@@ -661,18 +672,18 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {current.key === 'logistica' && (
               <>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label htmlFor="height-cm">Altura em cm (opcional)</Label><Input id="height-cm" type="number" min={80} max={250} value={form.heightCm} onChange={event=>set('heightCm',event.target.value)} placeholder="Pode preencher depois" /></div>
-                  <div className="space-y-2"><Label htmlFor="inactivity-weeks">Semanas afastado dos treinos</Label><Input id="inactivity-weeks" type="number" min={0} max={104} value={form.inactivityWeeks} onChange={event=>set('inactivityWeeks',event.target.value)} placeholder="0 se não houve afastamento" /></div>
+                  <div className="space-y-2"><Label htmlFor="height-cm">Altura em cm (opcional)</Label><Input id="height-cm" type="number" min={80} max={250}  name="heightCm" error={fieldError('heightCm')} value={form.heightCm} onChange={event=>set('heightCm',event.target.value)} placeholder="Pode preencher depois" /></div>
+                  <div className="space-y-2"><Label htmlFor="inactivity-weeks">Semanas afastado dos treinos</Label><Input id="inactivity-weeks" type="number" min={0} max={104}  name="inactivityWeeks" error={fieldError('inactivityWeeks')} value={form.inactivityWeeks} onChange={event=>set('inactivityWeeks',event.target.value)} placeholder="0 se não houve afastamento" /></div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-base">Horas DISPONÍVEIS por semana para treino</Label>
-                    <Input type="number" step="0.5" min={0.5} max={40} value={form.weeklyHours} onChange={e => set('weeklyHours', e.target.value)} placeholder="Informe seu tempo disponível" />
+                    <Input type="number" step="0.5" min={0.5} max={40}  name="weeklyHours" error={fieldError('weeklyHours')} value={form.weeklyHours} onChange={e => set('weeklyHours', e.target.value)} placeholder="Informe seu tempo disponível" />
                     <p className="text-xs text-muted-foreground">Informe tempo efetivo de treino; não some deslocamentos.</p>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-base">Quantas horas você treina HOJE por semana?</Label>
-                    <Input type="number" step="0.5" min={0} max={40} value={form.currentWeeklyVol} onChange={e => set('currentWeeklyVol', e.target.value)} placeholder="0 se ainda não está treinando" />
+                    <Input type="number" step="0.5" min={0} max={40}  name="currentWeeklyVol" error={fieldError('currentWeeklyVol')} value={form.currentWeeklyVol} onChange={e => set('currentWeeklyVol', e.target.value)} placeholder="0 se ainda não está treinando" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -766,7 +777,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
         </Card>
       </FadeIn>
 
-      {(errors.length > 0 || generationErrors.length > 0) && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Revise os dados da triagem</p><ul className="mt-2 list-disc space-y-1 pl-4">{[...errors, ...generationErrors].map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
+      {(errors.length > 0 || generationErrors.length > 0) && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"><p className="font-semibold">Revise os dados da triagem</p><ul className="mt-2 list-disc space-y-1 pl-4">{[...errors, ...generationErrors].map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
 
       {/* Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -779,7 +790,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             <Sparkles className="mr-2 h-4 w-4" /> Gerar Plano Personalizado
           </Button>
         ) : (
-          <Button onClick={() => { const messages = stepErrors(current.key); setErrors(messages); if (!messages.length) setStep(s => s + 1); }}>
+          <Button onClick={() => { setAttempted(true); const messages = stepErrors(current.key); const required=missing.filter(item=>item.step===step); setErrors([...messages,...required.map(item=>`${item.label}: preencha este campo.`)]); if(required.length)return; if (!messages.length) setStep(s => s + 1); }}>
             Próximo <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         )}

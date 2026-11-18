@@ -290,7 +290,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
       } else {
         const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
         const message = data?.error || 'Não foi possível gerar o plano.';
-        setGenerationErrors([message, ...details]); toast.error(message);
+        setGenerationErrors([message, ...details]); if(res.status===422)setShowQuestionnaire(true); toast.error(message);
       }
     } catch { setGenerationErrors(['Falha de conexão. Seus planos anteriores foram preservados; tente novamente quando estiver online.']); toast.error('Erro ao gerar plano'); }
     finally { setGenerating(false); }
