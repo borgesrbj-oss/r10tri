@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
   }
 
-  const where: any = { planId };
+  const where: any = { planId,paused:false };
   if (modality !== 'todos') where.modality = modality;
   const workouts = await prisma.workout.findMany({ where, orderBy: { date: 'asc' } });
   if (workouts.length === 0) return NextResponse.json({ error: 'Nenhum treino para exportar' }, { status: 404 });

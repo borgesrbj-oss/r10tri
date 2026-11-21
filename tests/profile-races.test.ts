@@ -1,3 +1,4 @@
+import { refreshFutureBikeTargets } from '../lib/workout-reassessment';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,11 +17,13 @@ type Handler = { POST: (request: Request) => Promise<Response>; GET: () => Promi
 
 // Exercita os handlers reais, trocando somente sessão e persistência por fronteiras controladas.
 function handler(file: string, prisma: unknown, session: Session = { user: { id: 'atleta-atual' } }): Handler {
+  const db=prisma as any;db.$transaction??=async (run:any)=>run(db);
   const source = ts.transpileModule(fs.readFileSync(path.join(root, file), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true },
   }).outputText;
   const sandboxModule = { exports: {} };
   const dependencies: Record<string, unknown> = {
+    '@/lib/workout-reassessment':{refreshFutureBikeTargets},
     'next/server': { NextResponse: { json: (body: unknown, options?: ResponseInit) => Response.json(body, options) } },
     '@/auth': { auth: async () => session },
     '@/lib/db': { prisma },

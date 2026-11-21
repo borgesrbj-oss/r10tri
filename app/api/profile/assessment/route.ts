@@ -1,3 +1,4 @@
+import { refreshFutureBikeTargets } from '@/lib/workout-reassessment';
 import { publicProfile } from '@/lib/profile-public';
 import { assessmentData, assessmentReadiness } from '@/lib/assessment-validation';
 import { NextRequest, NextResponse } from 'next/server';
@@ -15,12 +16,13 @@ export async function POST(req: NextRequest) {
   const parsed = assessmentData(await req.json().catch(()=>null), previous);
   if (!parsed.ok) return NextResponse.json({error:'Confira os dados da triagem.',details:parsed.errors},{status:422,...options});
   const readiness=assessmentReadiness({...previous,...parsed.data});
-  await prisma.athleteProfile.upsert({
+  const refreshed=await prisma.$transaction(async tx=>{const profile=await tx.athleteProfile.upsert({
     where:{userId},
     update:{...parsed.data,coachAssessmentDone:readiness.complete},
     create:{userId,...parsed.data,coachAssessmentDone:readiness.complete,availableDays:parsed.data.availableDays || []},
   });
-  return NextResponse.json({ok:true,assessment:readiness},options);
+  return refreshFutureBikeTargets(tx,userId,previous,profile);},{timeout:20000});
+  return NextResponse.json({ok:true,assessment:readiness,updatedFutureBikeWorkouts:refreshed},options);
 }
 
 export async function GET() {

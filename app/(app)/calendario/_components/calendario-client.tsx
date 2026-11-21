@@ -1,4 +1,7 @@
 'use client';
+import {WeekReview} from '@/components/week-review';
+import {WorkoutActions} from '@/components/workout-actions';
+
 import { useState } from 'react';
 import { Calendar, Waves, Bike, Timer, Dumbbell, CheckCircle2, ClipboardEdit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +23,7 @@ const colors: Record<string, string> = { natacao: 'bg-blue-50 dark:bg-blue-950',
 
 export function CalendarioClient({ workouts }: { workouts: any[] }) {
   const [filter, setFilter] = useState('todos');
-  const [view,setView]=useState<CalendarView>('todos');
+  const [view,setView]=useState<CalendarView>('semana');
   const [anchor,setAnchor]=useState(()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()));
   const [logDialog, setLogDialog] = useState<any>(null);
   const [logForm, setLogForm] = useState({ actualDuration: '', actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '' });
@@ -95,6 +98,7 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
         ))}
       </div>
 
+      <WeekReview date={anchor} revision={workouts} />
       {(filtered?.length ?? 0) === 0 ? (
         <Card><CardContent className="p-12 text-center text-muted-foreground"><Calendar className="h-12 w-12 mx-auto mb-4 opacity-30" /><p>Nenhum treino encontrado</p></CardContent></Card>
       ) : (
@@ -109,20 +113,20 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
                   {wkWorkouts?.map((w: any) => {
                     const Icon = icons?.[w?.modality] ?? Dumbbell;
                     return (
-                      <div key={w?.id} className={`flex items-center gap-3 p-3 rounded-lg ${colors?.[w?.modality] ?? 'bg-muted/50'} ${w?.completed ? 'opacity-60' : ''}`}>
+                      <div key={w?.id}><div className={`flex items-center gap-3 p-3 rounded-lg ${colors?.[w?.modality] ?? 'bg-muted/50'} ${w?.completed ? 'opacity-60' : ''}`}>
                         <Icon className="h-5 w-5 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">{w?.title}</p>
                           <p className="text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {w?.duration}min · {w?.targetZone ?? ''}</p>
                         </div>
-                        {w?.completed ? (
+                        {w?.paused ? <Badge variant="secondary">Pausado</Badge> : w?.completed ? (
                           <Badge variant="secondary" className="shrink-0"><CheckCircle2 className="h-3 w-3 mr-1" /> Feito</Badge>
                         ) : (
                           <Button variant="outline" size="sm" onClick={() => { setLogDialog(w); setLogError(''); setLogForm({ actualDuration: String(w?.duration ?? ''), actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '' }); }}>
                             <ClipboardEdit className="h-4 w-4 mr-1" /> Registrar
                           </Button>
                         )}
-                      </div>
+                      </div><WorkoutActions workout={w} onChanged={date=>{setAnchor(date);setView("semana");}} /></div>
                     );
                   })}
                 </div>

@@ -291,6 +291,11 @@
             "type": "string",
             "nullable": true,
             "description": "Foco específico salvo por modalidade. A geração sem goal explícito reutiliza este valor."
+          },
+          "planningPreferences": {
+            "type": "object",
+            "nullable": true,
+            "description": "Preferências de dias por tipo, doubleDays, maxSessionMinutes e recentMinutes; validar enums e limites conforme API de triagem."
           }
         }
       },
@@ -459,6 +464,10 @@
               }
             ],
             "description": "Estrutura versionada nos treinos novos; ausente em registros legados."
+          },
+          "paused": {
+            "type": "boolean",
+            "description": "Pausa reversível; preserva histórico e exclui sessão do volume ativo."
           }
         }
       },
@@ -1576,6 +1585,11 @@
                     "type": "string",
                     "nullable": true,
                     "description": "Foco específico salvo por modalidade. A geração sem goal explícito reutiliza este valor."
+                  },
+                  "planningPreferences": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Preferências de dias por tipo, doubleDays, maxSessionMinutes e recentMinutes; validar enums e limites conforme API de triagem."
                   }
                 }
               }
@@ -4142,6 +4156,112 @@
           },
           "401": {
             "description": "Sessão ausente."
+          }
+        }
+      }
+    },
+    "/api/week-review": {
+      "get": {
+        "summary": "Revisar conflitos e espaços da própria semana, sem alterar sessões",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Volume, avisos e espaços de agenda; não é liberação fisiológica."
+          },
+          "401": {
+            "description": "Não autorizado."
+          },
+          "422": {
+            "description": "Data inválida."
+          }
+        }
+      }
+    },
+    "/api/workouts/adapt": {
+      "post": {
+        "summary": "Pausar, retomar, encurtar ou substituir sessão não concluída",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "action"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "pausar",
+                      "retomar",
+                      "encurtar",
+                      "substituir"
+                    ]
+                  },
+                  "minutes": {
+                    "type": "integer",
+                    "minimum": 4,
+                    "maximum": 480
+                  },
+                  "modality": {
+                    "type": "string",
+                    "enum": [
+                      "corrida",
+                      "ciclismo",
+                      "natacao",
+                      "forca"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sessão adaptada; revisar semana."
+          },
+          "401": {
+            "description": "Não autorizado."
+          },
+          "404": {
+            "description": "Não encontrado para este proprietário."
+          },
+          "409": {
+            "description": "Sessão concluída, histórico preservado."
+          },
+          "422": {
+            "description": "Ação ou estrutura inválida."
           }
         }
       }

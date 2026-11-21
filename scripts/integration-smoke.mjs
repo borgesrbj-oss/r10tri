@@ -60,6 +60,11 @@ const scenarioNames = [
   'orcamento-diario-em-todas-as-modalidades',
   'edicao-atualiza-blocos-e-preserva-observacao',
   'objetivo-salvo-na-triagem-influencia-geracao',
+  'ftp-futuro-preserva-historico',
+  'adaptacao-alheia-bloqueada',
+  'pausa-reavalia-volume-semanal',
+  'retomar-encurtar-e-substituir-preservam-blocos',
+  'preferencias-persistidas-limitam-a-geracao',
 ];
 
 function client() {
@@ -315,8 +320,26 @@ try {
     const saved=await atletaA.request('/api/profile/assessment',{method:'POST',body:{modality:'triatlo',trainingGoal:'sprint',goalType:'completar'}});
     assert.equal(saved.status,200);
     const generated=await atletaA.request('/api/plan/generate',{method:'POST',body:{weeks:2}});
-    assert.equal(generated.status,200);assert.equal(generated.data.summary.goal,'sprint');
+    assert.equal(generated.status,200);assert.equal(generated.data.summary.goal,'sprint');planId=generated.data.planId;
     const profile=await atletaA.request('/api/profile');assert.equal(profile.data.trainingGoal,'sprint');
+  });
+
+  await check(async()=>{
+    const all=await atletaA.request('/api/workouts'),bike=all.data.find(w=>w.planId===planId&&w.modality==='ciclismo'&&!w.completed);assert.ok(bike);
+    const history=await prisma.workout.create({data:{userId:identities.atletaA.id,modality:'ciclismo',date:new Date(Date.now()+86400000),duration:bike.duration,structure:bike.structure,completed:true,description:bike.description,title:'Histórico fictício preservado'}});
+    const before=JSON.stringify(history.structure);
+    const response=await atletaA.request('/api/profile',{method:'POST',body:{ftp:250,hasPowerMeter:true,hasTrainer:false}});assert.equal(response.status,200);
+    const changed=await prisma.workout.findUnique({where:{id:bike.id}}),unchanged=await prisma.workout.findUnique({where:{id:history.id}});
+    assert.equal(JSON.stringify(unchanged.structure),before);assert.equal(changed.duration,bike.duration);assert.ok(changed.structure.steps.filter(s=>s.zone).every(s=>s.target.unit==='W'&&s.target.text.includes('% do FTP')));
+  });
+  await check(async()=>{const all=await atletaA.request('/api/workouts'),item=all.data.find(w=>w.planId===planId&&!w.completed);const response=await atletaB.request('/api/workouts/adapt',{method:'POST',body:{id:item.id,action:'pausar'}});denied(response);});
+  await check(async()=>{const all=await atletaA.request('/api/workouts'),item=all.data.find(w=>w.planId===planId&&!w.completed);const before=await atletaA.request('/api/week-review?date='+item.date.slice(0,10));assert.equal(before.status,200);const response=await atletaA.request('/api/workouts/adapt',{method:'POST',body:{id:item.id,action:'pausar'}});assert.equal(response.status,200);const after=await atletaA.request('/api/week-review?date='+item.date.slice(0,10));assert.equal(before.data.plannedMinutes-after.data.plannedMinutes,item.duration);const record=await atletaA.request('/api/workouts/log',{method:'POST',body:{workoutId:item.id,rpe:5}});assert.equal(record.status,409);});
+  await check(async()=>{const all=await atletaA.request('/api/workouts'),item=all.data.find(w=>w.planId===planId&&w.paused);assert.equal((await atletaA.request('/api/workouts/adapt',{method:'POST',body:{id:item.id,action:'retomar'}})).status,200);assert.equal((await atletaA.request('/api/workouts/adapt',{method:'POST',body:{id:item.id,action:'encurtar',minutes:item.duration-1}})).status,200);assert.equal((await atletaA.request('/api/workouts/adapt',{method:'POST',body:{id:item.id,action:'substituir',modality:'corrida'}})).status,200);const changed=await prisma.workout.findUnique({where:{id:item.id}});assert.equal(changed.modality,'corrida');assert.equal(changed.structure.steps.reduce((s,w)=>s+w.durationSeconds,0),changed.duration*60);assert.equal(changed.paused,false);});
+  await check(async()=>{
+    const saved=await atletaA.request('/api/profile',{method:'POST',body:{planningPreferences:{preferred:{longo:['sab'],brick:['sab'],tiros:['ter'],descanso:['dom']},doubleDays:['sab'],maxSessionMinutes:30,recentMinutes:{corrida:40,ciclismo:60,natacao:40}}}});assert.equal(saved.status,200);
+    const generated=await atletaA.request('/api/plan/generate',{method:'POST',body:{weeks:8}});assert.equal(generated.status,200);
+    const sessions=(await atletaA.request('/api/workouts')).data.filter(w=>w.planId===generated.data.planId);assert.ok(sessions.length>0);assert.ok(sessions.every(w=>w.duration<=30));
+    const profile=await atletaA.request('/api/profile');assert.equal(profile.data.planningPreferences.maxSessionMinutes,30);
   });
   console.log(JSON.stringify({ cenarios: scenario, aprovados: passed, falhas: 0, contasTemporarias: 4 }));
 } catch (error) {

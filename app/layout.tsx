@@ -17,7 +17,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#1A8A7D',
+  themeColor: '#101113',
   colorScheme: 'light dark',
 }
 
@@ -107,7 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${jakartaSans.variable} ${jetbrainsMono.variable} font-sans`}>
         <SessionProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="dark" storageKey="r10-triatlo-theme" enableSystem disableTransitionOnChange>
             {children}
             <Toaster />
             <ChunkLoadErrorHandler />

@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       const structure=editWorkoutStructure(existing.structure,data.duration??existing.duration,data.modality??existing.modality,targetZone??null,profile);
       const previous=String(description??existing.description??'');
       const notes=original?previous.replace(describeStructure(original),'').trim():previous;
-      data.structure=JSON.parse(JSON.stringify(structure));
+      data.structure=JSON.parse(JSON.stringify(structure)); data.tssEstimate=null; data.targetZone=structure.steps.filter(step=>step.kind==="principal"&&step.zone).sort((a,b)=>Number(b.zone!.slice(1))-Number(a.zone!.slice(1)))[0]?.zone||"Z1";
       data.description=[describeStructure(structure),notes?`Observação preservada da edição (não substitui os blocos acima):\n${notes}`:''].filter(Boolean).join('\n\n');
     }
     catch {return NextResponse.json({error:'Não foi possível preservar os blocos com estes valores. Revise a duração e a estrutura.'},{status:422});}

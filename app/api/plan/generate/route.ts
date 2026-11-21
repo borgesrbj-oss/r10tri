@@ -33,7 +33,7 @@ export async function POST(req:NextRequest) {
   const now=new Date();
   const [logs,past]=await Promise.all([
     prisma.workoutLog.findMany({where:{userId,completedAt:{gte:new Date(now.getTime()-7*86400000)}},select:{completedAt:true,actualDuration:true,rpe:true,sleepHours:true,fatigueScore:true,painScore:true},take:50,orderBy:{completedAt:'desc'}}),
-    prisma.workout.findMany({where:{userId,date:{gte:new Date(now.getTime()-7*86400000),lt:now},OR:[{planId:null},{plan:{status:'active'}}]},select:{date:true,completed:true},take:50}),
+    prisma.workout.findMany({where:{userId,paused:false,date:{gte:new Date(now.getTime()-7*86400000),lt:now},OR:[{planId:null},{plan:{status:'active'}}]},select:{date:true,completed:true},take:50}),
   ]);
   const feedback=trainingFeedback(logs,past,now);
   const generated=generateStructuredPlan(selected,races,profile!.availableDays,body.startDate,weeks,feedback);

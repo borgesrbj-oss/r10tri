@@ -132,6 +132,7 @@ model AthleteProfile {
   strongestSport    String?  // natacao, ciclismo, corrida
   goalType          String?  // completar, melhorar_tempo, competir, top_age_group
   trainingGoal      String?  // foco específico, validado por modalidade
+  planningPreferences Json? // preferências por tipo, sessões duplas e volume recente por modalidade
   goalTime          String?  // tempo-alvo se aplicável
   injuryHistory     String?  // histórico detalhado de lesões
   currentInjuries   String?  // lesões atuais
@@ -219,6 +220,7 @@ model Workout {
   phase          String?      // base, construcao, pico, polimento
   weekNumber     Int?
   completed      Boolean      @default(false)
+  paused         Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)

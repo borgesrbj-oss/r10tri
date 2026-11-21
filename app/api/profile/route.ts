@@ -1,3 +1,4 @@
+import { refreshFutureBikeTargets } from '@/lib/workout-reassessment';
 import { publicProfile } from '@/lib/profile-public';
 import { assessmentData } from '@/lib/assessment-validation';
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     dashboardPrefs: raw.dashboardPrefs,
     aboutMe: raw.aboutMe,
   };
-  const profile = await prisma.athleteProfile.upsert({
+  const profile = await prisma.$transaction(async tx=>{const saved=await tx.athleteProfile.upsert({
     where: { userId: session.user.id },
     update: {
       ...validated.data,
@@ -90,5 +91,6 @@ export async function POST(req: NextRequest) {
       aboutMe: data.aboutMe || null,
     },
   });
+  await refreshFutureBikeTargets(tx,session.user.id,previous,saved);return saved;},{timeout:20000});
   return NextResponse.json(publicProfile(profile));
 }

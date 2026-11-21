@@ -1,0 +1,3047 @@
+[
+  {
+    "profile": "Iniciante com três dias e limiares desconhecidos",
+    "week": 1,
+    "summary": {
+      "weekNumber": 1,
+      "phase": "base",
+      "recovery": false,
+      "budgetMinutes": 60,
+      "plannedMinutes": 60,
+      "targetHighFraction": 0,
+      "distribution": {
+        "lowSeconds": 3520,
+        "moderateSeconds": 0,
+        "highSeconds": 0,
+        "restSeconds": 80,
+        "enduranceSeconds": 3520,
+        "strengthSeconds": 0,
+        "totalSeconds": 3600,
+        "highFraction": 0
+      },
+      "warnings": [
+        "Menos de 20% intenso nesta semana por adaptação, recuperação, prova, disponibilidade ou necessidade de revisão; não compensar com intensidade extra."
+      ]
+    },
+    "workouts": [
+      {
+        "date": "2027-01-05T12:00:00.000Z",
+        "modality": "natacao",
+        "title": "Técnica · Natação · Base · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 2 min 24 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n2. Série 1: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n3. Pausa 1 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n4. Série 2: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n5. Pausa 2 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n6. Série 3: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n7. Pausa 3 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n8. Série 4: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n9. Pausa 4 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n10. Série 5: respiração e alinhamento, nado fácil em piscina supervisionada: 1 min 4 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n11. Recuperação ativa confortável: 1 min 36 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n12. Desaquecimento e retorno à calma: 1 min 36 s · Z1 · Percepção 1–2/10, confortável e conversacional.\nTotal: 16 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 14 min 40 s; Z1–Z2 14 min 40 s, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nAtenção: Sem CSS: prescrição por percepção, sem ritmo fictício por 100 m.\nPercepção de esforço (0–10): Z1: 1–2. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 16,
+        "targetZone": "Z1",
+        "tssEstimate": null,
+        "phase": "base",
+        "weekNumber": 1,
+        "structure": {
+          "version": 1,
+          "modality": "natacao",
+          "phase": "base",
+          "durationSeconds": 960,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 144,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 1: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 1 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 2: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 2 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 3: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 3 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 4: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 4 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 5: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 64,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 96,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 96,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "CSS não informado; não foram inventados ritmos de natação.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 880,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 80,
+            "enduranceSeconds": 880,
+            "strengthSeconds": 0,
+            "totalSeconds": 960,
+            "highFraction": 0
+          },
+          "warnings": [
+            "Sem CSS: prescrição por percepção, sem ritmo fictício por 100 m."
+          ],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-01-07T12:00:00.000Z",
+        "modality": "ciclismo",
+        "title": "Cadência · Ciclismo · Base · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 3 min 54 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n2. Cadência 1/3: giro confortável e fluido, sem saltar no selim; sem aumentar potência: 5 min 38 s · Z2 · Percepção 2–3/10, confortável e conversacional.\n3. Cadência 2/3: voltar à cadência espontânea; sem aumentar potência: 5 min 38 s · Z2 · Percepção 2–3/10, confortável e conversacional.\n4. Cadência 3/3: giro confortável e fluido, sem saltar no selim; sem aumentar potência: 5 min 38 s · Z2 · Percepção 2–3/10, confortável e conversacional.\n5. Recuperação ativa confortável: 2 min 36 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n6. Desaquecimento e retorno à calma: 2 min 36 s · Z1 · Percepção 1–2/10, confortável e conversacional.\nTotal: 26 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 26 min; Z1–Z2 26 min, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nAtenção: Sem FTP: prescrição por percepção, sem potência fictícia.\nPercepção de esforço (0–10): Z1: 1–2; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 26,
+        "targetZone": "Z2",
+        "tssEstimate": null,
+        "phase": "base",
+        "weekNumber": 1,
+        "structure": {
+          "version": 1,
+          "modality": "ciclismo",
+          "phase": "base",
+          "durationSeconds": 1560,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 234,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP não informado; não foram inventados alvos em watts.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Cadência 1/3: giro confortável e fluido, sem saltar no selim; sem aumentar potência",
+              "durationSeconds": 338,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 2,
+                "high": 3,
+                "source": "FTP não informado; não foram inventados alvos em watts.",
+                "text": "Percepção 2–3/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Cadência 2/3: voltar à cadência espontânea; sem aumentar potência",
+              "durationSeconds": 338,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 2,
+                "high": 3,
+                "source": "FTP não informado; não foram inventados alvos em watts.",
+                "text": "Percepção 2–3/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Cadência 3/3: giro confortável e fluido, sem saltar no selim; sem aumentar potência",
+              "durationSeconds": 338,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 2,
+                "high": 3,
+                "source": "FTP não informado; não foram inventados alvos em watts.",
+                "text": "Percepção 2–3/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 156,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP não informado; não foram inventados alvos em watts.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 156,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP não informado; não foram inventados alvos em watts.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 1560,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 0,
+            "enduranceSeconds": 1560,
+            "strengthSeconds": 0,
+            "totalSeconds": 1560,
+            "highFraction": 0
+          },
+          "warnings": [
+            "Sem FTP: prescrição por percepção, sem potência fictícia."
+          ],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-01-09T12:00:00.000Z",
+        "modality": "corrida",
+        "title": "Endurance leve · Corrida · Base · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 2 min 42 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n2. Ciclo 1: trote confortável; caminhe se necessário: 1 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n3. Caminhada 1: 2 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n4. Ciclo 2: trote confortável; caminhe se necessário: 1 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n5. Caminhada 2: 2 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n6. Ciclo 3: trote confortável; caminhe se necessário: 1 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n7. Caminhada 3: 2 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n8. Ciclo 4: trote confortável; caminhe se necessário: 1 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n9. Caminhada 4: 1 min 42 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n10. Recuperação ativa confortável: 1 min 48 s · Z1 · Percepção 1–2/10, confortável e conversacional.\n11. Desaquecimento e retorno à calma: 1 min 48 s · Z1 · Percepção 1–2/10, confortável e conversacional.\nTotal: 18 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 18 min; Z1–Z2 18 min, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nAtenção: Sem limiar de corrida: prescrição por percepção, sem pace ou FC fictícios.\nPercepção de esforço (0–10): Z1: 1–2. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 18,
+        "targetZone": "Z1",
+        "tssEstimate": null,
+        "phase": "base",
+        "weekNumber": 1,
+        "structure": {
+          "version": 1,
+          "modality": "corrida",
+          "phase": "base",
+          "durationSeconds": 1080,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 162,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Ciclo 1: trote confortável; caminhe se necessário",
+              "durationSeconds": 60,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Caminhada 1",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Ciclo 2: trote confortável; caminhe se necessário",
+              "durationSeconds": 60,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Caminhada 2",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Ciclo 3: trote confortável; caminhe se necessário",
+              "durationSeconds": 60,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Caminhada 3",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Ciclo 4: trote confortável; caminhe se necessário",
+              "durationSeconds": 60,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Caminhada 4",
+              "durationSeconds": 102,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 108,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 108,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "Limiar de corrida não informado; tempo de 3 km isolado e ritmo desejado não foram tratados como VDOT.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 1080,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 0,
+            "enduranceSeconds": 1080,
+            "strengthSeconds": 0,
+            "totalSeconds": 1080,
+            "highFraction": 0
+          },
+          "warnings": [
+            "Sem limiar de corrida: prescrição por percepção, sem pace ou FC fictícios."
+          ],
+          "requiresCoachReview": false
+        }
+      }
+    ],
+    "warnings": [
+      "Evidência de recuperação ainda insuficiente: não aumentar automaticamente a carga por ausência de relatos. Reavaliar após uma semana.",
+      "Objetivo sprint: blocos curtos de intensidade no Build/Peak. O volume continua limitado pela triagem; esta escolha não comprova prontidão para a prova.",
+      "Volume atual ausente ou zero: início conservador, sem presumir uma hora de treino. Confirme com o treinador.",
+      "Menos de 20% intenso nesta semana por adaptação, recuperação, prova, disponibilidade ou necessidade de revisão; não compensar com intensidade extra.",
+      "Tempo insuficiente para todas as sessões de pelo menos 10 minutos; não foi ultrapassada a disponibilidade. Revise a distribuição com o treinador.",
+      "Política do app: intensidade medida por tempo aeróbico ativo, incluindo aquecimento/desaquecimento e recuperação ativa. A referência 80/20 por sessões não é matematicamente idêntica.",
+      "Progressão operacional conservadora entre semanas de carga, com recuperação programada; não é garantia de prevenção de lesão. Revise sinais de dor, fadiga e tolerância com o treinador."
+    ]
+  },
+  {
+    "profile": "Intermediário com FTP e brick preferido no sábado",
+    "week": 9,
+    "summary": {
+      "weekNumber": 9,
+      "phase": "build",
+      "recovery": false,
+      "budgetMinutes": 360,
+      "plannedMinutes": 360,
+      "targetHighFraction": 0.2,
+      "distribution": {
+        "lowSeconds": 17580,
+        "moderateSeconds": 0,
+        "highSeconds": 3420,
+        "restSeconds": 600,
+        "enduranceSeconds": 21000,
+        "strengthSeconds": 0,
+        "totalSeconds": 21600,
+        "highFraction": 0.16285714285714287
+      },
+      "warnings": [
+        "Tempo insuficiente para todas as sessões de pelo menos 10 minutos; não foi ultrapassada a disponibilidade. Revise a distribuição com o treinador.",
+        "O alvo de intensidade foi reduzido para manter intervalos viáveis e dias de recuperação; não foram criadas sessões extras para atingir uma porcentagem."
+      ]
+    },
+    "workouts": [
+      {
+        "date": "2027-03-01T12:00:00.000Z",
+        "modality": "natacao",
+        "title": "Técnica · Natação · Build · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 5 min 33 s · Z1 · 2:12–2:20/100 m · distância estimada 250 m.\n2. Série 1: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n3. Pausa 1 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n4. Série 2: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n5. Pausa 2 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n6. Série 3: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n7. Pausa 3 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n8. Série 4: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n9. Pausa 4 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n10. Série 5: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n11. Pausa 5 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n12. Série 6: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n13. Pausa 6 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n14. Série 7: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n15. Pausa 7 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n16. Série 8: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n17. Pausa 8 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n18. Série 9: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n19. Pausa 9 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n20. Série 10: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n21. Pausa 10 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n22. Série 11: respiração e alinhamento, nado fácil em piscina supervisionada: 43 s · Z1 · 2:12–2:20/100 m · distância estimada 25 m.\n23. Recuperação ativa confortável: 3 min 42 s · Z1 · 2:12–2:20/100 m · distância estimada 175 m.\n24. Desaquecimento e retorno à calma: 3 min 42 s · Z1 · 2:12–2:20/100 m · distância estimada 175 m.\nTotal: 37 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 33 min 40 s; Z1–Z2 33 min 40 s, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nPercepção de esforço (0–10): Z1: 1–2. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 37,
+        "targetZone": "Z1",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "natacao",
+          "phase": "build",
+          "durationSeconds": 2220,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 333,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 250
+            },
+            {
+              "kind": "principal",
+              "label": "Série 1: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 1 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 2: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 2 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 3: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 3 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 4: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 4 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 5: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 5 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 6: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 6 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 7: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 7 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 8: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 8 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 9: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 9 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 10: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 10 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 11: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 43,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 25
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 222,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 175
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 222,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 175
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 2020,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 200,
+            "enduranceSeconds": 2020,
+            "strengthSeconds": 0,
+            "totalSeconds": 2220,
+            "highFraction": 0
+          },
+          "warnings": [],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-02T12:00:00.000Z",
+        "modality": "corrida",
+        "title": "Intervalos longos · Corrida · Build · Intervalos estruturados",
+        "description": "Objetivo: estimular capacidade aeróbica com blocos fortes controlados e recuperação. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 6 min 27 s · Z1 · 6:53–7:42/km · distância estimada 880 m.\n2. Bloco 1/4 controlado: 6 min · Z4 · 5:20–5:40/km · distância estimada 1090 m.\n3. Recuperação 1/3: 2 min · Z1 · 6:53–7:42/km · distância estimada 270 m.\n4. Bloco 2/4 controlado: 6 min · Z4 · 5:20–5:40/km · distância estimada 1090 m.\n5. Recuperação 2/3: 2 min · Z1 · 6:53–7:42/km · distância estimada 270 m.\n6. Bloco 3/4 controlado: 6 min · Z4 · 5:20–5:40/km · distância estimada 1090 m.\n7. Recuperação 3/3: 2 min · Z1 · 6:53–7:42/km · distância estimada 270 m.\n8. Bloco 4/4 controlado: 6 min · Z4 · 5:20–5:40/km · distância estimada 1090 m.\n9. Complemento aeróbico confortável: 2 min 15 s · Z2 · 6:10–6:53/km · distância estimada 340 m.\n10. Desaquecimento e retorno à calma: 4 min 18 s · Z1 · 6:53–7:42/km · distância estimada 590 m.\nTotal: 43 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 43 min; Z1–Z2 19 min, Z3 0 s, Z4–Z5 24 min. Repouso passivo não entra na distribuição.\nPercepção de esforço (0–10): Z1: 1–2; Z4: 6–7; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 43,
+        "targetZone": "Z4",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "corrida",
+          "phase": "build",
+          "durationSeconds": 2580,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 387,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 880
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 1/4 controlado",
+              "durationSeconds": 360,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 320,
+                "high": 340,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "5:20–5:40/km"
+              },
+              "distanceMeters": 1090
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 1/3",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 270
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 2/4 controlado",
+              "durationSeconds": 360,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 320,
+                "high": 340,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "5:20–5:40/km"
+              },
+              "distanceMeters": 1090
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 2/3",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 270
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 3/4 controlado",
+              "durationSeconds": 360,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 320,
+                "high": 340,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "5:20–5:40/km"
+              },
+              "distanceMeters": 1090
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 3/3",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 270
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 4/4 controlado",
+              "durationSeconds": 360,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 320,
+                "high": 340,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "5:20–5:40/km"
+              },
+              "distanceMeters": 1090
+            },
+            {
+              "kind": "principal",
+              "label": "Complemento aeróbico confortável",
+              "durationSeconds": 135,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 370,
+                "high": 413,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:10–6:53/km"
+              },
+              "distanceMeters": 340
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 258,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 590
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 1140,
+            "moderateSeconds": 0,
+            "highSeconds": 1440,
+            "restSeconds": 0,
+            "enduranceSeconds": 2580,
+            "strengthSeconds": 0,
+            "totalSeconds": 2580,
+            "highFraction": 0.5581395348837209
+          },
+          "warnings": [],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-03T12:00:00.000Z",
+        "modality": "natacao",
+        "title": "Técnica · Natação · Build · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 5 min 33 s · Z1 · 2:12–2:20/100 m · distância estimada 250 m.\n2. Série 1: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n3. Pausa 1 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n4. Série 2: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n5. Pausa 2 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n6. Série 3: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n7. Pausa 3 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n8. Série 4: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n9. Pausa 4 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n10. Série 5: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n11. Pausa 5 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n12. Série 6: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n13. Pausa 6 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n14. Série 7: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n15. Pausa 7 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n16. Série 8: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n17. Pausa 8 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n18. Série 9: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n19. Pausa 9 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n20. Série 10: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n21. Pausa 10 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n22. Série 11: respiração e alinhamento, nado fácil em piscina supervisionada: 43 s · Z1 · 2:12–2:20/100 m · distância estimada 25 m.\n23. Recuperação ativa confortável: 3 min 42 s · Z1 · 2:12–2:20/100 m · distância estimada 175 m.\n24. Desaquecimento e retorno à calma: 3 min 42 s · Z1 · 2:12–2:20/100 m · distância estimada 175 m.\nTotal: 37 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 33 min 40 s; Z1–Z2 33 min 40 s, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nPercepção de esforço (0–10): Z1: 1–2. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 37,
+        "targetZone": "Z1",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "natacao",
+          "phase": "build",
+          "durationSeconds": 2220,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 333,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 250
+            },
+            {
+              "kind": "principal",
+              "label": "Série 1: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 1 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 2: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 2 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 3: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 3 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 4: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 4 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 5: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 5 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 6: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 6 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 7: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 7 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 8: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 8 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 9: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 9 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 10: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 10 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 11: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 43,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 25
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 222,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 175
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 222,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 175
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 2020,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 200,
+            "enduranceSeconds": 2020,
+            "strengthSeconds": 0,
+            "totalSeconds": 2220,
+            "highFraction": 0
+          },
+          "warnings": [],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-04T12:00:00.000Z",
+        "modality": "natacao",
+        "title": "Técnica · Natação · Build · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 5 min 33 s · Z1 · 2:12–2:20/100 m · distância estimada 250 m.\n2. Série 1: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n3. Pausa 1 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n4. Série 2: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n5. Pausa 2 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n6. Série 3: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n7. Pausa 3 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n8. Série 4: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n9. Pausa 4 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n10. Série 5: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n11. Pausa 5 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n12. Série 6: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n13. Pausa 6 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n14. Série 7: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n15. Pausa 7 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n16. Série 8: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n17. Pausa 8 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n18. Série 9: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n19. Pausa 9 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n20. Série 10: respiração e alinhamento, nado fácil em piscina supervisionada: 2 min · Z1 · 2:12–2:20/100 m · distância estimada 100 m.\n21. Pausa 10 na borda: 20 s · repouso · Repouso passivo; retome somente quando confortável..\n22. Série 11: respiração e alinhamento, nado fácil em piscina supervisionada: 43 s · Z1 · 2:12–2:20/100 m · distância estimada 25 m.\n23. Recuperação ativa confortável: 3 min 42 s · Z1 · 2:12–2:20/100 m · distância estimada 175 m.\n24. Desaquecimento e retorno à calma: 3 min 42 s · Z1 · 2:12–2:20/100 m · distância estimada 175 m.\nTotal: 37 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 33 min 40 s; Z1–Z2 33 min 40 s, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nPercepção de esforço (0–10): Z1: 1–2. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 37,
+        "targetZone": "Z1",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "natacao",
+          "phase": "build",
+          "durationSeconds": 2220,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 333,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 250
+            },
+            {
+              "kind": "principal",
+              "label": "Série 1: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 1 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 2: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 2 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 3: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 3 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 4: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 4 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 5: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 5 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 6: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 6 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 7: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 7 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 8: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 8 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 9: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 9 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 10: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 120,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 100
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Pausa 10 na borda",
+              "durationSeconds": 20,
+              "zone": null,
+              "rest": "passivo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 0,
+                "high": 0,
+                "source": "Repouso passivo entre repetições.",
+                "text": "Repouso passivo; retome somente quando confortável."
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Série 11: respiração e alinhamento, nado fácil em piscina supervisionada",
+              "durationSeconds": 43,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 25
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 222,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 175
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 222,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "css",
+                "unit": "s/100m",
+                "low": 132,
+                "high": 140,
+                "source": "CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.",
+                "text": "2:12–2:20/100 m"
+              },
+              "distanceMeters": 175
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 2020,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 200,
+            "enduranceSeconds": 2020,
+            "strengthSeconds": 0,
+            "totalSeconds": 2220,
+            "highFraction": 0
+          },
+          "warnings": [],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-05T12:00:00.000Z",
+        "modality": "ciclismo",
+        "title": "Intervalos longos · Ciclismo · Build · Intervalos estruturados",
+        "description": "Objetivo: estimular capacidade aeróbica com blocos fortes controlados e recuperação. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 9 min · Z1 · 80–110 W (40–55% do FTP).\n2. Bloco 1/5 controlado: 6 min 36 s · Z4 · 182–210 W (91–105% do FTP).\n3. Recuperação 1/4: 3 min · Z1 · 80–110 W (40–55% do FTP).\n4. Bloco 2/5 controlado: 6 min 36 s · Z4 · 182–210 W (91–105% do FTP).\n5. Recuperação 2/4: 3 min · Z1 · 80–110 W (40–55% do FTP).\n6. Bloco 3/5 controlado: 6 min 36 s · Z4 · 182–210 W (91–105% do FTP).\n7. Recuperação 3/4: 3 min · Z1 · 80–110 W (40–55% do FTP).\n8. Bloco 4/5 controlado: 6 min 36 s · Z4 · 182–210 W (91–105% do FTP).\n9. Recuperação 4/4: 3 min · Z1 · 80–110 W (40–55% do FTP).\n10. Bloco 5/5 controlado: 6 min 36 s · Z4 · 182–210 W (91–105% do FTP).\n11. Desaquecimento e retorno à calma: 6 min · Z1 · 80–110 W (40–55% do FTP).\nTotal: 60 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 60 min; Z1–Z2 27 min, Z3 0 s, Z4–Z5 33 min. Repouso passivo não entra na distribuição.\nPercepção de esforço (0–10): Z1: 1–2; Z4: 6–7. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 60,
+        "targetZone": "Z4",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "ciclismo",
+          "phase": "build",
+          "durationSeconds": 3600,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 540,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 1/5 controlado",
+              "durationSeconds": 396,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 182,
+                "high": 210,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "182–210 W (91–105% do FTP)"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 1/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 2/5 controlado",
+              "durationSeconds": 396,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 182,
+                "high": 210,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "182–210 W (91–105% do FTP)"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 2/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 3/5 controlado",
+              "durationSeconds": 396,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 182,
+                "high": 210,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "182–210 W (91–105% do FTP)"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 3/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 4/5 controlado",
+              "durationSeconds": 396,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 182,
+                "high": 210,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "182–210 W (91–105% do FTP)"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 4/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 5/5 controlado",
+              "durationSeconds": 396,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 182,
+                "high": 210,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "182–210 W (91–105% do FTP)"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 360,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 1620,
+            "moderateSeconds": 0,
+            "highSeconds": 1980,
+            "restSeconds": 0,
+            "enduranceSeconds": 3600,
+            "strengthSeconds": 0,
+            "totalSeconds": 3600,
+            "highFraction": 0.55
+          },
+          "warnings": [],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-06T12:00:00.000Z",
+        "modality": "ciclismo",
+        "title": "Brick — 1. Bike · Ciclismo · Build · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 10 min · Z1 · 80–110 W (40–55% do FTP).\n2. Transição bike → corrida: controle de técnica e esforço, sem buscar velocidade: 90 min · Z2 · 112–150 W (56–75% do FTP).\n3. Recuperação ativa confortável: 12 min · Z1 · 80–110 W (40–55% do FTP).\n4. Desaquecimento e retorno à calma: 8 min · Z1 · 80–110 W (40–55% do FTP).\nTotal: 120 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 120 min; Z1–Z2 120 min, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nPercepção de esforço (0–10): Z1: 1–2; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 120,
+        "targetZone": "Z2",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "ciclismo",
+          "phase": "build",
+          "durationSeconds": 7200,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 600,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Transição bike → corrida: controle de técnica e esforço, sem buscar velocidade",
+              "durationSeconds": 5400,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 112,
+                "high": 150,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "112–150 W (56–75% do FTP)"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 720,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 480,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "ftp",
+                "unit": "W",
+                "low": 80,
+                "high": 110,
+                "source": "FTP informado; faixas de Coggan.",
+                "text": "80–110 W (40–55% do FTP)"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 7200,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 0,
+            "enduranceSeconds": 7200,
+            "strengthSeconds": 0,
+            "totalSeconds": 7200,
+            "highFraction": 0
+          },
+          "warnings": [],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-06T12:00:00.000Z",
+        "modality": "corrida",
+        "title": "Brick — 2. Corrida após bike · Corrida · Build · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 3 min 54 s · Z1 · 6:53–7:42/km · distância estimada 530 m.\n2. Transição bike → corrida: controle de técnica e esforço, sem buscar velocidade: 16 min 54 s · Z2 · 6:10–6:53/km · distância estimada 2590 m.\n3. Recuperação ativa confortável: 2 min 36 s · Z1 · 6:53–7:42/km · distância estimada 360 m.\n4. Desaquecimento e retorno à calma: 2 min 36 s · Z1 · 6:53–7:42/km · distância estimada 360 m.\nTotal: 26 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 26 min; Z1–Z2 26 min, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nPercepção de esforço (0–10): Z1: 1–2; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 26,
+        "targetZone": "Z2",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "corrida",
+          "phase": "build",
+          "durationSeconds": 1560,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 234,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 530
+            },
+            {
+              "kind": "principal",
+              "label": "Transição bike → corrida: controle de técnica e esforço, sem buscar velocidade",
+              "durationSeconds": 1014,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 370,
+                "high": 413,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:10–6:53/km"
+              },
+              "distanceMeters": 2590
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 156,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 360
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 156,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "run_threshold",
+                "unit": "s/km",
+                "low": 413,
+                "high": 462,
+                "source": "Faixa operacional relativa ao limiar informado/testado; revisar com o treinador.",
+                "text": "6:53–7:42/km"
+              },
+              "distanceMeters": 360
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 1560,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 0,
+            "enduranceSeconds": 1560,
+            "strengthSeconds": 0,
+            "totalSeconds": 1560,
+            "highFraction": 0
+          },
+          "warnings": [],
+          "requiresCoachReview": false
+        }
+      }
+    ],
+    "warnings": [
+      "Evidência de recuperação ainda insuficiente: não aumentar automaticamente a carga por ausência de relatos. Reavaliar após uma semana.",
+      "Objetivo 70.3: prioridade de duração aeróbica na última sessão disponível e blocos sustentados. O volume continua limitado pela triagem; esta escolha não comprova prontidão para a prova.",
+      "Brick adiado: exige construção, tolerância, recuperação e duas sessões permitidas.",
+      "Tempo insuficiente para todas as sessões de pelo menos 10 minutos; não foi ultrapassada a disponibilidade. Revise a distribuição com o treinador.",
+      "Menos de 20% intenso nesta semana por adaptação, recuperação, prova, disponibilidade ou necessidade de revisão; não compensar com intensidade extra.",
+      "O alvo de intensidade foi reduzido para manter intervalos viáveis e dias de recuperação; não foram criadas sessões extras para atingir uma porcentagem.",
+      "Política do app: intensidade medida por tempo aeróbico ativo, incluindo aquecimento/desaquecimento e recuperação ativa. A referência 80/20 por sessões não é matematicamente idêntica.",
+      "Progressão operacional conservadora entre semanas de carga, com recuperação programada; não é garantia de prevenção de lesão. Revise sinais de dor, fadiga e tolerância com o treinador."
+    ]
+  },
+  {
+    "profile": "Ciclista sem potência",
+    "week": 9,
+    "summary": {
+      "weekNumber": 9,
+      "phase": "build",
+      "recovery": false,
+      "budgetMinutes": 360,
+      "plannedMinutes": 360,
+      "targetHighFraction": 0.2,
+      "distribution": {
+        "lowSeconds": 17280,
+        "moderateSeconds": 0,
+        "highSeconds": 4320,
+        "restSeconds": 0,
+        "enduranceSeconds": 21600,
+        "strengthSeconds": 0,
+        "totalSeconds": 21600,
+        "highFraction": 0.2
+      },
+      "warnings": [
+        "Brick adiado: exige construção, tolerância, recuperação e duas sessões permitidas.",
+        "Tempo insuficiente para todas as sessões de pelo menos 10 minutos; não foi ultrapassada a disponibilidade. Revise a distribuição com o treinador."
+      ]
+    },
+    "workouts": [
+      {
+        "date": "2027-03-02T12:00:00.000Z",
+        "modality": "ciclismo",
+        "title": "Intervalos longos · Ciclismo · Build · Intervalos estruturados",
+        "description": "Objetivo: estimular capacidade aeróbica com blocos fortes controlados e recuperação. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 10 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n2. Bloco 1/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n3. Recuperação 1/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n4. Bloco 2/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n5. Recuperação 2/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n6. Bloco 3/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n7. Recuperação 3/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n8. Bloco 4/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n9. Recuperação 4/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n10. Bloco 5/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n11. Complemento aeróbico confortável: 14 min · Z2 · Percepção 2–3/10, confortável e conversacional.\n12. Desaquecimento e retorno à calma: 8 min · Z1 · Percepção 1–2/10, confortável e conversacional.\nTotal: 80 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 80 min; Z1–Z2 44 min, Z3 0 s, Z4–Z5 36 min. Repouso passivo não entra na distribuição.\nAtenção: Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço.\nPercepção de esforço (0–10): Z1: 1–2; Z4: 6–7; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 80,
+        "targetZone": "Z4",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "ciclismo",
+          "phase": "build",
+          "durationSeconds": 4800,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 600,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 1/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 1/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 2/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 2/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 3/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 3/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 4/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 4/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 5/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Complemento aeróbico confortável",
+              "durationSeconds": 840,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 2,
+                "high": 3,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 2–3/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 480,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 2640,
+            "moderateSeconds": 0,
+            "highSeconds": 2160,
+            "restSeconds": 0,
+            "enduranceSeconds": 4800,
+            "strengthSeconds": 0,
+            "totalSeconds": 4800,
+            "highFraction": 0.45
+          },
+          "warnings": [
+            "Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço."
+          ],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-03T12:00:00.000Z",
+        "modality": "ciclismo",
+        "title": "Endurance leve · Ciclismo · Build · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 10 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n2. Bloco aeróbico contínuo e controlado: 54 min · Z2 · Percepção 2–3/10, confortável e conversacional.\n3. Recuperação ativa confortável: 8 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n4. Desaquecimento e retorno à calma: 8 min · Z1 · Percepção 1–2/10, confortável e conversacional.\nTotal: 80 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 80 min; Z1–Z2 80 min, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nAtenção: Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço.\nPercepção de esforço (0–10): Z1: 1–2; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 80,
+        "targetZone": "Z2",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "ciclismo",
+          "phase": "build",
+          "durationSeconds": 4800,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 600,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco aeróbico contínuo e controlado",
+              "durationSeconds": 3240,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 2,
+                "high": 3,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 2–3/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 480,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 480,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 4800,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 0,
+            "enduranceSeconds": 4800,
+            "strengthSeconds": 0,
+            "totalSeconds": 4800,
+            "highFraction": 0
+          },
+          "warnings": [
+            "Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço."
+          ],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-05T12:00:00.000Z",
+        "modality": "ciclismo",
+        "title": "Intervalos longos · Ciclismo · Build · Intervalos estruturados",
+        "description": "Objetivo: estimular capacidade aeróbica com blocos fortes controlados e recuperação. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 10 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n2. Bloco 1/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n3. Recuperação 1/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n4. Bloco 2/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n5. Recuperação 2/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n6. Bloco 3/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n7. Recuperação 3/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n8. Bloco 4/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n9. Recuperação 4/4: 3 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n10. Bloco 5/5 controlado: 7 min 12 s · Z4 · Percepção 6–7/10, forte e controlada, sem esforço máximo.\n11. Complemento aeróbico confortável: 14 min · Z2 · Percepção 2–3/10, confortável e conversacional.\n12. Desaquecimento e retorno à calma: 8 min · Z1 · Percepção 1–2/10, confortável e conversacional.\nTotal: 80 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 80 min; Z1–Z2 44 min, Z3 0 s, Z4–Z5 36 min. Repouso passivo não entra na distribuição.\nAtenção: Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço.\nPercepção de esforço (0–10): Z1: 1–2; Z4: 6–7; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 80,
+        "targetZone": "Z4",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "ciclismo",
+          "phase": "build",
+          "durationSeconds": 4800,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 600,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 1/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 1/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 2/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 2/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 3/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 3/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 4/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação 4/4",
+              "durationSeconds": 180,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Bloco 5/5 controlado",
+              "durationSeconds": 432,
+              "zone": "Z4",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 6,
+                "high": 7,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 6–7/10, forte e controlada, sem esforço máximo"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Complemento aeróbico confortável",
+              "durationSeconds": 840,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 2,
+                "high": 3,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 2–3/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 480,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 2640,
+            "moderateSeconds": 0,
+            "highSeconds": 2160,
+            "restSeconds": 0,
+            "enduranceSeconds": 4800,
+            "strengthSeconds": 0,
+            "totalSeconds": 4800,
+            "highFraction": 0.45
+          },
+          "warnings": [
+            "Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço."
+          ],
+          "requiresCoachReview": false
+        }
+      },
+      {
+        "date": "2027-03-06T12:00:00.000Z",
+        "modality": "ciclismo",
+        "title": "Longo · Ciclismo · Build · Aeróbico e técnica",
+        "description": "Objetivo: desenvolver resistência aeróbica e consistência em baixo esforço. Justificativa: distribuir o estímulo dentro da fase e do tempo disponível.\n1. Aquecimento progressivo e confortável: 10 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n2. Longo aeróbico: duração sustentável, hidratação e logística previamente combinadas: 90 min · Z2 · Percepção 2–3/10, confortável e conversacional.\n3. Recuperação ativa confortável: 12 min · Z1 · Percepção 1–2/10, confortável e conversacional.\n4. Desaquecimento e retorno à calma: 8 min · Z1 · Percepção 1–2/10, confortável e conversacional.\nTotal: 120 min. A duração inclui aquecimento, recuperações e desaquecimento.\nTempo aeróbico ativo: 120 min; Z1–Z2 120 min, Z3 0 s, Z4–Z5 0 s. Repouso passivo não entra na distribuição.\nAtenção: Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço.\nPercepção de esforço (0–10): Z1: 1–2; Z2: 2–3. Faixas operacionais, sem equivalência fisiológica exata. Reduza ou interrompa se houver dor, tontura ou mal-estar e procure orientação apropriada.",
+        "duration": 120,
+        "targetZone": "Z2",
+        "tssEstimate": null,
+        "phase": "build",
+        "weekNumber": 9,
+        "structure": {
+          "version": 1,
+          "modality": "ciclismo",
+          "phase": "build",
+          "durationSeconds": 7200,
+          "steps": [
+            {
+              "kind": "aquecimento",
+              "label": "Aquecimento progressivo e confortável",
+              "durationSeconds": 600,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "principal",
+              "label": "Longo aeróbico: duração sustentável, hidratação e logística previamente combinadas",
+              "durationSeconds": 5400,
+              "zone": "Z2",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 2,
+                "high": 3,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 2–3/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "recuperacao",
+              "label": "Recuperação ativa confortável",
+              "durationSeconds": 720,
+              "zone": "Z1",
+              "rest": "ativo",
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            },
+            {
+              "kind": "desaquecimento",
+              "label": "Desaquecimento e retorno à calma",
+              "durationSeconds": 480,
+              "zone": "Z1",
+              "rest": null,
+              "target": {
+                "basis": "rpe",
+                "unit": "RPE",
+                "low": 1,
+                "high": 2,
+                "source": "FTP informado, mas sem medidor de potência/rolo configurado; utilizar percepção.",
+                "text": "Percepção 1–2/10, confortável e conversacional"
+              }
+            }
+          ],
+          "distribution": {
+            "lowSeconds": 7200,
+            "moderateSeconds": 0,
+            "highSeconds": 0,
+            "restSeconds": 0,
+            "enduranceSeconds": 7200,
+            "strengthSeconds": 0,
+            "totalSeconds": 7200,
+            "highFraction": 0
+          },
+          "warnings": [
+            "Sem medidor de potência/rolo: alvos de ciclismo usam percepção de esforço."
+          ],
+          "requiresCoachReview": false
+        }
+      }
+    ],
+    "warnings": [
+      "Evidência de recuperação ainda insuficiente: não aumentar automaticamente a carga por ausência de relatos. Reavaliar após uma semana.",
+      "Objetivo endurance: prioridade de duração aeróbica na última sessão disponível e blocos sustentados. O volume continua limitado pela triagem; esta escolha não comprova prontidão para a prova.",
+      "Brick adiado: exige construção, tolerância, recuperação e duas sessões permitidas.",
+      "Tempo insuficiente para todas as sessões de pelo menos 10 minutos; não foi ultrapassada a disponibilidade. Revise a distribuição com o treinador.",
+      "Menos de 20% intenso nesta semana por adaptação, recuperação, prova, disponibilidade ou necessidade de revisão; não compensar com intensidade extra.",
+      "Política do app: intensidade medida por tempo aeróbico ativo, incluindo aquecimento/desaquecimento e recuperação ativa. A referência 80/20 por sessões não é matematicamente idêntica.",
+      "Progressão operacional conservadora entre semanas de carga, com recuperação programada; não é garantia de prevenção de lesão. Revise sinais de dor, fadiga e tolerância com o treinador."
+    ]
+  }
+]

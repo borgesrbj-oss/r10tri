@@ -1,4 +1,6 @@
 'use client';
+import {SeasonSummary} from '@/components/season-summary';
+
 import { useState } from 'react';
 import { useLocalDate } from '@/hooks/use-browser-state';
 import { Dumbbell, Waves, Bike, Timer, Sparkles, Download, CheckCircle2, RotateCcw, ClipboardEdit, Activity, Trash2, ExternalLink, Apple, CalendarCheck, Clock, Flame, CalendarRange, ChevronRight, CalendarDays, List } from 'lucide-react';
@@ -456,7 +458,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
               <StatTile icon={Flame} label="Carga (TSS)" value={workouts.length>0&&workouts.every(w=>w.tssEstimate!=null)?String(totalTss):'Sem estimativa'} color="#EF4444" />
             </div>
           </FadeIn>
-          <TrainingDistributionSummary workouts={workouts} title="Distribuição de intensidade do plano" />
+          <SeasonSummary workouts={workouts} /><TrainingDistributionSummary workouts={workouts.filter(w=>!w.paused)} title="Distribuição planejada do plano" />
           {plan?.nutritionPlan && (
             <FadeIn>
               <Link href="/nutricao" className="block">

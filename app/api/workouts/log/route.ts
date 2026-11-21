@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   const workout = await prisma.workout.findFirst({ where: { id: data.workoutId, userId: session.user.id } });
   if (!workout) return NextResponse.json({ error: 'Treino não encontrado' }, { status: 404 });
 
+  if(workout.paused)return NextResponse.json({error:'Retome a sessão antes de registrar a conclusão.'},{status:409});
   const fields: Record<string, [number, number, boolean]> = {
     actualDuration: [0, 1440, true], actualDistance: [0, 1000, false],
     rpe: [1, 10, true], weight: [1, 500, false], heartRateAvg: [20, 260, true],
