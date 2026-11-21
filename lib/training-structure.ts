@@ -1,6 +1,7 @@
 import { effortTarget, numericValue, runThreshold, targetForZone, thresholdWarnings } from './training-zones';
 import { trainingFeedback, type TrainingFeedback } from './training-feedback';
 import { parseRaceTime, predictRaceTime } from './race-prediction';
+import { preferences,preferredDay,dayKey,inferRaceGoal } from './planning-preferences';
 import type { GeneratedWorkout, StructuredPlan, TrainingDistribution, TrainingModality, TrainingPhase, TrainingProfile, TrainingRace, TrainingStep, TrainingWeekSummary, TrainingZone, WorkoutStructure } from './training-types';
 
 const DAY_MS = 86_400_000;
@@ -107,7 +108,7 @@ export function highCapacitySeconds(duration: number, modality: TrainingModality
   return capacity;
 }
 
-export function buildWorkoutStructure(profile: TrainingProfile | null, modality: TrainingModality, phase: TrainingPhase, minutes: number, highSeconds = 0, highZone: TrainingZone = 'Z4', easyZone: TrainingZone = 'Z2'): WorkoutStructure {
+export function buildWorkoutStructure(profile: TrainingProfile | null, modality: TrainingModality, phase: TrainingPhase, minutes: number, highSeconds = 0, highZone: TrainingZone = 'Z4', easyZone: TrainingZone = 'Z2', kind='aerobico'): WorkoutStructure {
   if (!Number.isInteger(minutes) || minutes < 4 || minutes > 1440) throw new Error('Duração inválida para estruturar a sessão.');
   const duration = minutes * 60;
   const steps: TrainingStep[] = [];
@@ -148,15 +149,17 @@ export function buildWorkoutStructure(profile: TrainingProfile | null, modality:
     } else {
       const recovery = Math.max(30, Math.round(duration * 0.1));
       let remaining=duration-warm-cool-recovery, repetition=1;
-      const returning=modality==='corrida' && (Number(profile?.currentWeeklyVol)===0 || (profile?.inactivityWeeks??0)>=4 || profile?.trainingGoal==='retorno');
-      const technique=modality==='natacao' && (profile?.swimLevel==='basico' || profile?.level==='iniciante' || profile?.trainingGoal==='tecnica');
+      const returning=modality==='corrida' && (Number(profile?.currentWeeklyVol)===0 || preferences(profile?.planningPreferences).recentMinutes?.corrida===0 || (profile?.inactivityWeeks??0)>=4 || profile?.trainingGoal==='retorno');
+      const technique=modality==='natacao' && (kind==='tecnica' || preferences(profile?.planningPreferences).recentMinutes?.natacao===0 || profile?.swimLevel==='basico' || profile?.level==='iniciante' || profile?.trainingGoal==='tecnica');
       if(returning || technique) while(remaining>0) {
         const active=Math.min(returning?60:120,remaining);
         appendStep(steps,profile,modality,'principal',returning?`Ciclo ${repetition}: trote confortável; caminhe se necessário`:`Série ${repetition}: respiração e alinhamento, nado fácil em piscina supervisionada`,active,'Z1'); remaining-=active;
         const rest=Math.min(returning?120:20,remaining);
         appendStep(steps,profile,modality,'recuperacao',returning?`Caminhada ${repetition++}`:`Pausa ${repetition++} na borda`,rest,returning?'Z1':null,returning?'ativo':'passivo'); remaining-=rest;
       }
-      else appendStep(steps, profile, modality, 'principal', 'Bloco aeróbico contínuo e controlado', remaining, easyZone);
+      else if(modality==='ciclismo'&&kind==='cadencia') {
+        for(let i=0;i<3;i++) {const seconds=Math.floor(remaining/(3-i));appendStep(steps,profile,modality,'principal',`Cadência ${i+1}/3: ${i%2===0?'giro confortável e fluido, sem saltar no selim':'voltar à cadência espontânea'}; sem aumentar potência`,seconds,'Z2');remaining-=seconds;}
+      } else appendStep(steps, profile, modality, 'principal', kind==='longo'?'Longo aeróbico: duração sustentável, hidratação e logística previamente combinadas':kind==='brick'?'Transição bike → corrida: controle de técnica e esforço, sem buscar velocidade':'Bloco aeróbico contínuo e controlado', remaining, kind==='recuperacao'?'Z1':easyZone);
       appendStep(steps, profile, modality, 'recuperacao', 'Recuperação ativa confortável', recovery, 'Z1', 'ativo');
     }
     appendStep(steps, profile, modality, 'desaquecimento', 'Desaquecimento e retorno à calma', cool, 'Z1');
@@ -177,7 +180,7 @@ export function durationLabel(seconds: number): string {
 
 export function describeStructure(structure: WorkoutStructure): string {
   const lines = structure.steps.map((step, index) => `${index + 1}. ${step.label}: ${durationLabel(step.durationSeconds)} · ${step.zone || 'repouso'} · ${step.target.text}${step.distanceMeters ? ` · distância estimada ${step.distanceMeters} m` : ''}.`);
-  lines.unshift(`Objetivo: ${structure.distribution.highSeconds>0 ? 'estimular capacidade aeróbica com blocos fortes controlados e recuperação' : structure.modality==='forca' ? 'desenvolver força e controle do movimento com orientação' : 'desenvolver resistência aeróbica e consistência em baixo esforço'}. Justificativa: ${structure.phase==='transition' ? 'recuperar após a competição' : 'distribuir o estímulo dentro da fase e do tempo disponível'}.`);
+  lines.unshift(`Objetivo: ${structure.distribution.highSeconds+structure.distribution.moderateSeconds>0 ? 'estimular capacidade aeróbica com blocos fortes controlados e recuperação' : structure.modality==='forca' ? 'desenvolver força e controle do movimento com orientação' : 'desenvolver resistência aeróbica e consistência em baixo esforço'}. Justificativa: ${structure.phase==='transition' ? 'recuperar após a competição' : 'distribuir o estímulo dentro da fase e do tempo disponível'}.`);
   lines.push(`Total: ${durationLabel(structure.durationSeconds)}. A duração inclui aquecimento, recuperações e desaquecimento.`);
   if (structure.modality !== 'forca') lines.push(`Tempo aeróbico ativo: ${durationLabel(structure.distribution.enduranceSeconds)}; Z1–Z2 ${durationLabel(structure.distribution.lowSeconds)}, Z3 ${durationLabel(structure.distribution.moderateSeconds)}, Z4–Z5 ${durationLabel(structure.distribution.highSeconds)}. Repouso passivo não entra na distribuição.`);
   else lines.push('Força não é contabilizada como volume aeróbico. Exercícios e cargas devem ser definidos pelo treinador, especialmente diante de dor ou restrição.');
@@ -243,25 +246,27 @@ function safetyPolicy(profile: TrainingProfile | null, start: Date) {
   return { review, warnings };
 }
 
-interface SessionDraft { date: Date; modality: TrainingModality; minutes: number; phase: TrainingPhase; high: number; highZone: TrainingZone; }
+interface SessionDraft { date: Date; modality: TrainingModality; minutes: number; phase: TrainingPhase; high: number; highZone: TrainingZone; kind?:string }
 
-function allocateMinutes(drafts: SessionDraft[], budget: number, level: string, goal?: string | null, daily?: unknown): SessionDraft[] {
+function allocateMinutes(drafts: SessionDraft[], budget: number, level: string, goal?: string | null, daily?: unknown, options?:unknown, week=0, growth=0): SessionDraft[] {
+  const prefs=preferences(options);
   const perDay = level === 'iniciante' ? 90 : level === 'avancado' ? 360 : 240;
   const limits = daily && typeof daily==='object' && !Array.isArray(daily) ? daily as Record<string,unknown> : {};
   const dayCap=(draft:SessionDraft)=>{const key=Object.keys(DAYS).find(day=>DAYS[day]===draft.date.getUTCDay())!; const limit=numericValue(limits[key]); return limit==null?perDay:Math.min(perDay,Math.max(0,limit));};
   const chosen:SessionDraft[]=[];
-  for(const draft of drafts) if(chosen.length<Math.floor(budget/10) && chosen.filter(item=>item.date.getTime()===draft.date.getTime()).length*10+10<=dayCap(draft))chosen.push(draft);
+  const recentCap=(modality:string)=>prefs.recentMinutes?.[modality]==null?Infinity:Math.max(20,Math.floor(prefs.recentMinutes[modality]*Math.pow(1+growth,week)));
+  for(const draft of drafts) if(chosen.length<Math.floor(budget/10) && chosen.filter(item=>item.modality===draft.modality).length*10+10<=recentCap(draft.modality) && chosen.filter(item=>item.date.getTime()===draft.date.getTime()).length<(prefs.doubleDays===undefined?4:prefs.doubleDays.includes(dayKey(draft.date))?2:1) && chosen.filter(item=>item.date.getTime()===draft.date.getTime()).length*10+10<=dayCap(draft))chosen.push(draft);
   const maximum: Record<TrainingModality, number> = level === 'iniciante'
     ? { corrida: 40, ciclismo: 75, natacao: 40, forca: 25 }
     : level === 'avancado' ? { corrida: 150, ciclismo: 300, natacao: 120, forca: 45 } : { corrida: 120, ciclismo: 240, natacao: 90, forca: 40 };
   const weights: Record<TrainingModality, number> = { corrida: 1.15, ciclismo: 1.6, natacao: 1, forca: 0.4 };
   const longGoal = ['15k', '21k', '42k', '70.3', 'ironman','endurance','aguas_abertas'].includes(goal || '');
   const lastDay = Math.max(...chosen.filter(draft => draft.modality !== 'forca').map(draft => draft.date.getTime()));
-  const weight = (draft: SessionDraft) => weights[draft.modality] * (longGoal && draft.date.getTime() === lastDay && ['corrida', 'ciclismo'].includes(draft.modality) ? 1.6 : 1);
+  const weight = (draft: SessionDraft) => weights[draft.modality] * ((draft.kind==='longo'||(draft.kind==='brick'&&draft.modality==='ciclismo'&&preferredDay(prefs,'longo',dayKey(draft.date))))?2:longGoal && !prefs.preferred?.longo?.length && draft.date.getTime() === lastDay && ['corrida', 'ciclismo'].includes(draft.modality) ? 1.6 : 1);
   for (const draft of chosen) draft.minutes = 10;
   let remaining = budget - chosen.length * 10;
   while (remaining > 0) {
-    const available = chosen.filter(draft => draft.minutes < maximum[draft.modality] && chosen.filter(other => other.date.getTime() === draft.date.getTime()).reduce((sum, other) => sum + other.minutes, 0) < dayCap(draft));
+    const available = chosen.filter(draft => draft.minutes < Math.min(maximum[draft.modality],prefs.maxSessionMinutes??480,draft.kind==='brick'&&draft.modality==='corrida'?(level==='iniciante'?10:Math.min(35,10+week*2)):480) && (prefs.recentMinutes?.[draft.modality]==null || chosen.filter(other=>other.modality===draft.modality).reduce((sum,other)=>sum+other.minutes,0)<Math.max(20,Math.floor(prefs.recentMinutes[draft.modality]*Math.pow(1+growth,week)))) && chosen.filter(other => other.date.getTime() === draft.date.getTime()).reduce((sum, other) => sum + other.minutes, 0) < dayCap(draft));
     if (!available.length) break;
     available.sort((a, b) => weight(b) / (b.minutes + 1) - weight(a) / (a.minutes + 1));
     available[0].minutes++;
@@ -311,6 +316,8 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   const level = profile?.level || 'intermediario';
   const swimming = profile?.canSwim !== false && (profile?.hasPoolAccess !== false || profile?.poolSize === 'mar_aberto');
   const selected = profile?.modality || 'triatlo';
+  const inferredGoal=inferRaceGoal(selected,(datedRaces.find(item=>item.priority==='A')??datedRaces[0])?.distance);
+  if(!profile?.trainingGoal&&inferredGoal){profile={...profile,trainingGoal:inferredGoal};warnings.push('Foco derivado da distância cadastrada da prova prioritária; nenhum resultado fisiológico foi presumido.');}
   const goal = profile?.trainingGoal || null;
   const goalKm:Record<string,number>={'5k':5,'10k':10,'15k':15,'21k':21.0975,'42k':42.195};
   if(selected==='corrida' && goal && goalKm[goal] && profile?.goalTime) {
@@ -330,6 +337,8 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   try { schedule = typeof profile?.daySchedule === 'string' ? JSON.parse(profile.daySchedule) : profile?.daySchedule || {}; } catch { warnings.push('Agenda por modalidade inválida; revise a triagem.'); return result(); }
   if (schedule == null || Array.isArray(schedule) || typeof schedule !== 'object') { warnings.push('Agenda por modalidade inválida.'); return result(); }
   const explicit = Object.values(schedule).some(value => Array.isArray(value) && value.length > 0);
+  const prefs=preferences(profile?.planningPreferences);
+  for(const [kind,preferred]of Object.entries(prefs.preferred||{}))if(preferred.some(day=>!days.includes(day)))warnings.push(`Preferência ${kind} em dia indisponível ignorada. Disponibilidade e recuperação têm prioridade.`);
   const currentHours = numericValue(profile?.currentWeeklyVol);
   const returning=(profile?.inactivityWeeks??0)>=4 || goal==='retorno';
   const reference = currentHours != null && currentHours > 0 && !returning ? Math.min(budget, Math.floor(currentHours * 60)) : Math.min(budget, Math.floor(budget * 0.6), days.length * (level === 'iniciante' || returning ? 20 : 30));
@@ -359,18 +368,22 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
       const date = new Date(weekStart.getTime() + offset * DAY_MS);
       const key = Object.keys(DAYS).find(day => DAYS[day] === date.getUTCDay())!;
       if (!days.includes(key)) continue;
+      if(preferredDay(prefs,'descanso',key)){weekWarnings.push('Descanso reservado respeitado; nenhuma falta será comprimida nos outros dias.');continue;}
       if (datedRaces.some(item=>item.parsed!.getTime()===date.getTime())) { weekWarnings.push('Dia da prova reservado; a competição não foi substituída por um treino genérico.'); continue; }
-      const planned: string[] = explicit ? (Array.isArray(schedule[key]) ? schedule[key] : []) : [modalities[index++ % modalities.length]];
+      let planned: string[] = explicit ? (Array.isArray(schedule[key]) ? schedule[key] : []) : [preferredDay(prefs,'natacao',key)&&swimming?'natacao':preferredDay(prefs,'forca',key)?'forca':modalities[index++ % modalities.length]];
+      const brick=selected==='triatlo'&&preferredDay(prefs,'brick',key)&&(prefs.doubleDays===undefined||prefs.doubleDays.includes(key))&&phaseForDate(date,start,race)==='build'&&week>=(level==='iniciante'?4:2)&&!recovery&&!requiresCoachReview&&!returning;
+      if(brick&&(prefs.doubleDays===undefined||prefs.doubleDays.includes(key)))planned=['ciclismo','corrida'];
+      else if(preferredDay(prefs,'brick',key))weekWarnings.push('Brick adiado: exige construção, tolerância, recuperação e duas sessões permitidas.');
       for (const modality of [...new Set(planned)]) {
         if (modality !== 'forca' && !modalities.includes(modality as TrainingModality)) continue;
         if(modality==='forca' && profile?.strengthAvailable===false)continue;
-        drafts.push({ date, modality: modality as TrainingModality, minutes: 0, phase: phaseForDate(date, start, race), high: 0, highZone: weekPhase === 'peak' || (shortGoal && weekPhase === 'build') ? 'Z5' : 'Z4' });
+        drafts.push({ date, modality: modality as TrainingModality, minutes: 0, phase: phaseForDate(date, start, race), high: 0, highZone: preferredDay(prefs,'ritmo',key)?'Z3':weekPhase === 'peak' || (shortGoal && weekPhase === 'build') ? 'Z5' : 'Z4', kind:brick?'brick':preferredDay(prefs,'longo',key)?'longo':modality==='natacao'?(week%2===0?'tecnica':'endurance'):modality==='ciclismo'?(week%3===0?'cadencia':'endurance'):preferredDay(prefs,'rodagem',key)?'rodagem':recovery?'recuperacao':'aerobico' });
       }
     }
     if (explicit && Object.keys(schedule).some(day => !days.includes(day) && schedule[day]?.length)) weekWarnings.push('Modalidades marcadas em dias indisponíveis foram ignoradas; ajuste a agenda na triagem.');
     // Preserva a sessão de força do fluxo legado, no mesmo dia disponível e dentro do orçamento.
     if (!explicit && days.length >= 3 && weekBudget >= 120 && !recovery && drafts.length && weekPhase !== 'transition' && weekPhase !== 'race') drafts.push({ date: drafts[0].date, modality: 'forca', minutes: 0, phase: drafts[0].phase, high: 0, highZone: 'Z4' });
-    const sessions = allocateMinutes(drafts.filter(item=>item.modality!=='forca' || profile?.strengthAvailable!==false), weekBudget, level, goal, profile?.dailyMinutes);
+    const sessions = allocateMinutes(drafts.filter(item=>item.modality!=='forca' || profile?.strengthAvailable!==false), weekBudget, level, goal, profile?.dailyMinutes,profile?.planningPreferences,week,growth);
     if (sessions.length < drafts.length) weekWarnings.push('Tempo insuficiente para todas as sessões de pelo menos 10 minutos; não foi ultrapassada a disponibilidade. Revise a distribuição com o treinador.');
     if (!sessions.length) weekWarnings.push('Nenhuma sessão cabe no orçamento desta semana; ajuste disponibilidade e agenda com o treinador.');
     let targetHigh = 0.2;
@@ -386,7 +399,7 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
     if (targetHigh < 0.2) weekWarnings.push('Menos de 20% intenso nesta semana por adaptação, recuperação, prova, disponibilidade ou necessidade de revisão; não compensar com intensidade extra.');
     const aerobic = sessions.filter(session => session.modality !== 'forca');
     const targetHighSeconds = Math.floor(aerobic.reduce((sum, session) => sum + session.minutes * 60, 0) * targetHigh / 30) * 30;
-    const candidates = aerobic.filter(session => !(session.modality==='natacao' && (profile?.swimLevel==='basico'||profile?.level==='iniciante')) && session.phase !== 'race' && session.phase !== 'transition' && highCapacitySeconds(session.minutes * 60, session.modality, session.highZone) > 0 && (lastQualityDay == null || Math.round(session.date.getTime() / DAY_MS) - lastQualityDay >= 2)).sort((a, b) => highCapacitySeconds(b.minutes * 60, b.modality, b.highZone) - highCapacitySeconds(a.minutes * 60, a.modality, a.highZone));
+    const candidates = aerobic.filter(session => !['brick','longo','rodagem','recuperacao'].includes(session.kind||'') && !(session.modality==='natacao' && (profile?.swimLevel==='basico'||profile?.level==='iniciante')) && session.phase !== 'race' && session.phase !== 'transition' && highCapacitySeconds(session.minutes * 60, session.modality, session.highZone) > 0 && (lastQualityDay == null || Math.round(session.date.getTime() / DAY_MS) - lastQualityDay >= 2)).sort((a,b)=>Number(preferredDay(prefs,'tiros',dayKey(b.date))||preferredDay(prefs,'ritmo',dayKey(b.date)))-Number(preferredDay(prefs,'tiros',dayKey(a.date))||preferredDay(prefs,'ritmo',dayKey(a.date))) || highCapacitySeconds(b.minutes*60,b.modality,b.highZone)-highCapacitySeconds(a.minutes*60,a.modality,a.highZone));
     const quality: SessionDraft[] = [];
     const maximumQuality = days.length >= 4 ? 2 : 1;
     for (const candidate of candidates) {
@@ -401,20 +414,23 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
         const capacity = highCapacitySeconds(session.minutes * 60, session.modality, session.highZone);
         if (session.high + 30 > capacity || remaining < 30) continue;
         session.high += 30;
-        const structures = sessions.map(item => buildWorkoutStructure(profile, item.modality, item.phase, item.minutes, item.high, item.highZone));
+        const structures = sessions.map(item => buildWorkoutStructure(profile, item.modality, item.phase, item.minutes, item.high, item.highZone,'Z2',item.kind));
         const combined = combineDistributions(structures.map(structure => structure.distribution));
-        if (combined.highFraction > targetHigh + 0.000001) { session.high -= 30; continue; }
+        if ((combined.highSeconds+combined.moderateSeconds)/Math.max(1,combined.enduranceSeconds) > targetHigh + 0.000001) { session.high -= 30; continue; }
         remaining -= 30;
         changed = true;
       }
       if (!changed) break;
     }
+    if(prefs.preferred?.tiros?.length&&targetHigh>0&&!quality.some(item=>preferredDay(prefs,'tiros',dayKey(item.date))))weekWarnings.push('Preferência de tiros não pôde ser atendida com a recuperação e o tempo disponíveis. Revise um encaixe alternativo, sem acumular intensidade.');
     const built = sessions.map(draft => {
-      const structure = buildWorkoutStructure(profile, draft.modality, draft.phase, draft.minutes, draft.high, draft.highZone);
+      const structure = buildWorkoutStructure(profile, draft.modality, draft.phase, draft.minutes, draft.high, draft.highZone,'Z2',draft.kind);
       structure.requiresCoachReview = requiresCoachReview;
       structure.warnings = [...new Set([...structure.warnings, ...(safety.review ? safety.warnings : [])])];
-      const title = `${LABEL[draft.modality]} · ${PHASE_LABEL[draft.phase]} · ${draft.high > 0 ? 'Intervalos estruturados' : recovery ? 'Recuperação' : 'Aeróbico e técnica'}`;
-      const workout: GeneratedWorkout = { date: draft.date.toISOString(), modality: draft.modality, title, description: withEnvironment(describeStructure(structure), profile, draft), duration: draft.minutes, targetZone: draft.high > 0 ? draft.highZone : 'Z2', tssEstimate: null, phase: draft.phase, weekNumber: week + 1, structure };
+      const kindLabel=draft.high>0?(draft.highZone==='Z3'?'Ritmo':draft.highZone==='Z5'?'Tiros curtos':'Intervalos longos'):draft.kind==='brick'?'Brick — '+(draft.modality==='ciclismo'?'1. Bike':'2. Corrida após bike'):draft.kind==='longo'?'Longo':draft.kind==='cadencia'?'Cadência':draft.kind==='tecnica'?'Técnica':draft.kind==='recuperacao'?'Recuperação':'Endurance leve';
+      const title = `${kindLabel} · ${LABEL[draft.modality]} · ${PHASE_LABEL[draft.phase]} · ${draft.high > 0 ? 'Intervalos estruturados' : recovery ? 'Recuperação' : 'Aeróbico e técnica'}`;
+      const targetZone=structure.steps.filter(step=>step.kind==='principal'&&step.zone).sort((a,b)=>Number(b.zone!.slice(1))-Number(a.zone!.slice(1)))[0]?.zone||'Z1';
+      const workout: GeneratedWorkout = { date: draft.date.toISOString(), modality: draft.modality, title, description: withEnvironment(describeStructure(structure), profile, draft), duration: draft.minutes, targetZone, tssEstimate: null, phase: draft.phase, weekNumber: week + 1, structure };
       return workout;
     });
     const distribution = combineDistributions(built.map(workout => workout.structure.distribution));

@@ -15,6 +15,7 @@ const date = z.preprocess(value => value === '' ? null : value, z.string().regex
 }, 'Data de calendário inválida.').nullable().optional());
 
 export const assessmentSchema = z.object({
+  planningPreferences:z.preprocess(value=>value==null?undefined:value,z.object({preferred:z.partialRecord(z.enum(['tiros','rodagem','longo','ritmo','brick','natacao','forca','descanso']),z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7)).optional(),doubleDays:z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7).optional(),maxSessionMinutes:z.number().int().min(10).max(480).optional(),recentMinutes:z.partialRecord(z.enum(['corrida','ciclismo','natacao']),z.number().int().min(0).max(1800)).optional()}).optional()),
   birthDate: date,
   heightCm: number(80, 250),
   inactivityWeeks: number(0, 104, true),

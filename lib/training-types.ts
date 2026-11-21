@@ -60,6 +60,7 @@ export interface GeneratedWorkout {
 }
 
 export interface TrainingProfile {
+  planningPreferences?:unknown;
   heightCm?: number | null;
   goalTime?: string | null;
   goalType?: string | null;

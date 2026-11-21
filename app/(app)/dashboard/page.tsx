@@ -20,9 +20,9 @@ export default async function DashboardPage() {
   const today=new Date(`${localDay}T00:00:00Z`);
   const monday=new Date(today);monday.setUTCDate(today.getUTCDate()-((today.getUTCDay()+6)%7));
   const sunday=new Date(monday.getTime()+7*86400000);
-  const activeScope={userId,OR:[{planId:null},{plan:{status:'active'}}]};
+  const activeScope={userId,paused:false,OR:[{planId:null},{plan:{status:'active'}}]};
   const [next,week]=await Promise.all([
-    prisma.workout.findFirst({where:{...activeScope,date:{gte:today},completed:false},orderBy:{date:'asc'},select:{title:true,date:true,duration:true,structure:true,description:true}}),
+    prisma.workout.findFirst({where:{...activeScope,date:{gte:today},completed:false},orderBy:{date:'asc'},select:{title:true,date:true,duration:true,structure:true,description:true,phase:true}}),
     prisma.workout.findMany({where:{...activeScope,date:{gte:monday,lt:sunday}},select:{duration:true,completed:true}}),
   ]);
   const upcomingRaces = races?.filter((r: any) => new Date(r?.date) > new Date()) ?? [];

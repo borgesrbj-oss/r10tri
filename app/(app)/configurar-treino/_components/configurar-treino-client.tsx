@@ -1,4 +1,6 @@
 'use client';
+import {PlanningPreferencesForm} from '@/components/planning-preferences-form';
+
 import { useState } from 'react';
 import { Settings, Clock, Save, Waves, Bike, Timer, Dumbbell } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,7 +62,7 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const availableDays = Object.keys(schedule).filter((d) => (schedule[d] ?? []).length > 0);
+      const availableDays = profile?.availableDays ?? [];
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -87,7 +89,7 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
           </h1>
           <p className="text-muted-foreground">Defina os dias disponíveis, as modalidades de cada dia e o volume semanal</p>
         </div>
-      </FadeIn>
+      </FadeIn><PlanningPreferencesForm profile={profile} />
 
       <FadeIn delay={0.1}>
         <Card>

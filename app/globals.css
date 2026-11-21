@@ -203,3 +203,16 @@ html { scroll-padding-top: calc(4rem + env(safe-area-inset-top, 0px)); }
 @media(max-width:1023px){.app-content{padding-bottom:calc(6rem + env(safe-area-inset-bottom,0px));}.pwa-utility{padding-bottom:calc(5rem + env(safe-area-inset-bottom,0px));}}
 @media(pointer:coarse){button:not([role='switch']),a.nav-item{min-height:44px;}}
 .sport-anim { animation:none; }
+
+/* Direção triathlon: grafite e laranja; estados de erro mantêm cor semântica. */
+.dark {
+  --background: 220 8% 6%; --foreground: 0 0% 94%;
+  --card: 220 7% 10%; --card-foreground: 0 0% 94%;
+  --popover: 220 7% 10%; --popover-foreground: 0 0% 94%;
+  --primary: 25 95% 70%; --primary-foreground: 220 8% 7%;
+  --secondary: 220 6% 15%; --secondary-foreground: 0 0% 91%;
+  --muted: 220 6% 13%; --muted-foreground: 220 5% 72%;
+  --accent: 25 20% 17%; --accent-foreground: 25 95% 77%;
+  --border: 220 6% 25%; --input: 220 6% 37%; --ring: 25 95% 70%;
+  --chart-1: 25 95% 70%; --chart-2: 25 45% 57%; --chart-3: 220 5% 72%;
+}

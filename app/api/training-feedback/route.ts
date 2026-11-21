@@ -10,7 +10,7 @@ export async function GET() {
   const userId=session.user.id, now=new Date(),since=new Date(now.getTime()-7*86400000);
   const [logs,workouts]=await Promise.all([
     prisma.workoutLog.findMany({where:{userId,completedAt:{gte:since}},select:{completedAt:true,actualDuration:true,rpe:true,sleepHours:true,fatigueScore:true,painScore:true},orderBy:{completedAt:'desc'},take:50}),
-    prisma.workout.findMany({where:{userId,date:{gte:since,lt:now},OR:[{planId:null},{plan:{status:'active'}}]},select:{date:true,completed:true},take:50}),
+    prisma.workout.findMany({where:{userId,paused:false,date:{gte:since,lt:now},OR:[{planId:null},{plan:{status:'active'}}]},select:{date:true,completed:true},take:50}),
   ]);
   return NextResponse.json(trainingFeedback(logs,workouts,now),{headers});
 }

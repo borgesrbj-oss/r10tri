@@ -27,7 +27,7 @@ export async function GET() {
       prisma.user.count({ where: { role: 'atleta' } }),
     ]);
     const ids = athletes.map(athlete => athlete.id);
-    const activeWorkouts = { userId: { in: ids }, OR: [{ planId: null }, { plan: { status: 'active' } }] };
+    const activeWorkouts = { paused:false,userId: { in: ids }, OR: [{ planId: null }, { plan: { status: 'active' } }] };
     const [overdue, weekly] = ids.length ? await Promise.all([
       prisma.workout.groupBy({ by: ['userId'], where: { ...activeWorkouts, date: { gte: window.overdueSince, lt: window.today }, completed: false, modality: { not: 'descanso' } }, _count: { _all: true } }),
       prisma.workout.groupBy({ by: ['userId'], where: { ...activeWorkouts, date: { gte: window.weekStart, lt: window.weekEnd }, duration: { gt: 0 }, modality: { not: 'descanso' } }, _sum: { duration: true } }),

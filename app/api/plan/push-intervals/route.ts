@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'CHAVE_AUSENTE', message: 'Configure a chave de API do Intervals.icu no perfil do atleta antes de enviar.' }, { status: 400 });
   }
 
-  const where: any = { planId };
+  const where: any = { planId,paused:false };
   if (modality !== 'todos') where.modality = modality;
   const workouts = await prisma.workout.findMany({ where, orderBy: { date: 'asc' } });
   if (workouts.length === 0) return NextResponse.json({ error: 'Nenhum treino para enviar' }, { status: 404 });

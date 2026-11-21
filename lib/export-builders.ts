@@ -192,7 +192,7 @@ export function buildFit(workout: any, opts?: { mode?: 'zona' | 'km'; thresholdP
 const TCX_SPORT: Record<string, string> = { corrida: 'Running', ciclismo: 'Biking', natacao: 'Other', forca: 'Other' };
 
 function repeatLabel(label: string): string {
-  return label.replace(/^Bloco \d+\/\d+ controlado$/, 'Bloco controlado').replace(/^Recuperação \d+\/\d+$/, 'Recuperação');
+  return label.replace(/^Bloco \d+\/\d+ controlado$/, 'Bloco controlado').replace(/^Recuperação \d+\/\d+$/, 'Recuperação').replace(/^Série \d+:/,'Série:').replace(/^Pausa \d+ na borda$/,'Pausa na borda').replace(/^Ciclo \d+:/,'Ciclo:').replace(/^Caminhada \d+$/,'Caminhada');
 }
 
 function tcxGroups(steps: TrainingStep[]): { steps: TrainingStep[]; repetitions: number }[] {
