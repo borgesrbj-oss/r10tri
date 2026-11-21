@@ -1,0 +1,52 @@
+[
+  {
+    "domain": "cadorya.com",
+    "status": 404,
+    "checkedAt": "2026-11-19T02:00:13.422Z"
+  },
+  {
+    "domain": "trajora.com",
+    "status": 200,
+    "checkedAt": "2026-11-19T02:00:13.409Z"
+  },
+  {
+    "domain": "oridra.com",
+    "status": 200,
+    "checkedAt": "2026-11-19T02:00:13.411Z"
+  },
+  {
+    "domain": "eluntra.com",
+    "status": 200,
+    "checkedAt": "2026-11-19T02:00:13.406Z"
+  },
+  {
+    "domain": "senvora.com",
+    "status": 200,
+    "checkedAt": "2026-11-19T02:00:13.412Z"
+  },
+  {
+    "domain": "r10vertice.com",
+    "status": 404,
+    "checkedAt": "2026-11-19T02:00:13.410Z"
+  },
+  {
+    "domain": "r10prisma.com",
+    "status": 404,
+    "checkedAt": "2026-11-19T02:00:13.423Z"
+  },
+  {
+    "domain": "r10limiar.com",
+    "status": 404,
+    "checkedAt": "2026-11-19T02:00:13.415Z"
+  },
+  {
+    "domain": "r10cadencia.com",
+    "status": 404,
+    "checkedAt": "2026-11-19T02:00:13.424Z"
+  },
+  {
+    "domain": "r10travessia.com",
+    "status": 404,
+    "checkedAt": "2026-11-19T02:00:13.409Z"
+  }
+]
