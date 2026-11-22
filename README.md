@@ -6,6 +6,8 @@ O motor principal de planos é determinístico e funciona sem serviços pagos de
 
 - Repositório: [borgesrbj-oss/r10tri](https://github.com/borgesrbj-oss/r10tri)
 - Portfólio: [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/)
+- Área do Coach: [vínculos, rascunhos, publicação e validação](docs/AREA_COACH_2026.md).
+- Área do Coach: [permissões, convites, rascunhos, publicação e validação](docs/AREA_COACH_2026.md).
 - Nova revisão de triathlon: [periodização, fontes e limites](docs/PERIODIZACAO_TRIATLO_2026.md), [semanas fictícias](docs/EXEMPLOS_TRIATLO_2026.md), [dez nomes](docs/NOMES_TRIATLO_2026.md).
 - Aplicativo: [acessar R10 TRI](https://r10tri-production.up.railway.app/login)
 - Auditoria científica, redesign e entregáveis de novembro: [docs/ENTREGA_AUDITORIA_2026.md](docs/ENTREGA_AUDITORIA_2026.md)
