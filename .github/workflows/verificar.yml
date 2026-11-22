@@ -68,6 +68,7 @@ jobs:
           done
           test "$pronto" = 1
           npm run test:integracao
+          npm run test:coach
           npm run test:auth
       - name: Testar recuperação por e-mail com SMTP local TLS
         shell: bash

@@ -12,7 +12,7 @@ export default async function PlanilhaPage() {
   const plan = plans?.[0] ?? null;
   let workouts: any[] = [];
   if (plan) {
-    workouts = await prisma.workout.findMany({ where: { planId: plan.id }, orderBy: { date: 'asc' }, include: { log: true } });
+    workouts = await prisma.workout.findMany({ where: { planId: plan.id }, orderBy: [{date:'asc'},{partOrder:'asc'}], include: { log: true } });
   }
   // Indica se a chave do Intervals.icu do DONO do plano ja esta salva (para o envio direto).
   const ownerProfile = plan ? await prisma.athleteProfile.findUnique({ where: { userId: plan.userId }, select: { intervalsIcuApiKey: true } }) : null;

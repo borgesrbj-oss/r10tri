@@ -468,6 +468,24 @@
           "paused": {
             "type": "boolean",
             "description": "Pausa reversível; preserva histórico e exclui sessão do volume ativo."
+          },
+          "coachManaged": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "coachPublicationId": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "brickGroupId": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "partOrder": {
+            "type": "integer",
+            "readOnly": true
           }
         }
       },
@@ -822,6 +840,13 @@
           "requiresCoachReview": {
             "type": "boolean",
             "description": "Indica necessidade de revisão do treinador antes da execução; não é liberação clínica."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "coach"
+            ],
+            "description": "Origem manual; mantém validação dos passos e da soma exata de segundos."
           }
         },
         "required": [
@@ -1047,6 +1072,135 @@
           "athletes",
           "limited",
           "totalAthletes"
+        ]
+      },
+      "CoachBlock": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "aquecimento",
+              "principal",
+              "recuperacao",
+              "desaquecimento"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 21600
+          },
+          "repeat": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "default": 1
+          },
+          "recoverySeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3600
+          },
+          "distanceMeters": {
+            "type": "number",
+            "minimum": 1
+          },
+          "zone": {
+            "type": "string",
+            "enum": [
+              "Z1",
+              "Z2",
+              "Z3",
+              "Z4",
+              "Z5"
+            ]
+          },
+          "passive": {
+            "type": "boolean"
+          },
+          "ftpLow": {
+            "type": "number"
+          },
+          "ftpHigh": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 250
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "seconds"
+        ]
+      },
+      "CoachSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "title": {
+            "type": "string"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "corrida",
+              "ciclismo",
+              "natacao",
+              "forca",
+              "brick"
+            ]
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "base",
+              "build",
+              "peak",
+              "race",
+              "transition"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachBlock"
+            },
+            "minItems": 1,
+            "maxItems": 64
+          },
+          "transitionSeconds": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 1800
+          },
+          "runBlocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachBlock"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "title",
+          "modality",
+          "blocks"
         ]
       }
     }
@@ -3009,7 +3163,7 @@
     "/api/athlete/create": {
       "post": {
         "operationId": "createAthlete",
-        "summary": "Treinador cadastra atleta ou renova convite de primeiro acesso",
+        "summary": "Cadastrar atleta novo ou convidar conta existente para vínculo com aceite.",
         "security": [
           {
             "bearerAuth": []
@@ -3124,7 +3278,7 @@
     "/api/athlete/delete": {
       "post": {
         "operationId": "deleteAthlete",
-        "summary": "Coach deletes an athlete member and all their data",
+        "summary": "Encerrar vínculo com atleta; não apaga conta ou histórico.",
         "security": [
           {
             "bearerAuth": []
@@ -3150,7 +3304,7 @@
         },
         "responses": {
           "200": {
-            "description": "Athlete deleted",
+            "description": "Vínculo encerrado; dados preservados.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4262,6 +4416,1071 @@
           },
           "422": {
             "description": "Ação ou estrutura inválida."
+          }
+        }
+      }
+    },
+    "/api/coach/athletes": {
+      "get": {
+        "operationId": "coach_athletes",
+        "summary": "Listar somente alunos vinculados ao coach e convites pendentes, sem dados esportivos antes do aceite.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/athlete": {
+      "get": {
+        "operationId": "coach_athlete",
+        "summary": "Ficha de atleta com vínculo ativo; sem senha ou chave de integração.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/invitations": {
+      "get": {
+        "operationId": "coach_invitations",
+        "summary": "Convites pendentes destinados ao atleta da sessão.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/publications": {
+      "get": {
+        "operationId": "coach_publications",
+        "summary": "Histórico publicado para o atleta da sessão. Nunca inclui rascunhos.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/invite": {
+      "post": {
+        "operationId": "coach_invite",
+        "summary": "Cadastrar atleta novo ou convidar conta existente sem duplicar. Primeiro acesso usa token privado de uso único.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "whatsapp": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/respond": {
+      "post": {
+        "operationId": "coach_respond",
+        "summary": "Atleta aceita ou recusa um convite recebido.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "accept": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "accept"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/end": {
+      "post": {
+        "operationId": "coach_end",
+        "summary": "Encerrar vínculo ativo e retirar acesso do coach, preservando conta e histórico.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "athleteId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/profile": {
+      "post": {
+        "operationId": "coach_profile",
+        "summary": "Atualizar dados esportivos com autoria e auditoria. Exige revisão das propostas após mudança de perfil.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "profile": {
+                    "$ref": "#/components/schemas/AthleteProfile"
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "profile"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/race": {
+      "post": {
+        "operationId": "coach_race",
+        "summary": "Cadastrar ou ajustar prova do aluno vinculado.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "distance": {
+                    "type": "string"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "A",
+                      "B",
+                      "C"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "name",
+                  "date",
+                  "distance",
+                  "priority"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/message": {
+      "post": {
+        "operationId": "coach_message",
+        "summary": "Enviar orientação interna com auditoria; retorna link opcional de WhatsApp para envio manual.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 4000
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "message"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/session": {
+      "post": {
+        "operationId": "coach_session",
+        "summary": "Salvar sessão estruturada em rascunho privado. ID de sessão exige mesmo atleta; changeKey edita uma sugestão pendente. Percentuais exigem FTP/equipamento e coerência com a zona.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "draftId": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  "session": {
+                    "$ref": "#/components/schemas/CoachSession"
+                  },
+                  "duplicate": {
+                    "type": "boolean"
+                  },
+                  "changeKey": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "session"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/batch": {
+      "post": {
+        "operationId": "coach_batch",
+        "summary": "Propor movimento, encurtamento, substituição ou cancelamento de sessões futuras; não altera calendário publicado.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "draftId": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  "operation": {
+                    "type": "string",
+                    "enum": [
+                      "move",
+                      "shorten",
+                      "substitute",
+                      "cancel",
+                      "discardChange"
+                    ]
+                  },
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 500
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "shiftDays": {
+                    "type": "integer",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "minutes": {
+                    "type": "integer",
+                    "minimum": 4,
+                    "maximum": 1440
+                  },
+                  "factor": {
+                    "type": "number",
+                    "minimum": 0.1,
+                    "maximum": 2
+                  },
+                  "modality": {
+                    "type": "string",
+                    "enum": [
+                      "corrida",
+                      "ciclismo",
+                      "natacao",
+                      "forca"
+                    ]
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "operation",
+                  "ids"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/generate": {
+      "post": {
+        "operationId": "coach_generate",
+        "summary": "Gerar proposta de semana/bloco a partir da triagem e resposta recente, preservando a última publicação.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "draftId": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "weeks": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "startDate",
+                  "weeks"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/notes": {
+      "post": {
+        "operationId": "coach_notes",
+        "summary": "Salvar orientações no rascunho com controle de revisão.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "draftId": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "maxLength": 10000
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "draftId",
+                  "revision",
+                  "instructions"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/rebase": {
+      "post": {
+        "operationId": "coach_rebase",
+        "summary": "Atualizar alvos da proposta após mudança de perfil; conflitos com sessão exigem reabrir a versão publicada.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "draftId": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "maxLength": 10000
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "draftId",
+                  "revision"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
+          }
+        }
+      }
+    },
+    "/api/coach/publish": {
+      "post": {
+        "operationId": "coach_publish",
+        "summary": "Publicar atomicamente proposta revisada com vínculo ativo e versões conferidas; registra autoria e avisa o atleta.",
+        "tags": [
+          "Área do Coach"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "sessionCookie": []
+          },
+          {
+            "secureSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "athleteId": {
+                    "type": "string"
+                  },
+                  "draftId": {
+                    "type": "string"
+                  },
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  "acknowledge": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "athleteId",
+                  "draftId",
+                  "revision",
+                  "instructions",
+                  "acknowledge"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação concluída."
+          },
+          "401": {
+            "description": "Sessão necessária."
+          },
+          "403": {
+            "description": "Papel ou acesso não autorizado."
+          },
+          "404": {
+            "description": "Registro ou vínculo ativo não encontrado."
+          },
+          "409": {
+            "description": "Dados/revisão mudaram ou histórico deve ser preservado."
+          },
+          "422": {
+            "description": "Confira os campos."
           }
         }
       }
