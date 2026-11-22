@@ -59,7 +59,7 @@ Limites: convite de vínculo é entregue dentro do app; não depende de envio de
 
 ## Logo
 
-Origem: [logo GoTri fornecida pelo usuário](https://chatgpt.com/s/p_eeb3078d5e508191a7b44d7de8076cfe). Arquivo aplicado: `public/brand/gotri-laranja.png`. Cores de referência: laranja `#FBA66A`, prata/branco `#F0F0F0`, grafite `#101113`. A imagem é servida pelo componente compartilhado de marca, com otimização de tamanho do Next.js. Não foram alterados o nome técnico do projeto, contas ou domínios.
+Origem: [logo GoTri fornecida pelo usuário](https://chatgpt.com/s/p_eeb3078d5e508191a7b44d7de8076cfe). Arquivo aplicado: `public/brand/gotri-laranja.png`. Cores de referência: laranja `#FBA66A`, prata/branco `#F0F0F0`, grafite `#101113`. A imagem é servida como arquivo público pelo componente compartilhado de marca, com tamanho de exibição responsivo. A configuração existente mantém a otimização automática de imagens do Next.js desativada. Não foram alterados o nome técnico do projeto, contas ou domínios.
 
 ## Resultado da conferência — 22/11/2026
 
