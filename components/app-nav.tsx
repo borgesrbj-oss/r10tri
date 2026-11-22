@@ -99,7 +99,7 @@ export function AppNav() {
         <div className="app-topbar-inner flex min-h-16 items-center justify-between gap-2 px-4 lg:px-6 lg:py-4">
           <Link
             href={coach ? '/coach' : '/dashboard'}
-            aria-label="R10 TRI, abrir painel"
+            aria-label="Gotri, abrir painel"
           >
             <BrandLogo />
           </Link>

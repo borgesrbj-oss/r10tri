@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "R10 TRI API",
+    "title": "Gotri API",
     "version": "1.0.0",
     "description": "API de planejamento e acompanhamento multiesportivo. Marca provisória."
   },

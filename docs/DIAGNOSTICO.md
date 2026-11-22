@@ -1,4 +1,4 @@
-# Diagnóstico e correções do R10 TRI
+# Diagnóstico e correções do Gotri
 
 Consolidação iniciada em 14 de novembro de 2026 a partir do ZIP fornecido e das verificações locais. Este documento não contém valores de credenciais.
 
@@ -133,7 +133,7 @@ O ZIP não continha README nem migrações de banco. Continha um `.env` preenchi
 | Workflow de verificação do projeto | [Execução 43639788897 aprovada](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897): `npm ci` em Linux, verificação de segredos, migrações, lint, tipos, 28 testes, auditoria sem vulnerabilidades, compilação e 21 cenários de integração em produção. |
 | Portfólio | 7 testes de busca, paginação, privacidade e fallback passaram. Snapshot atualizado com oito repositórios públicos e [deploy 43639849786 aprovado](https://github.com/borgesrbj-oss/borgesrbj-oss.github.io/actions/runs/43639849786). |
 | README de perfil | [Perfil público atualizado](https://github.com/borgesrbj-oss/borgesrbj-oss) com os oito repositórios públicos. |
-| Revisão visual | Portfólio conferido em computador e larguras de celular de 390 e 430 pixels no Chromium disponível, com busca e filtro dos oito repositórios. Login do R10 TRI revisado visualmente, sem erros no console observado. |
+| Revisão visual | Portfólio conferido em computador e larguras de celular de 390 e 430 pixels no Chromium disponível, com busca e filtro dos oito repositórios. Login do Gotri revisado visualmente, sem erros no console observado. |
 
 Os testes unitários de segurança executam os handlers reais com dependências controladas. O teste de integração é separado e deve ser executado com o servidor apontando para o mesmo PostgreSQL de testes. Aprovação de teste local não comprova configuração das integrações externas.
 
@@ -152,4 +152,4 @@ Os testes unitários de segurança executam os handlers reais com dependências 
 
 Na primeira publicação, os testes automatizados, a checagem de tipos, o linter global, a compilação e a auditoria de dependências foram concluídos com os resultados históricos acima. A integração passou tanto em desenvolvimento quanto em produção. A conferência dos arquivos rastreados passou pela busca por padrões e pela comparação exata com os segredos locais e os recebidos no ZIP, sem ocorrências. O Git foi inicialmente preparado na branch `main`; a revisão de endurance utiliza a branch indicada no início deste documento.
 
-O [repositório R10 TRI](https://github.com/borgesrbj-oss/r10tri) foi publicado e seu [workflow anterior foi aprovado](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897). O portfólio está publicado em [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/), com [deploy anterior aprovado](https://github.com/borgesrbj-oss/borgesrbj-oss.github.io/actions/runs/43639849786), e o [README de perfil](https://github.com/borgesrbj-oss/borgesrbj-oss) reuniu os oito projetos públicos daquele levantamento. O estado da revisão atual e suas pendências estão registrados no início deste documento.
+O [repositório Gotri](https://github.com/borgesrbj-oss/r10tri) foi publicado e seu [workflow anterior foi aprovado](https://github.com/borgesrbj-oss/r10tri/actions/runs/43639788897). O portfólio está publicado em [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/), com [deploy anterior aprovado](https://github.com/borgesrbj-oss/borgesrbj-oss.github.io/actions/runs/43639849786), e o [README de perfil](https://github.com/borgesrbj-oss/borgesrbj-oss) reuniu os oito projetos públicos daquele levantamento. O estado da revisão atual e suas pendências estão registrados no início deste documento.

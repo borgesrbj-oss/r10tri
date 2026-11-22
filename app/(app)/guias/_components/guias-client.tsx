@@ -31,13 +31,13 @@ const guides: Guide[] = [
   "id": "instalar-app",
   "category": "app",
   "title": "Instalar o app na tela inicial (PWA)",
-  "subtitle": "R10 TRI no Android e no iPhone, sem APK",
+  "subtitle": "Gotri no Android e no iPhone, sem APK",
   "image": "https://cdn.abacus.ai/images/3e041c3a-5467-432b-a18a-7f63ba559332.png",
   "duration": "3 min",
   "steps": [
     {
       "title": "1. Abra o endereço oficial",
-      "detail": "Acesse o R10 TRI pelo navegador usando HTTPS. Não há APK oficial distribuído por este projeto."
+      "detail": "Acesse o Gotri pelo navegador usando HTTPS. Não há APK oficial distribuído por este projeto."
     },
     {
       "title": "2. Android com Chrome",
@@ -67,7 +67,7 @@ const guides: Guide[] = [
     },
     {
       "title": "2. Uso disponível",
-      "detail": "Registre suas atividades pelo calendário e utilize as exportações da planilha. Nenhuma atividade do Strava entra automaticamente no R10 TRI."
+      "detail": "Registre suas atividades pelo calendário e utilize as exportações da planilha. Nenhuma atividade do Strava entra automaticamente no Gotri."
     },
     {
       "title": "3. Implementação futura",
@@ -139,7 +139,7 @@ const guides: Guide[] = [
     },
     {
       "title": "4. Registre o resultado",
-      "detail": "O R10 TRI não recebe automaticamente atividades do MyWhoosh, Zwift ou Strava. Registre a conclusão e o esforço no calendário."
+      "detail": "O Gotri não recebe automaticamente atividades do MyWhoosh, Zwift ou Strava. Registre a conclusão e o esforço no calendário."
     }
   ],
   "links": [

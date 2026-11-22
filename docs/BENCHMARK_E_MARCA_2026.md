@@ -4,7 +4,7 @@
 
 Consulta a páginas oficiais; não houve assinatura de planos, reprodução de telas nem teste comparativo com atletas. Afirmações dos fornecedores descrevem produto, não comprovam superioridade clínica. O app preserva sua linguagem e seus componentes.
 
-| Plataforma / fonte | Padrão observado | Decisão para R10 TRI |
+| Plataforma / fonte | Padrão observado | Decisão para Gotri |
 |---|---|---|
 | [TrainingPeaks: construtor estruturado](https://help.trainingpeaks.com/hc/en-us/articles/235164967-Structured-Workout-Builder) | Blocos com tempo/distância e intensidade por potência, pace, FC ou esforço | Exibir estrutura e soma da duração; preservar dados ao editar. |
 | [Runna: planos](https://www.runna.com/training/training-plans), [força](https://support.runna.com/en/articles/15624879-adding-strength-training-to-your-runna-plan) | Onboarding ligado a rotina, objetivos e equipamentos; força com configuração própria | Triagem em etapas, disponibilidade por dia e força explícita. Não assumir como seu modelo adaptativo interno funciona. |
@@ -67,4 +67,4 @@ Busca web exata e documentação: 16/11/2026. RDAP oficial Verisign retornou 404
 
 Colisões confirmadas em fontes dos próprios titulares: [Orvexa no Google Play](https://play.google.com/store/apps/details?id=orvexa.video.downloader), [Alviora Apps](https://apps.alvioragroup.com/), [Ritmora](https://ritmora.co/), [Voryn](https://voryngroup.com/news/voryn-connect-coming-september-1-2026), [Avyren](https://avyren.com/), [Noryth](https://www.noryth.com/), [Velunor](https://velunor.us/). Esses nomes foram mantidos na exploração para mostrar por que pesquisa muda a recomendação.
 
-Handles sociais e disponibilidade em todas as lojas não foram confirmados. Ausência em busca web não prova disponibilidade. A [busca de marcas do INPI](https://servicos.busca.inpi.gov.br/marcas/) e o [guia oficial](https://www.gov.br/inpi/pt-br/assuntos/marcas) foram localizados, mas não foi emitida análise de anterioridade, similaridade fonética ou classes de proteção. Isso exige diligência específica antes de uso comercial. Nenhum domínio foi comprado e nenhuma marca foi trocada: o produto continua **R10 TRI, identidade provisória**, aguardando aprovação.
+Handles sociais e disponibilidade em todas as lojas não foram confirmados. Ausência em busca web não prova disponibilidade. A [busca de marcas do INPI](https://servicos.busca.inpi.gov.br/marcas/) e o [guia oficial](https://www.gov.br/inpi/pt-br/assuntos/marcas) foram localizados, mas não foi emitida análise de anterioridade, similaridade fonética ou classes de proteção. Isso exige diligência específica antes de uso comercial. Nenhum domínio foi comprado. Em 22/11/2026, o usuário escolheu **Gotri** como nome do aplicativo; as sugestões anteriores permanecem como histórico da pesquisa.

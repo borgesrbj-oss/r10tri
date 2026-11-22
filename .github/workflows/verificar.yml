@@ -1,4 +1,4 @@
-name: Verificar R10 TRI
+name: Verificar Gotri
 
 on:
   push:

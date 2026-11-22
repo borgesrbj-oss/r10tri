@@ -1,6 +1,6 @@
 # Identidade provisória e sistema visual — 16/11/2026
 
-R10 TRI permanece o nome em uso. Nenhum nome sugerido foi aplicado ou registrado. O redesign reaproveita componentes, rotas e dados existentes; não simula uma plataforma nova.
+Gotri é o nome escolhido pelo usuário em 22/11/2026. Os nomes sugeridos anteriormente permanecem como referência histórica; nenhum registro de marca foi realizado. O redesign reaproveita componentes, rotas e dados existentes; não simula uma plataforma nova.
 
 ## Três direções avaliadas
 

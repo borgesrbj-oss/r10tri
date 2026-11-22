@@ -81,7 +81,7 @@ export function PwaManager() {
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3">
           {!online ? (
             <p className="flex items-center gap-2" role="status"><WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" /> Sem conexão. Reconecte antes de salvar seus treinos.</p>
-          ) : <span>R10 TRI no computador e no celular</span>}
+          ) : <span>Gotri no computador e no celular</span>}
           {!installed && <Button type="button" variant="outline" size="sm" onClick={install} className="min-h-11 gap-2"><Download className="h-4 w-4" aria-hidden="true" /> Instalar aplicativo</Button>}
         </div>
         {registrationFailed && <p className="mx-auto mt-2 max-w-[1200px]" role="status">Não foi possível preparar a instalação agora. Você pode continuar usando o navegador.</p>}
@@ -89,7 +89,7 @@ export function PwaManager() {
       <Dialog open={instructions} onOpenChange={setInstructions}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Leve o R10 TRI para sua tela inicial</DialogTitle>
+            <DialogTitle>Leve o Gotri para sua tela inicial</DialogTitle>
             <DialogDescription>A instalação depende das opções oferecidas pelo seu navegador.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 text-sm">

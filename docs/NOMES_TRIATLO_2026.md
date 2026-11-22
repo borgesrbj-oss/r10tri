@@ -1,6 +1,6 @@
 # Dez nomes para a próxima etapa — 18/11/2026
 
-R10tri permanece em uso. São propostas, sem registro, compra ou mudança de marca. Consulta oficial RDAP Verisign dos domínios .com em 18/11 no Brasil; horários UTC estão em [DOMINIOS_TRIATLO_2026.json](DOMINIOS_TRIATLO_2026.json). 404 significa registro não encontrado naquele instante, não garantia de disponibilidade para compra. 200 significa domínio registrado, sem provar titularidade de marca.
+Atualização de 22/11/2026: o usuário escolheu Gotri. As propostas abaixo foram mantidas como histórico, sem registro ou compra. Consulta oficial RDAP Verisign dos domínios .com em 18/11 no Brasil; horários UTC estão em [DOMINIOS_TRIATLO_2026.json](DOMINIOS_TRIATLO_2026.json). 404 significa registro não encontrado naquele instante, não garantia de disponibilidade para compra. 200 significa domínio registrado, sem provar titularidade de marca.
 
 | Nome | Conceito e pronúncia | Domínio consultado | Risco/resultado preliminar |
 |---|---|---|---|

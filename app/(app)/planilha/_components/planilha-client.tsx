@@ -137,7 +137,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
     doc.text(plan?.name ?? 'Planilha de Treinos', 14, 16);
     doc.setFontSize(10);
     doc.setTextColor(120);
-    doc.text('R10 TRI - Nade. Pedale. Corra. Evolua.', 14, 22);
+    doc.text('Gotri - Nade. Pedale. Corra. Evolua.', 14, 22);
     const sorted = [...(workouts ?? [])].sort((a: any, b: any) => (a?.weekNumber ?? 0) - (b?.weekNumber ?? 0) || (new Date(a?.date ?? 0).getTime() - new Date(b?.date ?? 0).getTime()));
     const totalMin = sorted.reduce((s: number, w: any) => s + (Number(w?.duration) || 0), 0);
     const totalTss = sorted.reduce((s: number, w: any) => s + (Number(w?.tssEstimate) || 0), 0);

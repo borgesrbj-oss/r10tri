@@ -86,7 +86,7 @@ export function workoutWhatsappMessage(workout: { title?: string; date?: string 
   const structure = getWorkoutStructure(workout.structure);
   const date = workout.date ? new Date(workout.date) : null;
   const dateLabel = date && Number.isFinite(date.getTime()) ? date.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Data a confirmar';
-  const lines = ['R10 TRI — treino', workout.title || 'Treino', dateLabel];
+  const lines = ['Gotri — treino', workout.title || 'Treino', dateLabel];
   if (structure) {
     lines.push(`Duração: ${formatTrainingDuration(structure.durationSeconds)}`);
     structure.steps.forEach((step, index) => lines.push(`${index + 1}. ${KINDS[step.kind]} · ${formatTrainingDuration(step.durationSeconds)} · ${step.rest === 'passivo' ? 'pausa' : step.zone || 'força/técnica'} · ${step.target.text}`));

@@ -1,6 +1,6 @@
 # Área do Coach e aplicação da logo — 22/11/2026
 
-Implementação incremental sobre `d10896d`, na branch `codex/area-coach`. O app continua no projeto R10tri. A logo GoTri fornecida pelo usuário foi adaptada para laranja/prata sobre grafite e aplicada ao login e à navegação, sem renomear repositório ou contas.
+Implementação incremental sobre `d10896d`, na branch `codex/area-coach`. A marca atual é Gotri, escolhida pelo usuário em 22/11/2026. A logo GoTri fornecida pelo usuário foi adaptada para laranja/prata sobre grafite e aplicada ao login e à navegação, sem renomear repositório ou contas.
 
 ## Diagnóstico e mudanças
 
@@ -59,7 +59,7 @@ Limites: convite de vínculo é entregue dentro do app; não depende de envio de
 
 ## Logo
 
-Origem: [logo GoTri fornecida pelo usuário](https://chatgpt.com/s/p_eeb3078d5e508191a7b44d7de8076cfe). Arquivo aplicado: `public/brand/gotri-laranja.png`. Cores de referência: laranja `#FBA66A`, prata/branco `#F0F0F0`, grafite `#101113`. A imagem é servida como arquivo público pelo componente compartilhado de marca, com tamanho de exibição responsivo. A configuração existente mantém a otimização automática de imagens do Next.js desativada. Não foram alterados o nome técnico do projeto, contas ou domínios.
+Origem: [logo GoTri fornecida pelo usuário](https://chatgpt.com/s/p_eeb3078d5e508191a7b44d7de8076cfe). Arquivo aplicado: `public/brand/gotri-laranja.png`. Cores de referência: laranja `#FBA66A`, prata/branco `#F0F0F0`, grafite `#101113`. A imagem é servida como arquivo público pelo componente compartilhado de marca, com tamanho de exibição responsivo. A configuração existente mantém a otimização automática de imagens do Next.js desativada. Repositório, contas, banco e domínios existentes foram preservados; o nome de exibição e os metadados foram atualizados para Gotri.
 
 ## Resultado da conferência — 22/11/2026
 

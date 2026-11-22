@@ -92,7 +92,7 @@ export default function LoginPage() {
           <Timer className="h-7 w-7" />
         </div>
         <p className="hidden sm:block mt-6 text-xs text-muted-foreground">
-          R10 TRI · identidade provisória
+          Gotri · treinamento de endurance
         </p>
       </section>
       <Card className="w-full max-w-md mx-auto overflow-hidden shadow-sm">
