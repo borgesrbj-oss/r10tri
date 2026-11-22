@@ -20,7 +20,7 @@ export function BrandLogo({
     >
       <Image
         src="/brand/gotri-laranja.png"
-        alt="GoTri — natação, ciclismo e corrida"
+        alt="Gotri — natação, ciclismo e corrida"
         width={1902}
         height={827}
         priority

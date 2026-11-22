@@ -1,4 +1,4 @@
-# Checklist de validação do R10 TRI
+# Checklist de validação do Gotri
 
 Registro atualizado em 16 de novembro de 2026. Uma caixa marcada indica evidência observada nesta revisão; caixas abertas indicam trabalho pendente ou dependência externa. Testes automatizados, simulação de largura e uso em dispositivo real são evidências diferentes.
 

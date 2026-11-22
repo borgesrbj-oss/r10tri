@@ -34,9 +34,9 @@ export async function sendPasswordResetEmail(
   const message: RecoveryMessage = {
     from: configuration.from,
     to,
-    subject: 'R10 TRI — redefinir sua senha',
-    text: `Recebemos uma solicitação para redefinir sua senha no R10 TRI.\n\nAbra o link em até 30 minutos: ${url}\n\nO link pode ser usado uma vez. Se você não solicitou a alteração, ignore esta mensagem. Sua senha continua igual.`,
-    html: `<p>Recebemos uma solicitação para redefinir sua senha no R10 TRI.</p><p><a href="${escapeHtml(url)}">Redefinir minha senha</a></p><p>Este link expira em 30 minutos e pode ser usado uma vez.</p><p>Se você não solicitou a alteração, ignore esta mensagem. Sua senha continua igual.</p>`,
+    subject: 'Gotri — redefinir sua senha',
+    text: `Recebemos uma solicitação para redefinir sua senha no Gotri.\n\nAbra o link em até 30 minutos: ${url}\n\nO link pode ser usado uma vez. Se você não solicitou a alteração, ignore esta mensagem. Sua senha continua igual.`,
+    html: `<p>Recebemos uma solicitação para redefinir sua senha no Gotri.</p><p><a href="${escapeHtml(url)}">Redefinir minha senha</a></p><p>Este link expira em 30 minutos e pode ser usado uma vez.</p><p>Se você não solicitou a alteração, ignore esta mensagem. Sua senha continua igual.</p>`,
   };
   if (options.sender) { await options.sender(message); return; }
   // Resend por HTTPS funciona também nos planos Railway que bloqueiam SMTP.

@@ -2,7 +2,7 @@
 
 ## O que foi ajustado
 
-O R10 TRI mantém as páginas, a identidade visual e as funções existentes. O manifesto recebeu identidade estável, idioma, escopo e ponto de entrada. Os ícones PNG existentes de 192 e 512 pixels foram preservados e tiveram suas dimensões verificadas. Eles são declarados como ícones comuns; não há promessa de área segura para recorte de ícone maskable.
+O Gotri mantém as páginas, a identidade visual e as funções existentes. O manifesto recebeu identidade estável, idioma, escopo e ponto de entrada. Os ícones PNG existentes de 192 e 512 pixels foram preservados e tiveram suas dimensões verificadas. Eles são declarados como ícones comuns; não há promessa de área segura para recorte de ícone maskable.
 
 O componente `components/pwa-manager.tsx` registra `public/sw.js` em produção quando o navegador oferece service worker e o contexto é seguro. O botão Instalar aplicativo utiliza a solicitação nativa quando ela está disponível e oferece instruções acessíveis nos demais casos. A instalação não é forçada e nenhuma permissão de notificação é pedida automaticamente.
 

@@ -1,4 +1,4 @@
-# R10tri: periodização individualizada de triathlon
+# Gotri: periodização individualizada de triathlon
 
 Revisão de 18/11/2026. Trabalho incremental sobre 4b9cf16, com nova migração aditiva. Nome preservado. Nenhum banco foi redefinido, atleta apagado ou treino concluído recalculado pela mudança de FTP.
 

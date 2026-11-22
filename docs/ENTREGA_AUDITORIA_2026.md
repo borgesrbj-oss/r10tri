@@ -2,7 +2,7 @@
 
 [Acessar o aplicativo](https://r10tri-production.up.railway.app/login) · [Código-fonte](https://github.com/borgesrbj-oss/r10tri)
 
-Implementação incremental na aplicação existente. A marca permanece R10 TRI; nenhum nome novo, domínio pago ou integração sem acesso autorizado foi aplicado. Nenhuma funcionalidade foi excluída nesta rodada.
+Implementação incremental na aplicação existente. Atualização de 22/11/2026: a marca passou a Gotri por solicitação do usuário. Nenhum domínio pago ou integração sem acesso autorizado foi aplicado. Nenhuma funcionalidade foi excluída nesta rodada.
 
 ## Entregáveis
 

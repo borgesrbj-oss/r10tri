@@ -317,7 +317,7 @@ export function buildZwo(workout: any, opts?: { ftp?: number | null }): string {
     }).join('\n');
     return `<?xml version="1.0" encoding="UTF-8"?>
 <workout_file>
-  <author>R10 TRI</author><name>${xmlEscape(workout.title || 'Treino')}</name>
+  <author>Gotri</author><name>${xmlEscape(workout.title || 'Treino')}</name>
   <description>${xmlEscape(`${describeWorkoutForExport(workout)}\n${instructions}`)}</description>
   <sportType>${structure.modality === 'corrida' ? 'run' : 'bike'}</sportType><tags/>
   <workout>
@@ -333,7 +333,7 @@ ${steps}
   const mainPower = zone === 'Z4' || zone === 'Z5' ? '0.95' : zone === 'Z3' ? '0.80' : '0.65';
   return `<?xml version="1.0" encoding="UTF-8"?>
 <workout_file>
-  <author>R10 TRI</author>
+  <author>Gotri</author>
   <name>${esc(workout?.title ?? 'Treino')}</name>
   <description>${esc(workout?.description ?? '')}</description>
   <sportType>${sportType}</sportType>
@@ -360,6 +360,6 @@ Semana: ${workout?.weekNumber ?? ''}
 --- DESCRIÇÃO ---
 ${describeWorkoutForExport(workout)}
 
-Gerado por R10 TRI
+Gerado por Gotri
 `;
 }

@@ -1,6 +1,6 @@
 # Opções de nome e identidade
 
-Sugestões para uma assessoria de corrida, triatlo e natação. A identidade atual R10 TRI foi preservada; estas opções permitem escolher uma direção visual antes de mudar a marca.
+Sugestões para uma assessoria de corrida, triatlo e natação. Em 22/11/2026, o usuário escolheu Gotri. Estas opções anteriores permanecem como histórico de exploração visual.
 
 | Nome | Ideia | Principal | Secundária | Destaque | Fundo | Texto |
 | --- | --- | --- | --- | --- | --- | --- |

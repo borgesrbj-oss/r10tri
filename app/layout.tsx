@@ -23,12 +23,12 @@ export const viewport: Viewport = {
 
 export const metadata = {
   title: {
-    default: 'R10 TRI - Nade. Pedale. Corra. Evolua.',
-    template: '%s | R10 TRI',
+    default: 'Gotri - Nade. Pedale. Corra. Evolua.',
+    template: '%s | Gotri',
   },
   description:
-    'R10 TRI organiza treinos de corrida, ciclismo e natação a partir da sua rotina, com sessões estruturadas, acompanhamento e exportação de arquivos compatíveis.',
-  applicationName: 'R10 TRI',
+    'Gotri organiza treinos de corrida, ciclismo e natação a partir da sua rotina, com sessões estruturadas, acompanhamento e exportação de arquivos compatíveis.',
+  applicationName: 'Gotri',
   keywords: [
     'triathlon',
     'treino de triathlon',
@@ -44,9 +44,9 @@ export const metadata = {
     'Strava',
     'MyWhoosh',
   ],
-  authors: [{ name: 'R10 TRI' }],
-  creator: 'R10 TRI',
-  publisher: 'R10 TRI',
+  authors: [{ name: 'Gotri' }],
+  creator: 'Gotri',
+  publisher: 'Gotri',
   category: 'sports',
   icons: {
     icon: '/favicon.svg',
@@ -56,7 +56,7 @@ export const metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    title: 'R10 TRI',
+    title: 'Gotri',
     statusBarStyle: 'black-translucent',
   },
   other: {
@@ -79,25 +79,25 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'R10 TRI',
-    title: 'R10 TRI - Nade. Pedale. Corra. Evolua.',
+    siteName: 'Gotri',
+    title: 'Gotri - Nade. Pedale. Corra. Evolua.',
     description:
       'Seu coach pessoal de triathlon com IA. Planos personalizados de natação, ciclismo e corrida, com periodização avançada e acompanhamento de evolução.',
     images: [
       {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'R10 TRI - Coach de triathlon com inteligência artificial',
+        url: '/brand/gotri-laranja.png',
+        width: 1902,
+        height: 827,
+        alt: 'Gotri - Coach de triathlon com inteligência artificial',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'R10 TRI - Nade. Pedale. Corra. Evolua.',
+    title: 'Gotri - Nade. Pedale. Corra. Evolua.',
     description:
       'Seu coach pessoal de triathlon com IA. Planos personalizados de natação, ciclismo e corrida.',
-    images: ['/og-image.png'],
+    images: ['/brand/gotri-laranja.png'],
   },
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
 }

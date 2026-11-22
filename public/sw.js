@@ -1,6 +1,6 @@
 /* O cache contém somente arquivos públicos. Dados de atletas sempre usam a rede. */
 const CACHE_PREFIX = 'r10tri-publico-';
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const OFFLINE_PAGE = '/offline.html';
 const PUBLIC_FILES = [OFFLINE_PAGE, '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png', '/favicon.svg'];
 

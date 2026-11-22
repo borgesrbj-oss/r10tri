@@ -1,4 +1,4 @@
-# R10 TRI
+# Gotri
 
 Aplicação web para organizar treinos de triatlo, natação, ciclismo e corrida. Atletas podem preencher seu perfil, cadastrar provas, gerar planos, acompanhar o calendário, registrar treinos e visualizar a evolução. Treinadores podem gerenciar atletas, criar planos e enviar mensagens.
 
@@ -6,10 +6,9 @@ O motor principal de planos é determinístico e funciona sem serviços pagos de
 
 - Repositório: [borgesrbj-oss/r10tri](https://github.com/borgesrbj-oss/r10tri)
 - Portfólio: [borgesrbj-oss.github.io](https://borgesrbj-oss.github.io/)
-- Área do Coach: [vínculos, rascunhos, publicação e validação](docs/AREA_COACH_2026.md).
 - Área do Coach: [permissões, convites, rascunhos, publicação e validação](docs/AREA_COACH_2026.md).
 - Nova revisão de triathlon: [periodização, fontes e limites](docs/PERIODIZACAO_TRIATLO_2026.md), [semanas fictícias](docs/EXEMPLOS_TRIATLO_2026.md), [dez nomes](docs/NOMES_TRIATLO_2026.md).
-- Aplicativo: [acessar R10 TRI](https://r10tri-production.up.railway.app/login)
+- Aplicativo: [acessar Gotri](https://r10tri-production.up.railway.app/login)
 - Auditoria científica, redesign e entregáveis de novembro: [docs/ENTREGA_AUDITORIA_2026.md](docs/ENTREGA_AUDITORIA_2026.md)
 - Histórico de correções e verificações: [docs/DIAGNOSTICO.md](docs/DIAGNOSTICO.md)
 - Metodologia, parâmetros e limites: [docs/METODOLOGIA_TREINOS.md](docs/METODOLOGIA_TREINOS.md)
@@ -264,7 +263,7 @@ r10tri/
 └── package-lock.json       Versões resolvidas
 ```
 
-Os guias técnicos úteis ao funcionamento foram preservados. A limpeza anterior foi autorizada somente para componentes ociosos e exemplos. A auditoria atual não removeu funcionalidades. As 20 novas sugestões e cinco finalistas estão em [docs/BENCHMARK_E_MARCA_2026.md](docs/BENCHMARK_E_MARCA_2026.md); R10 TRI permanece provisoriamente, sem mudança automática da marca.
+Os guias técnicos úteis ao funcionamento foram preservados. A limpeza anterior foi autorizada somente para componentes ociosos e exemplos. A auditoria atual não removeu funcionalidades. As 20 novas sugestões e cinco finalistas estão em [docs/BENCHMARK_E_MARCA_2026.md](docs/BENCHMARK_E_MARCA_2026.md); O nome escolhido é Gotri. Endereços, banco e identificadores técnicos existentes continuam compatíveis.
 
 ## Publicação do aplicativo
 

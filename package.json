@@ -1,5 +1,5 @@
 {
-  "name": "r10tri",
+  "name": "gotri",
   "private": true,
   "scripts": {
     "dev": "next dev",

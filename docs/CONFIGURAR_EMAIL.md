@@ -6,7 +6,7 @@ Com `SMTP_HOST=smtp.resend.com`, o app usa a API HTTPS oficial do Resend e reuti
 
 1. Para testes sem domínio, mantenha `onboarding@resend.dev` e use somente o endereço associado à conta. Para abrir envio a atletas, entre no [Resend](https://resend.com/) e verifique um domínio em **Domains**, seguindo os registros DNS do serviço. Não houve compra ou contratação de domínio.
 2. Crie uma chave de envio em **API Keys**, com o menor acesso necessário. Guarde-a no gerenciador de senhas e no painel privado da hospedagem.
-3. Abra o [projeto R10 TRI no Railway](https://railway.com/project/c9cd8b46-f23b-45e2-af82-5ea9884a2981), selecione o serviço **r10tri**, na produção, e abra **Variables**.
+3. Abra o [projeto Gotri no Railway](https://railway.com/project/c9cd8b46-f23b-45e2-af82-5ea9884a2981), selecione o serviço **r10tri**, na produção, e abra **Variables**.
 4. Preencha as variáveis abaixo. A senha SMTP é a chave criada no Resend; não publique a chave no Git, em prints ou no chat.
 
 | Variável | Valor |
