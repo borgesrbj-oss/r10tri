@@ -36,6 +36,7 @@ export interface TrainingDistribution {
 }
 
 export interface WorkoutStructure {
+  origin?: 'coach';
   version: 1;
   modality: TrainingModality;
   phase: TrainingPhase;

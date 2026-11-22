@@ -16,7 +16,8 @@
     "verificar:segredos": "node scripts/verificar-segredos.mjs",
     "db:bootstrap": "node scripts/bootstrap-coach.mjs",
     "db:prepare": "prisma migrate deploy && node scripts/bootstrap-coach.mjs",
-    "test:auth": "node scripts/auth-recovery-smoke.mjs"
+    "test:auth": "node scripts/auth-recovery-smoke.mjs",
+    "test:coach": "node scripts/coach-smoke.mjs"
   },
   "prisma": {
     "seed": "tsx --require dotenv/config scripts/safe-seed.ts"

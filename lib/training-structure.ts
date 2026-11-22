@@ -197,7 +197,7 @@ export function readWorkoutStructure(input: unknown): WorkoutStructure | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
   if (record.version !== 1 || typeof record.modality !== 'string' || typeof record.phase !== 'string' || !Object.prototype.hasOwnProperty.call(LABEL, record.modality) || !Object.prototype.hasOwnProperty.call(PHASE_LABEL, record.phase)) return null;
-  if (!Number.isInteger(record.durationSeconds) || Number(record.durationSeconds) < 240 || Number(record.durationSeconds) > DAY_MS / 1000 || !Array.isArray(record.steps) || record.steps.length < 3 || record.steps.length > 400) return null;
+  if (!Number.isInteger(record.durationSeconds) || Number(record.durationSeconds) < (record.origin==='coach'?60:240) || Number(record.durationSeconds) > DAY_MS / 1000 || !Array.isArray(record.steps) || record.steps.length < (record.origin==='coach'?1:3) || record.steps.length > 400) return null;
   const steps: TrainingStep[] = [];
   for (const item of record.steps) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
@@ -213,11 +213,11 @@ export function readWorkoutStructure(input: unknown): WorkoutStructure | null {
     if (step.distanceMeters != null && (typeof step.distanceMeters !== 'number' || !Number.isFinite(step.distanceMeters) || step.distanceMeters <= 0)) return null;
     steps.push({ kind: step.kind as TrainingStep['kind'], label: step.label, durationSeconds: Number(step.durationSeconds), zone: step.zone as TrainingStep['zone'], rest: step.rest as TrainingStep['rest'], target: { basis: target.basis as TrainingStep['target']['basis'], unit: target.unit as TrainingStep['target']['unit'], low: target.low, high: target.high, text: target.text, source: target.source }, ...(typeof step.distanceMeters === 'number' ? { distanceMeters: step.distanceMeters } : {}) });
   }
-  if (!steps.some(step => step.kind === 'aquecimento') || !steps.some(step => step.kind === 'principal') || !steps.some(step => step.kind === 'desaquecimento')) return null;
+  if (record.origin!=='coach' && (!steps.some(step => step.kind === 'aquecimento') || !steps.some(step => step.kind === 'principal') || !steps.some(step => step.kind === 'desaquecimento'))) return null;
   const modality = record.modality as TrainingModality;
   const distribution = distributionForSteps(steps, modality);
   if (distribution.totalSeconds !== record.durationSeconds) return null;
-  return { version: 1, modality, phase: record.phase as TrainingPhase, durationSeconds: Number(record.durationSeconds), steps, distribution, warnings: Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string').slice(0, 50) : [], requiresCoachReview: record.requiresCoachReview === true };
+  return { version: 1,...(record.origin==='coach'?{origin:'coach' as const}:{}), modality, phase: record.phase as TrainingPhase, durationSeconds: Number(record.durationSeconds), steps, distribution, warnings: Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string').slice(0, 50) : [], requiresCoachReview: record.requiresCoachReview === true };
 }
 
 function hasReportedCondition(value: unknown): boolean {
