@@ -1,6 +1,10 @@
 /** Autenticação mobile reutiliza a verificação de credenciais do NextAuth. */
 import { createHmac, timingSafeEqual } from 'crypto';
-import { configuredAppOrigin, mobileLinkAllowed, requiredAuthSecret } from './auth-policy';
+import {
+  configuredAppOrigin,
+  mobileLinkAllowed,
+  requiredAuthSecret,
+} from './auth-policy';
 
 // v4 (`next-auth.`) and Auth.js v5 (`authjs.`), with and without the https `__Secure-` prefix.
 export const SESSION_COOKIE_NAMES = [
@@ -19,7 +23,9 @@ export async function isAllowedDeepLink(target: string): Promise<boolean> {
 }
 
 function sign(value: string): string {
-  return createHmac('sha256', requiredAuthSecret()).update(value).digest('base64url');
+  return createHmac('sha256', requiredAuthSecret())
+    .update(value)
+    .digest('base64url');
 }
 
 /** Round-trips the deep link through Google without letting anyone else choose it. */
@@ -43,8 +49,7 @@ export async function verifyDeepLink(signed: string): Promise<string | null> {
 }
 
 export type MobileLoginResult =
-  | { ok: true; token: string }
-  | { ok: false; status: number; message: string };
+  { ok: true; token: string } | { ok: false; status: number; message: string };
 
 /** Absolute origin of this app, for server-to-server calls back into it. */
 export async function selfOrigin(): Promise<string> {
@@ -69,8 +74,11 @@ function parseSetCookie(raw: string[]): { session?: string; jar: string } {
 
 function readSetCookie(res: Response): string[] {
   // getSetCookie() is the only correct way to read multiple Set-Cookie headers.
-  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
-  if (typeof anyHeaders.getSetCookie === 'function') return anyHeaders.getSetCookie();
+  const anyHeaders = res.headers as unknown as {
+    getSetCookie?: () => string[];
+  };
+  if (typeof anyHeaders.getSetCookie === 'function')
+    return anyHeaders.getSetCookie();
   const single = res.headers.get('set-cookie');
   return single ? [single] : [];
 }
@@ -90,12 +98,17 @@ export async function issueSessionTokenForCredentials(
   // `manual` everywhere below: these calls carry no session, so a guard over
   // /api/* answers a redirect to an HTML page. Following it would turn "blocked"
   // into a 200 that parses as an empty body and reads as a plain auth failure.
-  const csrfRes = await fetch(`${origin}/api/auth/csrf`, { cache: 'no-store', redirect: 'manual' });
+  const csrfRes = await fetch(`${origin}/api/auth/csrf`, {
+    cache: 'no-store',
+    redirect: 'manual',
+  });
   if (!csrfRes.ok) {
     return { ok: false, status: 500, message: 'Authentication is unavailable' };
   }
   const { jar } = parseSetCookie(readSetCookie(csrfRes));
-  const csrfBody = (await csrfRes.json().catch(() => ({}))) as { csrfToken?: string };
+  const csrfBody = (await csrfRes.json().catch(() => ({}))) as {
+    csrfToken?: string;
+  };
   const csrfToken = csrfBody?.csrfToken;
   if (!csrfToken) {
     return { ok: false, status: 500, message: 'Authentication is unavailable' };
@@ -121,7 +134,23 @@ export async function issueSessionTokenForCredentials(
   if (!session) {
     // NextAuth answers a rejected credentials login with a redirect that
     // carries ?error=, and sets no session cookie.
-    return { ok: false, status: 401, message: 'Invalid email or password' };
+    if (
+      new URL(
+        loginRes.headers.get('location') || '/login',
+        origin,
+      ).searchParams.get('code') === 'area_incorreta'
+    )
+      return {
+        ok: false,
+        status: 403,
+        message:
+          'Esta conta não pertence à área selecionada. Confira se deve entrar como Coach ou Atleta.',
+      };
+    return {
+      ok: false,
+      status: 401,
+      message: 'E-mail, usuário ou senha incorretos.',
+    };
   }
   return { ok: true, token: session };
 }
@@ -136,7 +165,9 @@ export async function sessionForCookieHeader(
     redirect: 'manual',
   });
   if (!res.ok) return null;
-  const body = (await res.json().catch(() => null)) as { user?: Record<string, unknown> } | null;
+  const body = (await res.json().catch(() => null)) as {
+    user?: Record<string, unknown>;
+  } | null;
   return body?.user ?? null;
 }
 
@@ -145,6 +176,10 @@ export async function sessionForCookieHeader(
  * Sends the token under every name a NextAuth/Auth.js app might read, for the same reason
  * the bridge does: the app's version is not knowable from here.
  */
-export async function sessionForToken(token: string): Promise<Record<string, unknown> | null> {
-  return sessionForCookieHeader(SESSION_COOKIE_NAMES.map((name) => `${name}=${token}`).join('; '));
+export async function sessionForToken(
+  token: string,
+): Promise<Record<string, unknown> | null> {
+  return sessionForCookieHeader(
+    SESSION_COOKIE_NAMES.map((name) => `${name}=${token}`).join('; '),
+  );
 }

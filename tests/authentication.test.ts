@@ -225,3 +225,78 @@ test('dois usos concorrentes de um token mudam a senha apenas uma vez', async ()
   assert.deepEqual(responses.map(response => response.status).sort(), [200, 400]);
   assert.equal(db.user.authVersion, 1);
 });
+
+test('área selecionada restringe o login ao papel real sem criar outro perfil', async () => {
+  const password = secret();
+  for (const role of ['coach', 'atleta']) {
+    const record = {
+      id: 'conta-' + role,
+      name: null,
+      email: 'mesma-conta@example.invalid',
+      role,
+      authVersion: 0,
+      password: await bcrypt.hash(password, 12),
+    };
+    const find = async () => [record];
+    assert.equal(
+      (
+        await credentials.authenticateCredentials(
+          { email: record.email, password, expectedRole: role },
+          find,
+        )
+      )?.role,
+      role,
+    );
+    await assert.rejects(
+      credentials.authenticateCredentials(
+        {
+          email: record.email,
+          password,
+          expectedRole: role === 'coach' ? 'atleta' : 'coach',
+        },
+        find,
+      ),
+      credentials.LoginAreaMismatchError,
+    );
+    assert.equal(record.role, role);
+  }
+});
+test('área incompatível não revela o papel de uma conta sem senha correta', async () => {
+  const record = {
+    id: 'conta',
+    name: null,
+    email: 'teste@example.invalid',
+    role: 'coach',
+    authVersion: 0,
+    password: await bcrypt.hash(secret(), 12),
+  };
+  assert.equal(
+    await credentials.authenticateCredentials(
+      { email: record.email, password: secret(), expectedRole: 'atleta' },
+      async () => [record],
+    ),
+    null,
+  );
+  assert.equal(
+    await credentials.authenticateCredentials(
+      { email: record.email, password: secret(), expectedRole: 'coach' },
+      async () => [],
+    ),
+    null,
+  );
+});
+test('áreas inválidas são recusadas antes da consulta de credenciais', async () => {
+  let calls = 0;
+  for (const expectedRole of ['admin', '', null, {}, ['coach']])
+    assert.equal(
+      await credentials.authenticateCredentials(
+        { email: 'teste@example.invalid', password: secret(), expectedRole },
+        async () => {
+          calls++;
+          return [];
+        },
+      ),
+      null,
+    );
+  assert.equal(calls, 0);
+});

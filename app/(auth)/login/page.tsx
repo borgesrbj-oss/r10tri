@@ -37,9 +37,14 @@ export default function LoginPage() {
       const res = await signIn('credentials', {
         email: identifier,
         password: secret,
+        expectedRole: mode,
         redirect: false,
       });
-      if (res?.error === 'CredentialsSignin') {
+      if (res?.code === 'area_incorreta') {
+        setError(
+          'Esta conta não pertence à área selecionada. Escolha Coach ou Atleta conforme o seu cadastro.',
+        );
+      } else if (res?.error === 'CredentialsSignin') {
         setError(
           'E-mail, usuário ou senha incorretos. Confira os dados ou use “Esqueci minha senha”. Se é seu primeiro acesso, abra o convite do coach.',
         );
@@ -108,6 +113,8 @@ export default function LoginPage() {
           <div className="grid grid-cols-2 gap-1 p-1 mb-4 rounded-lg bg-muted">
             <button
               type="button"
+              disabled={loading}
+              aria-pressed={!isCoach}
               onClick={() => {
                 setMode('atleta');
                 setError('');
@@ -118,6 +125,8 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
+              disabled={loading}
+              aria-pressed={isCoach}
               onClick={() => {
                 setMode('coach');
                 setError('');
@@ -162,8 +171,8 @@ export default function LoginPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Use o e-mail cadastrado ou um usuário atribuído à sua conta. Não
-                existe usuário ou senha padrão.
+                Selecione a área correspondente ao seu cadastro. Use seu e-mail
+                ou usuário. Não existe usuário ou senha padrão.
               </p>
             </div>
             <div className="space-y-2">
@@ -221,7 +230,7 @@ export default function LoginPage() {
           )}
           {isCoach && (
             <p className="text-center text-xs text-muted-foreground mt-4">
-              Acesso exclusivo do treinador.
+              Acesso exclusivo de contas cadastradas como coach.
             </p>
           )}
         </CardContent>

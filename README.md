@@ -282,3 +282,9 @@ O aplicativo está hospedado no Railway, com PostgreSQL e HTTPS, no endereço ac
 - Verificar entrega real de recuperação: Resend está configurado sem domínio próprio, limitado ao e-mail associado à conta. Envio geral a atletas requer remetente autorizado, conforme [guia de e-mail](docs/CONFIGURAR_EMAIL.md).
 - Aprovar nome definitivo; nenhuma sugestão equivale a liberação jurídica de marca.
 - Executar o checklist no Safari e em aparelhos Android/iPhone reais; esses ambientes não estavam disponíveis para validação física.
+
+## Entrada de coach e atleta
+
+A seleção de área no login é conferida pelo servidor, após validar a senha. Uma conta de coach deve entrar em **Coach**, e uma conta de atleta em **Atleta**. Escolher a área incompatível exibe um aviso e não emite uma nova sessão. A escolha nunca altera o papel cadastrado. Web, verificação de credenciais e login mobile aceitam `expectedRole` (`coach` ou `atleta`) como restrição; clientes anteriores que não enviam esse campo continuam sendo autenticados exclusivamente no papel real da conta.
+
+A correção de 22/11/2026 trata um seletor que antes mudava somente os textos do formulário: as duas seleções levavam à mesma conta e à área definida pelo banco. Não foram criadas contas duplicadas, nem alteradas senhas ou permissões. Validação inclui os dois papéis nas duas seleções, aviso apenas após senha correta, rejeição de valores inválidos e ausência de sessão em tentativa incompatível.
