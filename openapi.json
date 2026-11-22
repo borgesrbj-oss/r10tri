@@ -1289,6 +1289,14 @@
                   },
                   "password": {
                     "type": "string"
+                  },
+                  "expectedRole": {
+                    "type": "string",
+                    "enum": [
+                      "coach",
+                      "atleta"
+                    ],
+                    "description": "Área selecionada. É comparada ao papel real após validar a senha e nunca concede permissões."
                   }
                 }
               }
@@ -2776,6 +2784,14 @@
                   },
                   "password": {
                     "type": "string"
+                  },
+                  "expectedRole": {
+                    "type": "string",
+                    "enum": [
+                      "coach",
+                      "atleta"
+                    ],
+                    "description": "Área selecionada. É comparada ao papel real após validar a senha e nunca concede permissões."
                   }
                 },
                 "required": [

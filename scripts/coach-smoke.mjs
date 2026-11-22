@@ -119,6 +119,66 @@ try {
     denied(await client().request('/api/coach/athletes'));
     denied(await aa.request('/api/coach/athletes'));
   });
+  await step(
+    'área-escolhida-é-validada-no-servidor-sem-elevar-permissões',
+    async () => {
+      for (const [key, area] of [
+        ['coachA', 'coach'],
+        ['atletaA', 'atleta'],
+      ]) {
+        const identity = identities[key];
+        for (const selected of ['coach', 'atleta']) {
+          const browser = client();
+          const csrf = await browser.request('/api/auth/csrf');
+          const login = await browser.request(
+            '/api/auth/callback/credentials',
+            {
+              method: 'POST',
+              form: {
+                csrfToken: csrf.data.csrfToken,
+                email: identity.email,
+                password: identity.password,
+                expectedRole: selected,
+                role: selected,
+              },
+            },
+          );
+          const session = (await browser.request('/api/auth/session')).data;
+          if (selected === area) {
+            assert.equal(login.location.includes('error='), false);
+            assert.equal(session.user.role, area);
+          } else {
+            assert.equal(
+              new URL(login.location, base).searchParams.get('code'),
+              'area_incorreta',
+            );
+            assert.equal(session?.user, undefined);
+            denied(await browser.request('/api/coach/athletes'));
+          }
+          const verified = await browser.request('/api/auth/login', {
+            method: 'POST',
+            body: {
+              email: identity.email,
+              password: identity.password,
+              expectedRole: selected,
+            },
+          });
+          assert.equal(verified.status, selected === area ? 200 : 403);
+          const mobile = await client().request('/api/mobile-auth/login', {
+            method: 'POST',
+            body: {
+              email: identity.email,
+              password: identity.password,
+              expectedRole: selected,
+            },
+          });
+          assert.equal(mobile.status, selected === area ? 200 : 403);
+          if (selected === area) assert.equal(mobile.data.user.role, area);
+          else assert.equal(mobile.data.token, undefined);
+        }
+      }
+    },
+  );
   await step('convites-sem-duplicação-ou-acesso-antecipado', async () => {
     for (const [c, key] of [
       [ca, 'atletaA'],
@@ -294,8 +354,11 @@ try {
     );
     const all = (await aa.request('/api/workouts')).data;
     assert.equal(all.length, 3);
-    assert.deepEqual(all.map(w=>w.partOrder),[0,1,2]);
-    assert.equal(new Set(all.map(w=>w.brickGroupId)).size,1);
+    assert.deepEqual(
+      all.map((w) => w.partOrder),
+      [0, 1, 2],
+    );
+    assert.equal(new Set(all.map((w) => w.brickGroupId)).size, 1);
     bike = all.find((w) => w.modality === 'ciclismo');
     run = all.find((w) => w.title.includes('3. Corrida'));
     assert.ok(all.every((w) => w.coachManaged));
@@ -531,7 +594,47 @@ try {
       );
     },
   );
-  await step('sugestão-do-gerador-pode-ser-editada-sem-publicar',async()=>{const c=draft.payload.changes.find(c=>!c.id&&c.modality!=='descanso');const modified=await post(ca,'session',{athleteId:identities.atletaA.id,draftId:draft.id,revision:draft.revision,changeKey:c.key,session:{date:c.date,title:'Sugestão revisada pelo coach',modality:c.modality,blocks:[{kind:'principal',label:'Bloco conservador revisado',seconds:600,zone:'Z2'}]}});assert.equal(modified.status,200);assert.equal(modified.data.payload.changes.length,draft.payload.changes.length);draft=modified.data;assert.ok(draft.payload.changes.some(c=>c.title==='Sugestão revisada pelo coach'));assert.equal((await aa.request('/api/workouts')).data.some(w=>w.title==='Sugestão revisada pelo coach'),false);});
+  await step('sugestão-do-gerador-pode-ser-editada-sem-publicar', async () => {
+    const c = draft.payload.changes.find(
+      (c) => !c.id && c.modality !== 'descanso',
+    );
+    const modified = await post(ca, 'session', {
+      athleteId: identities.atletaA.id,
+      draftId: draft.id,
+      revision: draft.revision,
+      changeKey: c.key,
+      session: {
+        date: c.date,
+        title: 'Sugestão revisada pelo coach',
+        modality: c.modality,
+        blocks: [
+          {
+            kind: 'principal',
+            label: 'Bloco conservador revisado',
+            seconds: 600,
+            zone: 'Z2',
+          },
+        ],
+      },
+    });
+    assert.equal(modified.status, 200);
+    assert.equal(
+      modified.data.payload.changes.length,
+      draft.payload.changes.length,
+    );
+    draft = modified.data;
+    assert.ok(
+      draft.payload.changes.some(
+        (c) => c.title === 'Sugestão revisada pelo coach',
+      ),
+    );
+    assert.equal(
+      (await aa.request('/api/workouts')).data.some(
+        (w) => w.title === 'Sugestão revisada pelo coach',
+      ),
+      false,
+    );
+  });
   await step('revisão-obsoleta-não-sobrescreve-rascunho', async () => {
     const b = {
       athleteId: identities.atletaA.id,
@@ -543,7 +646,45 @@ try {
     assert.equal((await post(ca, 'batch', b)).status, 200);
     assert.equal((await post(ca, 'batch', b)).status, 409);
   });
-  await step('orientações-salvas-e-bloco-gerado-publicado-com-histórico-preservado',async()=>{draft=(await athlete(ca,identities.atletaA.id)).data.drafts.find(d=>d.id===draft.id);const saved=await post(ca,'notes',{athleteId:identities.atletaA.id,draftId:draft.id,revision:draft.revision,instructions:'Bloco revisado: acompanhar esforço e recuperação.'});assert.equal(saved.status,200);draft=saved.data;assert.ok(draft.instructions.includes('Bloco revisado'));const published=await post(ca,'publish',{athleteId:identities.atletaA.id,draftId:draft.id,revision:draft.revision,acknowledge:true,instructions:draft.instructions});assert.equal(published.status,200);assert.equal(JSON.stringify(await db.workout.findUnique({where:{id:bike.id},include:{log:true}})),completedSnapshot);assert.ok((await aa.request('/api/workouts')).data.some(w=>w.title==='Sugestão revisada pelo coach'));});
+  await step(
+    'orientações-salvas-e-bloco-gerado-publicado-com-histórico-preservado',
+    async () => {
+      draft = (await athlete(ca, identities.atletaA.id)).data.drafts.find(
+        (d) => d.id === draft.id,
+      );
+      const saved = await post(ca, 'notes', {
+        athleteId: identities.atletaA.id,
+        draftId: draft.id,
+        revision: draft.revision,
+        instructions: 'Bloco revisado: acompanhar esforço e recuperação.',
+      });
+      assert.equal(saved.status, 200);
+      draft = saved.data;
+      assert.ok(draft.instructions.includes('Bloco revisado'));
+      const published = await post(ca, 'publish', {
+        athleteId: identities.atletaA.id,
+        draftId: draft.id,
+        revision: draft.revision,
+        acknowledge: true,
+        instructions: draft.instructions,
+      });
+      assert.equal(published.status, 200);
+      assert.equal(
+        JSON.stringify(
+          await db.workout.findUnique({
+            where: { id: bike.id },
+            include: { log: true },
+          }),
+        ),
+        completedSnapshot,
+      );
+      assert.ok(
+        (await aa.request('/api/workouts')).data.some(
+          (w) => w.title === 'Sugestão revisada pelo coach',
+        ),
+      );
+    },
+  );
   await step('novo-atleta-e-renovação-segura-sem-duplicação', async () => {
     const body = {
       email: `coach-test-${nonce}-novo@example.invalid`,
@@ -622,8 +763,14 @@ try {
       contasFicticias: 5,
     }),
   );
-} catch(error) {
-  console.error(JSON.stringify({actual:typeof error.actual==='number'?error.actual:undefined,expected:typeof error.expected==='number'?error.expected:undefined,at:error.stack?.split('\n').find(l=>l.includes('coach-smoke.mjs:'))}));
+} catch (error) {
+  console.error(
+    JSON.stringify({
+      actual: typeof error.actual === 'number' ? error.actual : undefined,
+      expected: typeof error.expected === 'number' ? error.expected : undefined,
+      at: error.stack?.split('\n').find((l) => l.includes('coach-smoke.mjs:')),
+    }),
+  );
   console.error(
     JSON.stringify({
       cenarios: passed + 1,
