@@ -1,5 +1,7 @@
 # Metodologia dos treinos estruturados
 
+> Revisão de 23/11/2026: consulte [Memória de cálculo e fontes](MEMORIA_CALCULO_E_FONTES_2026.md) para modo km, dados por esporte, relatório até/acima do limiar e distinção entre referências e regras operacionais.
+
 Este documento descreve o motor determinístico implementado em `lib/training-structure.ts`, seus critérios de entrada e seus limites. Os parâmetros operacionais do aplicativo precisam de acompanhamento do treinador; não representam diagnóstico, liberação clínica ou garantia de resultado.
 
 ## Triagem e uso dos dados
