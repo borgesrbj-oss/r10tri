@@ -67,6 +67,7 @@ const scenarioNames = [
   'preferencias-persistidas-limitam-a-geracao',
   'triagem-km-geracao-e-exportacao-real',
   'telas-do-atleta-sem-erro-de-renderizacao',
+  'geracao-sem-limite-de-horario-preserva-prescricao',
 ];
 
 function client() {
@@ -360,6 +361,14 @@ try {
     for(const path of ['/dashboard','/plano','/calendario','/planilha','/perfil','/configurar-treino','/provas','/evolucao','/nutricao','/exercicios','/guias','/strava']){
       const response=await atletaA.request(path);assert.equal(response.status,200,'Tela '+path);
     }
+  });
+  await check(async()=>{
+    const before=await atletaA.request('/api/plan/generate',{method:'POST',body:{weeks:1}});assert.equal(before.status,200);
+    const expected=(await atletaA.request('/api/workouts')).data.filter(w=>w.planId===before.data.planId).map(w=>[w.date,w.modality,w.duration]);
+    assert.equal((await atletaA.request('/api/profile/assessment',{method:'POST',body:{weeklyHours:null}})).status,200);
+    const after=await atletaA.request('/api/plan/generate',{method:'POST',body:{weeks:1}});assert.equal(after.status,200);
+    const actual=(await atletaA.request('/api/workouts')).data.filter(w=>w.planId===after.data.planId).map(w=>[w.date,w.modality,w.duration]);assert.deepEqual(actual,expected);
+    assert.equal(after.data.summary.calculation.weeklyCapMinutes,null);
   });
   console.log(JSON.stringify({ cenarios: scenario, aprovados: passed, falhas: 0, contasTemporarias: 4 }));
 } catch (error) {

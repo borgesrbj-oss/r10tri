@@ -6,7 +6,7 @@ Data da revisão: 23/11/2026. Escopo: corrida, ciclismo, natação, triatlo, rel
 
 1. Validar triagem e objetivo no servidor: modalidade, idade informada, experiência, disponibilidade, volume recente específico, agenda e referências de intensidade. Para maratona, exigir data completa e duração do longão recente. Não substituir campos ausentes por valores fisiológicos presumidos.
 2. Tratar conflitos de agenda: um dia com corrida/ciclismo/natação marcada e limite zero exige revisão explícita. Não mover silenciosamente uma modalidade para outro dia.
-3. Calcular minutos iniciais, alocar dentro do teto de cada dia, semana, esporte e sessão e aplicar as fases conforme a data da prova.
+3. Calcular minutos iniciais, prescrever a partir do histórico e da recuperação, aplicar as fases conforme a prova e só depois verificar limites de agenda, sem preencher tempo livre.
 4. Definir sessões apropriadas ao esporte. Corrida: rodagem, longo e alternância entre tiros, ritmo e fartlek quando o nível, a fase e as restrições permitirem. Ciclismo: endurance, cadência e intervalos; natação: técnica, séries, pausas e CSS; triatlo: combinar as modalidades sem ultrapassar o limite agregado e inserir bricks quando permitidos.
 5. Estruturar aquecimento, trabalho, recuperação e desaquecimento; salvar os blocos e a referência de intensidade junto do plano. Recalcular totais a partir desses blocos, inclusive nas exportações.
 6. Exibir a memória de cálculo e os avisos. Uma lesão/limitação relatada, dor recente ou falta de evidência de recuperação pode bloquear intensidade/progressão. Isso é uma política conservadora do produto, não um diagnóstico.
@@ -15,9 +15,9 @@ Data da revisão: 23/11/2026. Escopo: corrida, ciclismo, natação, triatlo, rel
 
 | Cálculo | Fórmula / regra | Natureza |
 |---|---|---|
-| Capacidade semanal | horas disponíveis × 60 | Conversão de unidade |
+| Capacidade semanal | limite opcional em horas × 60; ausência não significa carga zero | Conversão de unidade |
 | Base por esporte | minutos recentes de corrida, ciclismo e/ou natação; somar apenas os esportes do plano | Dado informado, não confundir com horas de todas as modalidades |
-| Volume inicial | menor entre capacidade e base declarada, multiplicado pelo fator de feedback | Política do app |
+| Volume inicial | base recente por modalidade, multiplicada pelo fator de recuperação; limites de horário aplicados depois, sem redistribuir sobras | Política do app |
 | Progressão | orçamento anterior × (1 + crescimento), limitado pela disponibilidade e pelos tetos | Crescimento até 5% somente com evidência de tolerância; zero sem essa evidência ou diante de restrição. Não é regra científica universal |
 | Recuperação | semana 4 de cada bloco: fator 0,65 | Política do app, não coeficiente retirado de um estudo |
 | Fases finais | Peak 0,75; Race 0,45; Transition 0,35 | Política do app; depende da data completa da prova |

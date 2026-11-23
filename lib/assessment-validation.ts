@@ -60,12 +60,13 @@ export function assessmentReadiness(profile: Record<string, unknown> | null | un
   if (!profile?.birthDate) requireField('birthDate','data de nascimento');
   if (!(Number(profile?.currentWeight) > 0)) requireField('currentWeight','peso atual');
   if (!['iniciante','intermediario','avancado'].includes(String(profile?.level))) requireField('level','experiência');
-  if (!(Number(profile?.weeklyHours) > 0)) requireField('weeklyHours','horas disponíveis por semana');
+  const hasWeeklyLimit=profile?.weeklyHours!=null&&profile.weeklyHours!=='';
+  if (hasWeeklyLimit&&!(Number(profile?.weeklyHours)>0))requireField('weeklyHours','limite semanal inválido; deixe vazio se não houver');
   if (!Array.isArray(profile?.availableDays) || profile.availableDays.length === 0) requireField('availableDays','dias disponíveis');
   if (!['triatlo','natacao','ciclismo','corrida'].includes(String(profile?.modality))) requireField('modality','modalidade');
   const distanceRequired=['corrida','triatlo'].includes(String(profile?.modality))&&profile?.runStructure==='distancia';
   if(distanceRequired&&!runThreshold(profile))requireField('runThresholdPace','pace de limiar para prescrever por km');
-  return { complete: missing.length === 0, missing, issues: fields.map(field=>assessmentIssue(field,'Preencha ou corrija este campo.')!), completedPercent: Math.round(((distanceRequired?7:6)-missing.length)/(distanceRequired?7:6)*100) };
+  return { complete: missing.length === 0, missing, issues: fields.map(field=>assessmentIssue(field,'Preencha ou corrija este campo.')!), completedPercent: Math.round(((5+Number(hasWeeklyLimit)+Number(distanceRequired))-missing.length)/(5+Number(hasWeeklyLimit)+Number(distanceRequired))*100) };
 }
 
 export function assessmentData(body: unknown, previous?: Record<string, unknown> | null) {

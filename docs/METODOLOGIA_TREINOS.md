@@ -8,7 +8,7 @@ Este documento descreve o motor determinístico implementado em `lib/training-st
 
 A triagem preserva o histórico existente e reúne nascimento, peso, experiência, histórico esportivo, lesões e condições relatadas, sono, disponibilidade, modalidades, equipamentos, objetivo e provas cadastradas. Também aceita FC máxima, de repouso e de limiar, FTP, limiar de corrida, CSS e resultado recente de corrida.
 
-O servidor valida os campos por uma lista explícita. Para gerar um plano, exige nascimento, peso atual, experiência, modalidade, horas semanais positivas e pelo menos um dia disponível. Dados opcionais desconhecidos permanecem ausentes. Dias, peso, FTP, ritmo, FC e prova não são inventados para completar o perfil. A FC de repouso deve ser menor que a máxima; a FC de limiar não pode superar a máxima informada. O motor não calcula FC máxima por `220 − idade`.
+O servidor valida os campos por uma lista explícita. Para gerar um plano, exige nascimento, peso atual, experiência, modalidade, pelo menos um dia disponível; o limite de horas semanais é opcional e não define a carga. Dados opcionais desconhecidos permanecem ausentes. Dias, peso, FTP, ritmo, FC e prova não são inventados para completar o perfil. A FC de repouso deve ser menor que a máxima; a FC de limiar não pode superar a máxima informada. O motor não calcula FC máxima por `220 − idade`.
 
 Quando há lesão atual, condição relatada, limitação ou menoridade, o plano sinaliza `requiresCoachReview`. Essa indicação exige revisão do contexto antes da execução e não substitui avaliação profissional. Dor, fadiga e sono do check-in geram alertas para o coach; não alteram automaticamente uma prescrição como se fossem um diagnóstico.
 

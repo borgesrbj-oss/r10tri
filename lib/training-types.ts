@@ -141,7 +141,7 @@ export interface StructuredPlan {
   workouts: GeneratedWorkout[];
   warnings: string[];
   summary: {
-    calculation?: {version:1;method:string;initialMinutes:number;weeklyCapMinutes:number;growth:number;inputs:Record<string,unknown>;rules:string[];sourceIds:string[]};
+    calculation?: {version:1;method:string;initialMinutes:number;weeklyCapMinutes:number|null;growth:number;inputs:Record<string,unknown>;rules:string[];sourceIds:string[]};
     feedback?: { status: string; reasons: string[]; observedSessions: number };
     basis: 'tempo_aerobico_ativo';
     targetHighFraction: 0.2;

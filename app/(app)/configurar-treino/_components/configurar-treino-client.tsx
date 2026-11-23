@@ -1,7 +1,7 @@
 'use client';
-import {PlanningPreferencesForm} from '@/components/planning-preferences-form';
+import {PlanningPreferencesForm,type PlanningPreferencesHandle} from '@/components/planning-preferences-form';
 
-import { useState } from 'react';
+import { useRef,useState } from 'react';
 import { Settings, Clock, Save, Waves, Bike, Timer, Dumbbell } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
   const [bikeEnv, setBikeEnv] = useState<Record<string, string>>(parseEnv(profile?.bikeEnvByDay));
   const [runEnv, setRunEnv] = useState<Record<string, string>>(parseEnv(profile?.runEnvByDay));
   const [weeklyHours, setWeeklyHours] = useState<string>(profile?.weeklyHours != null ? String(profile.weeklyHours) : '');
+  const preferencesRef=useRef<PlanningPreferencesHandle>(null);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -62,7 +63,7 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const availableDays = profile?.availableDays ?? [];
+      const preferencesPatch=preferencesRef.current?.getPatch();
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -70,8 +71,8 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
           daySchedule: JSON.stringify(schedule),
           bikeEnvByDay: JSON.stringify(bikeEnv),
           runEnvByDay: JSON.stringify(runEnv),
+          ...preferencesPatch,
           weeklyHours: weeklyHours ? Number(weeklyHours) : null,
-          availableDays,
         }),
       });
       if (res.ok) { toast.success('Configuração de treino salva!'); router.refresh(); }
@@ -87,22 +88,25 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
           <h1 className="font-display text-2xl md:text-3xl tracking-tight font-bold flex items-center gap-2">
             <Settings className="h-7 w-7 text-primary" /> Configurar Treino
           </h1>
-          <p className="text-muted-foreground">Defina os dias disponíveis, as modalidades de cada dia e o volume semanal</p>
+          <p className="text-muted-foreground">Escolha os dias e as modalidades. Restrições de horário são opcionais; a carga vem do histórico, objetivo e recuperação.</p>
         </div>
-      </FadeIn><PlanningPreferencesForm profile={profile} />
+      </FadeIn>
 
       <FadeIn delay={0.1}>
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Volume Semanal</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Restrições de horário (opcional)</CardTitle></CardHeader>
           <CardContent>
+            <p className="mb-4 text-sm text-muted-foreground">Mais tempo livre não significa treinar mais. O sistema prescreve a sessão primeiro e avisa se ela não couber no seu horário. Deixe vazio quando não houver uma restrição real.</p>
             <div className="max-w-xs space-y-2">
-              <Label>Horas disponíveis por semana</Label>
-              <Input type="number" step="0.5" min="0" value={weeklyHours} onChange={(e: any) => setWeeklyHours(e?.target?.value ?? '')} placeholder="Ex.: 8" />
+              <Label>Limite máximo por semana, se houver (horas)</Label>
+              <Input type="number" step="0.5" min="0" value={weeklyHours} onChange={(e: any) => setWeeklyHours(e?.target?.value ?? '')} placeholder="Sem limite informado" />
             </div>
+
           </CardContent>
         </Card>
       </FadeIn>
 
+      <PlanningPreferencesForm ref={preferencesRef} profile={profile} />
       <FadeIn delay={0.2}>
         <Card>
           <CardHeader>

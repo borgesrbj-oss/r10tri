@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { missingAssessmentFields } from '../lib/assessment-missing';
 test('triagem identifica campos faltantes e suas etapas sem exigir limiares opcionais',()=>{
  const result=missingAssessmentFields({modality:'triatlo'});
- for(const field of ['level','canSwim','birthDate','currentWeight','availableDays','weeklyHours','currentWeeklyVol'])assert.ok(result.some(item=>item.field===field));
+ for(const field of ['level','canSwim','birthDate','currentWeight','availableDays','currentWeeklyVol'])assert.ok(result.some(item=>item.field===field));
  assert.equal(result.find(item=>item.field==='currentWeight')?.step,4);
  assert.ok(!result.some(item=>['ftp','swimCssPace','runThresholdPace'].includes(item.field)));
 });

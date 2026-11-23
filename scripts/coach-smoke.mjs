@@ -243,7 +243,7 @@ try {
     const response=await post(ca,'generate',{athleteId:identities.atletaA.id,startDate:new Date(Date.now()+86400000).toISOString().slice(0,10),weeks:1});
     assert.equal(response.status,422);
     assert.ok(response.data.assessmentIssues.some(issue=>issue.field==='birthDate'));
-    assert.ok(response.data.assessmentIssues.some(issue=>issue.field==='weeklyHours'));
+    assert.ok(response.data.assessmentIssues.some(issue=>issue.field==='currentWeight'));
     assert.equal((await athlete(ca,identities.atletaA.id)).data.drafts.length,before);
   });
   await step('triagem-esportiva-auditada-e-perfil-sem-segredos', async () => {
