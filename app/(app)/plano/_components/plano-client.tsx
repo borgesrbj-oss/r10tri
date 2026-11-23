@@ -1,4 +1,6 @@
 'use client';
+import { assessmentIssues, type AssessmentIssue } from '@/lib/assessment-review';
+import { AssessmentReview } from '@/components/assessment-review';
 import {SeasonSummary} from '@/components/season-summary';
 
 import { useState } from 'react';
@@ -211,6 +213,8 @@ function CalendarView({ workouts, onSelect }: { workouts: any[]; onSelect: (w: a
 
 export function PlanoClient({ plan, workouts, profile, races }: { plan: any; workouts: any[]; profile: any; races: any[] }) {
   const [generating, setGenerating] = useState(false);
+  const [reviewIssues,setReviewIssues]=useState<AssessmentIssue[]>([]);
+  const [reviewField,setReviewField]=useState<string>();
   const [generationErrors, setGenerationErrors] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
@@ -276,6 +280,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
   const handleGenerate = async (opts?: { modality?: string; advanced?: boolean; goal?: string; structure?: string; startDate?: string; weeks?: number }) => {
     setGenerationErrors([]);
+    setReviewIssues([]);
     setGenerating(true);
     try {
       const res = await fetch('/api/plan/generate', {
@@ -292,7 +297,9 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
       } else {
         const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
         const message = data?.error || 'Não foi possível gerar o plano.';
-        setGenerationErrors([message, ...details]); if(res.status===422)setShowQuestionnaire(true); toast.error(message);
+        setGenerationErrors([message, ...details]);
+        setReviewIssues(assessmentIssues(data?.assessmentIssues));
+        toast.error(message);
       }
     } catch { setGenerationErrors(['Falha de conexão. Seus planos anteriores foram preservados; tente novamente quando estiver online.']); toast.error('Erro ao gerar plano'); }
     finally { setGenerating(false); }
@@ -304,13 +311,12 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
   };
 
   const handleAssessmentComplete = async (opts?: { startDate?: string; weeks?: number }) => {
-    setShowQuestionnaire(false);
     await handleGenerate(opts);
   };
 
   // Show questionnaire if assessment not done or user clicked "Refazer Avaliação"
   if (needsAssessment || showQuestionnaire) {
-    return <CoachQuestionnaire profile={profile} races={races} generationErrors={generationErrors} onComplete={handleAssessmentComplete} />;
+    return <CoachQuestionnaire profile={profile} races={races} generationErrors={generationErrors} generationIssues={reviewIssues} reviewField={reviewField} onComplete={handleAssessmentComplete} />;
   }
 
   // Estatísticas do plano (todos os treinos)
@@ -361,6 +367,8 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
       </FadeIn>
 
       {generationErrors.length > 0 && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Confira os dados antes de gerar o plano</p><ul className="mt-2 list-disc space-y-1 pl-4">{generationErrors.map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
+
+      <AssessmentReview issues={reviewIssues} onReview={issue=>{setReviewField(issue.field);setShowQuestionnaire(true);}} />
 
       <Dialog open={showGenOptions} onOpenChange={setShowGenOptions}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto">

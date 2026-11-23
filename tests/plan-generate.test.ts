@@ -1,3 +1,4 @@
+import { assessmentIssue } from '../lib/assessment-review';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -120,6 +121,7 @@ function endpoint({
       generateNutrition: () => 'Orientações gerais de alimentação.',
     },
     '@/lib/assessment-validation': { assessmentReadiness },
+    '@/lib/assessment-review': { assessmentIssue },
     '@/lib/training-feedback': { trainingFeedback },
     '@/lib/training-goals': { TRAINING_GOALS },
     '@/lib/training-structure': {
@@ -279,4 +281,29 @@ test('handler exige sessão, triagem e autorização antes de substituir planos'
     403,
   );
   assert.equal(other.state.archives, 0);
+});
+
+
+test('geração identifica o campo exato e preserva o plano quando falta triagem',async()=>{
+ const route=endpoint({savedProfile:{...profile,birthDate:null,currentWeight:0}});
+ const response=await route.post({});
+ assert.equal(response.status,422);
+ const body=await response.json();
+ assert.equal(body.assessmentIssues[0].field,'birthDate');
+ assert.equal(body.assessmentIssues[0].step,4);
+ assert.equal(body.assessmentIssues[1].field,'currentWeight');
+ assert.equal(route.state.archives,0);
+});
+test('sem sessões viáveis aponta os limites diários e horas para revisão',async()=>{
+ const route=endpoint({savedProfile:{...profile,availableDays:['seg'],dailyMinutes:{seg:0}}});
+ const response=await route.post({weeks:1,startDate:'2027-01-04'});
+ assert.equal(response.status,422);
+ const body=await response.json();
+ assert.ok(body.assessmentIssues.some((issue:any)=>issue.field==='dailyMinutes.seg'));
+ assert.equal(route.state.archives,0);
+});
+test('opções de geração inválidas não são rotuladas como erro de triagem',async()=>{
+ const response=await endpoint().post({weeks:53});
+ assert.equal(response.status,422);
+ assert.equal((await response.json()).assessmentIssues,undefined);
 });

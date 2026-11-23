@@ -1,3 +1,4 @@
+import { assessmentIssue } from '@/lib/assessment-review';
 import { canAccessAthlete } from '@/lib/coach-access';
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
   const modality = body.modality ?? profile?.modality;
   if (!['triatlo', 'natacao', 'ciclismo', 'corrida'].includes(modality))
     return NextResponse.json(
-      { error: 'Escolha uma modalidade válida.' },
+      { error: 'Escolha uma modalidade válida.', ...(body.modality===undefined?{assessmentIssues:[assessmentIssue('modality','Selecione sua modalidade na triagem.')]}:{}) },
       { status: 422, ...options },
     );
   if (
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
       {
         error: `Complete a triagem antes de gerar: ${readiness.missing.join(', ')}.`,
         missing: readiness.missing,
+        assessmentIssues: readiness.issues,
       },
       { status: 422, ...options },
     );
@@ -179,6 +181,7 @@ export async function POST(req: NextRequest) {
       {
         error: 'Não foi possível gerar sessões com essa disponibilidade.',
         warnings: generated.warnings,
+        assessmentIssues: ['weeklyHours','availableDays',...Object.keys(profile?.dailyMinutes && typeof profile.dailyMinutes==='object'?profile.dailyMinutes:{}).map(day=>'dailyMinutes.'+day)].map(field=>assessmentIssue(field,'Revise a disponibilidade: os limites atuais não permitem encaixar sessões.')),
       },
       { status: 422, ...options },
     );

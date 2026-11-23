@@ -1,10 +1,12 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocalDate } from '@/hooks/use-browser-state';
 import { ChevronRight, ChevronLeft, ClipboardCheck, Activity, Target, Heart, Wrench, Dumbbell, Sparkles, CheckCircle2, FlaskConical, Info, Waves, Bike, Timer, Layers } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input as BaseInput } from '@/components/ui/input';
+import { assessmentIssue, assessmentIssues, type AssessmentIssue } from '@/lib/assessment-review';
+import { AssessmentReview, useAssessmentReview } from '@/components/assessment-review';
 import { missingAssessmentFields } from '@/lib/assessment-missing';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -69,13 +71,14 @@ function dateField(value: unknown): string {
   return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : '';
 }
 
-export function CoachQuestionnaire({ profile, races = [], generationErrors = [], onComplete }: { profile: any; races?: { name: string; date: string | Date; distance?: string }[]; generationErrors?: string[]; onComplete: (opts?: { startDate?: string; weeks?: number }) => Promise<void> | void }) {
+export function CoachQuestionnaire({ profile, races = [], generationErrors = [], generationIssues = [], reviewField, onComplete }: { profile: any; races?: { name: string; date: string | Date; distance?: string }[]; generationErrors?: string[]; generationIssues?: AssessmentIssue[]; reviewField?: string; onComplete: (opts?: { startDate?: string; weeks?: number }) => Promise<void> | void }) {
   const confirmedProfile = Boolean(profile?.coachAssessmentDone || profile?.profileCompleted);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(()=>reviewField?assessmentIssue(reviewField,'')?.step??0:0);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [attempted,setAttempted]=useState(generationErrors.length>0);
-  useEffect(()=>{if(attempted)document.getElementById('assessment-errors')?.scrollIntoView({block:'start',behavior:'smooth'});},[attempted,step]);
+  const [serverIssues,setServerIssues]=useState<AssessmentIssue[]>([]);
+  const [editedFields,setEditedFields]=useState<string[]>([]);
   const [planStartDate, setPlanStartDate] = useState('');
   const [planWeeks, setPlanWeeks] = useState('');
   const todayStr = useLocalDate();
@@ -149,9 +152,13 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     limitations: profile?.limitations ?? '',
   });
 
-  const set = (key: string, val: any) => { setForm(p => ({ ...p, [key]: val })); setErrors([]); };
+  const set = (key: string, val: any) => { setEditedFields(fields=>[...fields,key]);setServerIssues(items=>items.filter(item=>item.field.split('.')[0]!==key));setForm(p => ({ ...p, [key]: val })); setErrors([]); };
   const missing=missingAssessmentFields(form);
-  const fieldError=(field:string)=>attempted&&missing.some(item=>item.field===field)?missing.find(item=>item.field===field)!.label+' — preencha este campo.':undefined;
+  const requiredIssues=attempted?missing.map(item=>assessmentIssue(item.field,'Preencha este campo.')!):[];
+  const issues=[...requiredIssues,...[...generationIssues,...serverIssues].filter(item=>!editedFields.includes(item.field.split('.')[0])&&!requiredIssues.some(required=>required.field===item.field))];
+  const {scope,focusField}=useAssessmentReview(issues,reviewField);
+  const review=(issue:AssessmentIssue)=>{setStep(issue.step);focusField(issue.field);};
+  const fieldError=(field:string)=>issues.find(item=>item.field===field)?.message;
   const toggleDay = (d: string) => set('availableDays', form.availableDays.includes(d) ? form.availableDays.filter((x: string) => x !== d) : [...form.availableDays, d]);
 
   // Flags de modalidade — definem quais esportes aparecem
@@ -175,36 +182,39 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     return Math.round(Number(form.testFTP20min) * 0.95);
   }, [form.testFTP20min]);
 
-  function stepErrors(key: string): string[] {
-    const messages: string[] = [];
-    if (key === 'modalidade' && !form.modality) messages.push('Escolha a modalidade que deseja treinar.');
+  function stepIssues(key: string): AssessmentIssue[] {
+    const messages: AssessmentIssue[] = [];
+    const add=(field:string,message:string)=>messages.push(assessmentIssue(field,message)!);
+    if (key === 'modalidade' && !form.modality) add('modality','Escolha a modalidade que deseja treinar.');
     if (key === 'experiencia') {
-      if (!form.level) messages.push('Escolha seu nível de experiência; o app não presume um nível inicial.');
+      if (!form.level) add('level','Escolha seu nível de experiência; o app não presume um nível inicial.');
       const hasRace = [form.recentRaceDistanceKm, form.recentRaceTime, form.recentRaceDate].some(value => value !== '');
-      if (hasRace && (!(Number(form.recentRaceDistanceKm) > 0) || !parseRaceTime(form.recentRaceTime) || !form.recentRaceDate)) messages.push('Para registrar uma prova de corrida, informe distância, tempo válido e data.');
-      if (form.recentRaceDate && todayStr && form.recentRaceDate > todayStr) messages.push('A prova de referência deve estar concluída, com data até hoje.');
+      if (hasRace && (!(Number(form.recentRaceDistanceKm) > 0) || !parseRaceTime(form.recentRaceTime) || !form.recentRaceDate)) add(!(Number(form.recentRaceDistanceKm)>0)?'recentRaceDistanceKm':!parseRaceTime(form.recentRaceTime)?'recentRaceTime':'recentRaceDate','Para registrar uma prova de corrida, informe distância, tempo válido e data.');
+      if (form.recentRaceDate && todayStr && form.recentRaceDate > todayStr) add('recentRaceDate','A prova de referência deve estar concluída, com data até hoje.');
     }
-    if (key === 'nivel' && showSwim && form.canSwim === null) messages.push('Informe se você sabe nadar antes de continuar.');
-    if (key === 'testes' && ((form.testCSS400 || form.testCSS200) && !cssCalc)) messages.push('Confira os tempos CSS: use m:ss, com o tempo de 400 m maior que o de 200 m.');
+    if (key === 'nivel' && showSwim && form.canSwim === null) add('canSwim','Informe se você sabe nadar antes de continuar.');
+    if (key === 'testes' && ((form.testCSS400 || form.testCSS200) && !cssCalc)) add('testCSS400','Confira os tempos CSS: use m:ss, com o tempo de 400 m maior que o de 200 m.');
     if (key === 'metricas') {
-      if (!form.birthDate || !Number.isFinite(new Date(`${form.birthDate}T00:00:00Z`).getTime()) || (todayStr && form.birthDate >= todayStr)) messages.push('Informe uma data de nascimento válida para a triagem.');
-      for (const [label, value] of [['Limiar de corrida', form.runThresholdPace], ['CSS de natação', form.swimCssPace]] as const) if (value && !parseRaceTime(String(value))) messages.push(`${label}: use o formato m:ss com segundos de 00 a 59.`);
-      if (form.maxHeartRate && form.restingHeartRate && Number(form.restingHeartRate) >= Number(form.maxHeartRate)) messages.push('A FC de repouso deve ser menor que a FC máxima informada.');
-      if (form.thresholdHeartRate && form.maxHeartRate && Number(form.thresholdHeartRate) >= Number(form.maxHeartRate)) messages.push('A FC de limiar deve ser menor que a FC máxima informada.');
+      if (!form.birthDate || !Number.isFinite(new Date(`${form.birthDate}T00:00:00Z`).getTime()) || (todayStr && form.birthDate >= todayStr)) add('birthDate','Informe uma data de nascimento válida para a triagem.');
+      for (const [label, value] of [['Limiar de corrida', form.runThresholdPace], ['CSS de natação', form.swimCssPace]] as const) if (value && !parseRaceTime(String(value))) add(label==='Limiar de corrida'?'runThresholdPace':'swimCssPace',`${label}: use o formato m:ss com segundos de 00 a 59.`);
+      if (form.maxHeartRate && form.restingHeartRate && Number(form.restingHeartRate) >= Number(form.maxHeartRate)) add('restingHeartRate','A FC de repouso deve ser menor que a FC máxima informada.');
+      if (form.thresholdHeartRate && form.maxHeartRate && Number(form.thresholdHeartRate) >= Number(form.maxHeartRate)) add('thresholdHeartRate','A FC de limiar deve ser menor que a FC máxima informada.');
     }
     if (key === 'logistica') {
-      if (!form.availableDays.length) messages.push('Selecione pelo menos um dia disponível para treinar.');
-      if (!Number.isFinite(Number(form.weeklyHours)) || Number(form.weeklyHours) <= 0) messages.push('Informe suas horas efetivamente disponíveis por semana.');
-      if (form.currentWeeklyVol === '' || !Number.isFinite(Number(form.currentWeeklyVol)) || Number(form.currentWeeklyVol) < 0) messages.push('Informe o volume semanal atual; digite 0 apenas se ainda não está treinando.');
+      if (!form.availableDays.length) add('availableDays','Selecione pelo menos um dia disponível para treinar.');
+      if (!Number.isFinite(Number(form.weeklyHours)) || Number(form.weeklyHours) <= 0) add('weeklyHours','Informe suas horas efetivamente disponíveis por semana.');
+      if (form.currentWeeklyVol === '' || !Number.isFinite(Number(form.currentWeeklyVol)) || Number(form.currentWeeklyVol) < 0) add('currentWeeklyVol','Informe o volume semanal atual; digite 0 apenas se ainda não está treinando.');
     }
     return messages;
   }
 
+  const stepErrors=(key:string)=>stepIssues(key).map(issue=>issue.message);
+
   const handleSaveAndGenerate = async () => {
     setAttempted(true);
-    if(missing.length){setErrors([]);setStep(missing[0].step);return;}
+    if(missing.length){setErrors([]);review(assessmentIssue(missing[0].field,'Preencha este campo.')!);return;}
     const invalid = STEPS.map((entry, index) => ({ index, messages: stepErrors(entry.key) })).filter(entry => entry.messages.length);
-    if (invalid.length) { setErrors(invalid.flatMap(entry => entry.messages)); setStep(invalid[0].index); return; }
+    if (invalid.length) { const fields=STEPS.flatMap(entry=>stepIssues(entry.key));setEditedFields([]);setServerIssues(fields);setErrors([]);review(fields[0]); return; }
     setErrors([]);
     setSaving(true);
     try {
@@ -232,9 +242,10 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
       if (!res.ok) {
         const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
         const message = data?.error || 'Não foi possível salvar a avaliação.';
-        setErrors([message, ...details]); toast.error(message); return;
+        setErrors([message, ...details]);setEditedFields([]);setServerIssues(assessmentIssues(data?.details)); toast.error(message); return;
       }
       toast.success('Avaliação salva! Gerando plano personalizado...');
+      setEditedFields([]);setServerIssues([]);
       await onComplete({ startDate: planStartDate || undefined, weeks: planWeeks ? Number(planWeeks) : undefined });
     } catch { setErrors(['Não foi possível conectar ao servidor. Confira a conexão antes de tentar novamente.']); toast.error('Erro ao salvar avaliação'); }
     finally { setSaving(false); }
@@ -247,7 +258,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const modLabel = MODALITIES.find(m => m.k === form.modality)?.l ?? 'Triatlo';
 
   return (
-    <div className="space-y-6">
+    <div ref={scope} className="space-y-6">
       <FadeIn>
         <div className="text-center">
           <h1 className="font-display text-2xl md:text-3xl tracking-tight font-bold flex items-center justify-center gap-2">
@@ -279,7 +290,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
         </div>
       </div>
 
-      {attempted&&missing.length>0&&<div id="assessment-errors" role="alert" className="scroll-mt-24 rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive"><p className="font-semibold">Preencha os campos abaixo para gerar o plano:</p><ul className="mt-2 space-y-2">{missing.map(item=><li key={item.field}><button type="button" className="text-left underline font-medium" onClick={()=>setStep(item.step)}>{item.label} — etapa {item.step+1}</button></li>)}</ul></div>}<FadeIn key={step}>
+      <AssessmentReview issues={issues} onReview={review} /><FadeIn key={step}>
         <Card className="border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
@@ -296,7 +307,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {current.key === 'modalidade' && (
               <>
                 <p className="text-sm text-muted-foreground">Selecione o foco do seu treino. No <strong>Triatlo</strong>, avaliamos natação, ciclismo e corrida juntos. Nas modalidades individuais, mostramos apenas os testes e níveis daquele esporte.</p>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div data-assessment-field="modality" className="grid sm:grid-cols-2 gap-3">
                   {MODALITIES.map(m => {
                     const MIcon = m.icon;
                     const selected = form.modality === m.k;
@@ -325,7 +336,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   <Input type="number" min={0}  name="trainingYears" error={fieldError('trainingYears')} value={form.trainingYears} onChange={e => set('trainingYears', e.target.value)} placeholder="Ex.: 3" />
                   <p className="text-xs text-muted-foreground">Considere também corrida/ciclismo/natação isolados</p>
                 </div>
-                <div className="space-y-2">
+                <div data-assessment-field="level" className="space-y-2">
                   <Label className="text-base">Como você classifica seu nível geral?</Label>
                   <div className="flex flex-wrap gap-2">
                     {[{ k: 'iniciante', l: '🟢 Iniciante', d: 'Primeiros passos, poucas provas' }, { k: 'intermediario', l: '🟡 Intermediário', d: 'Já completou provas, treina regular' }, { k: 'avancado', l: '🔴 Avançado', d: 'Treina consistente, busca performance' }].map(o => (
@@ -346,7 +357,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Histórico de provas (resultados recentes)</Label>
-                  <Textarea value={form.raceHistory} onChange={e => set('raceHistory', e.target.value)} placeholder={"Ex.: Ironman 70.3 Floripa 2024 - 6h30min\nSprint Santos 2023 - 1h25\nMeia Maratona SP 2024 - 1h55"} rows={4} />
+                  <Textarea name="raceHistory" value={form.raceHistory} onChange={e => set('raceHistory', e.target.value)} placeholder={"Ex.: Ironman 70.3 Floripa 2024 - 6h30min\nSprint Santos 2023 - 1h25\nMeia Maratona SP 2024 - 1h55"} rows={4} />
                   <p className="text-xs text-muted-foreground">Inclua distância, tempo e data — isso ajuda muito a calibrar os treinos</p>
                 </div>
                 <fieldset className="space-y-3 rounded-lg border p-4">
@@ -368,7 +379,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
 
                 {showSwim && (
                   <>
-                    <div className="space-y-2">
+                    <div data-assessment-field="canSwim" className="space-y-2">
                       <Label className="text-base">🏊 Você sabe nadar?</Label>
                       <div className="flex flex-wrap gap-2">
                         <OptionButton selected={form.canSwim === true} onClick={() => set('canSwim', true)}>Sim, sei nadar</OptionButton>
@@ -575,7 +586,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   {showBike && (
                     <div className="space-y-2">
                       <Label>FTP (watts) {ftpCalc && <span className="text-green-500">— calculado: {ftpCalc}W</span>}</Label>
-                      <Input type="number" value={form.ftp || ftpCalc || ''} onChange={e => set('ftp', e.target.value)} placeholder="200" />
+                      <Input name="ftp" type="number" value={form.ftp || ftpCalc || ''} onChange={e => set('ftp', e.target.value)} placeholder="200" />
                     </div>
                   )}
                   <div className="space-y-2">
@@ -587,13 +598,13 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   {showSwim && (
                     <div className="space-y-2">
                       <Label>Pace natação (min/100m) {cssCalc && <span className="text-green-500">— CSS: {cssCalc}</span>}</Label>
-                      <Input value={form.swimPace || cssCalc || ''} onChange={e => set('swimPace', e.target.value)} placeholder="2:15" />
+                      <Input name="swimPace" value={form.swimPace || cssCalc || ''} onChange={e => set('swimPace', e.target.value)} placeholder="2:15" />
                     </div>
                   )}
                   {showRun && (
                     <div className="space-y-2">
                       <Label>Pace corrida (min/km)</Label>
-                      <Input value={form.runPace || form.testRunPace || ''} onChange={e => set('runPace', e.target.value)} placeholder="5:30" />
+                      <Input name="runPace" value={form.runPace || form.testRunPace || ''} onChange={e => set('runPace', e.target.value)} placeholder="5:30" />
                     </div>
                   )}
                 </div>
@@ -603,7 +614,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {/* ===== STEP: Objetivos ===== */}
             {current.key === 'objetivos' && (
               <>
-                <div className="space-y-2"><Label htmlFor="training-focus">Foco específico da modalidade (opcional)</Label><select id="training-focus" value={form.trainingGoal} onChange={event=>set('trainingGoal',event.target.value)} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">Preparação geral, sem distância presumida</option>{Object.entries(TRAINING_GOALS[form.modality]??{}).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><p className="text-xs text-muted-foreground">O foco fica salvo e influencia as próximas gerações. Confira também a data e a prioridade das provas.</p></div>
+                <div className="space-y-2"><Label htmlFor="training-focus">Foco específico da modalidade (opcional)</Label><select name="trainingGoal" id="training-focus" value={form.trainingGoal} onChange={event=>set('trainingGoal',event.target.value)} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">Preparação geral, sem distância presumida</option>{Object.entries(TRAINING_GOALS[form.modality]??{}).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><p className="text-xs text-muted-foreground">O foco fica salvo e influencia as próximas gerações. Confira também a data e a prioridade das provas.</p></div>
                 <div className="rounded-lg border bg-muted/30 p-4 text-sm">
                   {races[0] ? <p>Prova principal cadastrada: <strong>{races[0].name}</strong> — <SafeDate date={races[0].date} options={{ day: 'numeric', month: 'long', year: 'numeric' }} locale="pt-BR" />.</p> : <p>Ainda não há prova principal com data cadastrada. Cadastre o evento para periodizar até a prova; sem evento, escolha um ciclo de treino por semanas.</p>}
                   <Link href="/provas" className="mt-2 inline-block text-primary underline">Cadastrar ou revisar objetivo e data em Provas</Link>
@@ -638,15 +649,15 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 <p className="text-sm text-muted-foreground">Um coach responsável SEMPRE pergunta sobre saúde antes de prescrever treino. Seja honesto aqui.</p>
                 <div className="space-y-2">
                   <Label className="text-base">Lesões atuais (que limitam o treino hoje)</Label>
-                  <Textarea value={form.currentInjuries} onChange={e => set('currentInjuries', e.target.value)} placeholder="Ex.: tendinite no tendão de Aquiles direito, dor no ombro ao nadar..." rows={2} />
+                  <Textarea name="currentInjuries" value={form.currentInjuries} onChange={e => set('currentInjuries', e.target.value)} placeholder="Ex.: tendinite no tendão de Aquiles direito, dor no ombro ao nadar..." rows={2} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Histórico de lesões passadas</Label>
-                  <Textarea value={form.injuryHistory} onChange={e => set('injuryHistory', e.target.value)} placeholder="Ex.: fratura de estresse no pé em 2022, cirurgia no menisco em 2020..." rows={2} />
+                  <Textarea name="injuryHistory" value={form.injuryHistory} onChange={e => set('injuryHistory', e.target.value)} placeholder="Ex.: fratura de estresse no pé em 2022, cirurgia no menisco em 2020..." rows={2} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Condições médicas relevantes</Label>
-                  <Textarea value={form.medicalConditions} onChange={e => set('medicalConditions', e.target.value)} placeholder="Ex.: asma, hipotireoidismo, diabetes..." rows={2} />
+                  <Textarea name="medicalConditions" value={form.medicalConditions} onChange={e => set('medicalConditions', e.target.value)} placeholder="Ex.: asma, hipotireoidismo, diabetes..." rows={2} />
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -687,7 +698,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     <Input type="number" step="0.5" min={0} max={40}  name="currentWeeklyVol" error={fieldError('currentWeeklyVol')} value={form.currentWeeklyVol} onChange={e => set('currentWeeklyVol', e.target.value)} placeholder="0 se ainda não está treinando" />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div data-assessment-field="availableDays" className="space-y-2">
                   <Label className="text-base">Dias disponíveis para treinar</Label>
                   <div className="flex flex-wrap gap-2">
                     {DAYS.map(d => (
@@ -697,7 +708,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Sua rotina de trabalho</Label>
-                  <fieldset className="rounded-xl border p-4 space-y-3"><legend className="px-2 text-sm font-medium">Limite de treino por dia, em minutos</legend><p className="text-xs text-muted-foreground">Inclui todas as modalidades e força. 0 reserva o dia para descanso; vazio mantém o limite operacional por experiência. O limite semanal também será respeitado.</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{DAYS.filter(day=>form.availableDays.includes(day.key)).map(day=><div key={day.key}><Label htmlFor={`limit-${day.key}`}>{day.label}</Label><Input id={`limit-${day.key}`} type="number" min={0} max={480} value={form.dailyMinutes[day.key]??''} onChange={event=>set('dailyMinutes',{...form.dailyMinutes,[day.key]:event.target.value})} placeholder="Não informado" /></div>)}</div><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.strengthAvailable} onChange={event=>set('strengthAvailable',event.target.checked)} /> Tenho disponibilidade para força e mobilidade</label></fieldset>
+                  <fieldset data-assessment-field="dailyMinutes" className="rounded-xl border p-4 space-y-3"><legend className="px-2 text-sm font-medium">Limite de treino por dia, em minutos</legend><p className="text-xs text-muted-foreground">Inclui todas as modalidades e força. 0 reserva o dia para descanso; vazio mantém o limite operacional por experiência. O limite semanal também será respeitado.</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{DAYS.filter(day=>form.availableDays.includes(day.key)).map(day=><div key={day.key}><Label htmlFor={`limit-${day.key}`}>{day.label}</Label><Input name={`dailyMinutes.${day.key}`} error={fieldError(`dailyMinutes.${day.key}`)} id={`limit-${day.key}`} type="number" min={0} max={480} value={form.dailyMinutes[day.key]??''} onChange={event=>set('dailyMinutes',{...form.dailyMinutes,[day.key]:event.target.value})} placeholder="Não informado" /></div>)}</div><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.strengthAvailable} onChange={event=>set('strengthAvailable',event.target.checked)} /> Tenho disponibilidade para força e mobilidade</label></fieldset>
                   <div className="flex flex-wrap gap-2">
                     {[{ k: 'flexivel', l: '🏠 Flexível/Remoto' }, { k: 'fixo_comercial', l: '🏢 Horário comercial' }, { k: 'turnos', l: '🔄 Turnos/Escalas' }].map(o => (
                       <OptionButton key={o.k} selected={form.workSchedule === o.k} onClick={() => set('workSchedule', o.k)}>{o.l}</OptionButton>
@@ -753,7 +764,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 )}
                 <div className="space-y-2">
                   <Label>Outras limitações ou observações</Label>
-                  <Textarea value={form.limitations} onChange={e => set('limitations', e.target.value)} placeholder="Ex.: Só consigo nadar 2x na semana, treino no horário do almoço..." rows={2} />
+                  <Textarea name="limitations" value={form.limitations} onChange={e => set('limitations', e.target.value)} placeholder="Ex.: Só consigo nadar 2x na semana, treino no horário do almoço..." rows={2} />
                 </div>
                 <div className="border-t pt-4 mt-2 space-y-4">
                   <div className="space-y-2">
@@ -791,7 +802,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             <Sparkles className="mr-2 h-4 w-4" /> Gerar Plano Personalizado
           </Button>
         ) : (
-          <Button onClick={() => { setAttempted(true); const messages = stepErrors(current.key); const required=missing.filter(item=>item.step===step); setErrors([...messages,...required.map(item=>`${item.label}: preencha este campo.`)]); if(required.length)return; if (!messages.length) setStep(s => s + 1); }}>
+          <Button onClick={() => { setAttempted(true); const currentIssues=stepIssues(current.key);setServerIssues(currentIssues);setEditedFields([]);const messages = currentIssues.map(issue=>issue.message); const required=missing.filter(item=>item.step===step); setErrors([...messages,...required.map(item=>`${item.label}: preencha este campo.`)]); if(required.length)return; if (!messages.length) setStep(s => s + 1); }}>
             Próximo <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         )}

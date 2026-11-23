@@ -216,3 +216,11 @@ html { scroll-padding-top: calc(4rem + env(safe-area-inset-top, 0px)); }
   --border: 220 6% 25%; --input: 220 6% 37%; --ring: 25 95% 70%;
   --chart-1: 25 95% 70%; --chart-2: 25 45% 57%; --chart-3: 220 5% 72%;
 }
+
+/* Leva o foco à pendência sem depender apenas da cor. */
+[data-review-invalid="true"] {
+  outline: 2px solid hsl(var(--destructive));
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+  scroll-margin-block: 7rem;
+}
