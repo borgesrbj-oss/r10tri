@@ -77,7 +77,7 @@ export function targetForZone(profile: TrainingProfile | null, modality: Trainin
       const max = maximum;
       const low = Math.ceil(heartRate * lo);
       const high = Math.max(low, Math.min(zone === 'Z5' ? Math.floor(heartRate * hi) : Math.ceil(heartRate * hi) - 1, max ?? 250));
-      return { basis: 'threshold_hr', unit: 'bpm', low, high, source: 'FC de limiar funcional informada; faixas Friel (2025). Piso Z1 de 50% e teto Z5 de 105% são limites operacionais do app. FC responde com atraso em intervalos curtos; revisar com treinador.', text: `${low}–${high} bpm` };
+      return { basis: 'threshold_hr', unit: 'bpm', low, high, source: 'FC de limiar funcional informada; cinco faixas operacionais do Gotri, sem equivalência literal às sete zonas Friel. Piso Z1 de 50% e teto Z5 de 105% são limites operacionais do app. FC responde com atraso em intervalos curtos; revisar com treinador.', text: `${low}–${high} bpm` };
     }
     const threshold = runThreshold(profile);
     if (threshold) {

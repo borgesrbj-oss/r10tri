@@ -667,3 +667,16 @@ test('envio ao Intervals conserva descrição e tempo estruturados e rejeita est
     }
   }
 });
+
+test('corrida gerada por km mantém distância em todos os blocos ativos no FIT e TCX',()=>{
+ const structure=buildWorkoutStructure({...profile,runStructure:'distancia'},'corrida','build',45,600);
+ const item={...workout('corrida'),structure};
+ const raw=decode(builders.buildFit(item),true).workoutStepMesgs;
+ assert.equal(raw.length,structure.steps.length);
+ structure.steps.forEach((step,i)=>{assert.equal(raw[i].durationType,'distance');assert.equal(raw[i].durationValue,step.distanceMeters!*100);});
+ const xml=builders.buildTcx(item);
+ assert.equal(XMLValidator.validate(xml),true);
+ assert.equal((xml.match(/xsi:type="Distance_t"/g)||[]).length,structure.steps.length);
+ assert.match(builders.buildTxt(item),/Prescrição por distância:.*km/);
+ assert.equal(readWorkoutStructure(structure)?.prescriptionMode,'distancia');
+});

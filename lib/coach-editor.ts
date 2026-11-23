@@ -45,6 +45,7 @@ export const blockSchema = z
   );
 export const sessionSchema = z
   .object({
+    prescriptionMode:z.enum(['distancia']).optional(),
     id: z.string().min(1).max(128).optional(),
     date: day,
     title: z.string().trim().min(1).max(250),
@@ -80,6 +81,7 @@ export type DraftChange = {
   spec?: SessionSpec;
 };
 export type DraftPayload = {
+  generation?:import('./training-types').StructuredPlan['summary'];
   baseProfileAt: string | null;
   changes: DraftChange[];
 };
@@ -189,7 +191,16 @@ export function compileSession(
     blocks: SessionSpec['blocks'],
     title: string,
   ): DraftChange => {
-    const structure = structureFor(blocks, modality, spec.phase, profile);
+    const structure = structureFor(blocks, modality, spec.phase, spec.prescriptionMode==='distancia'?{...profile,runStructure:'distancia'}:profile);
+    if(spec.prescriptionMode==='distancia'&&modality==='corrida'&&structure.steps.some(step=>step.rest!=='passivo')){
+      for(const step of structure.steps){
+        if(step.rest==='passivo')continue;
+        if(!step.distanceMeters&&step.kind==='recuperacao'&&step.target.unit==='s/km')step.distanceMeters=Math.max(10,Math.round(step.durationSeconds/((step.target.low+step.target.high)/2)*100)*10);
+        if(!step.distanceMeters||step.target.unit!=='s/km')throw new Error('Para manter a corrida por km, informe distância em cada bloco ativo e pace de limiar na triagem.');
+      }
+      structure.prescriptionMode='distancia';
+      structure.warnings=['Prescrição por distância revisada pelo coach. Tempos são estimativas para planejar o volume.'];
+    }
     return {
       key: randomUUID(),
       date: spec.date,

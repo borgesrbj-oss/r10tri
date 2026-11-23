@@ -1,4 +1,6 @@
 'use client';
+import {PlanningAudit} from '@/components/planning-audit';
+import {workoutPrescription} from '@/lib/training-prescription';
 import { assessmentIssues, type AssessmentIssue } from '@/lib/assessment-review';
 import { AssessmentReview } from '@/components/assessment-review';
 import {SeasonSummary} from '@/components/season-summary';
@@ -316,7 +318,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
   // Show questionnaire if assessment not done or user clicked "Refazer Avaliação"
   if (needsAssessment || showQuestionnaire) {
-    return <CoachQuestionnaire profile={profile} races={races} generationErrors={generationErrors} generationIssues={reviewIssues} reviewField={reviewField} onComplete={handleAssessmentComplete} />;
+    return <CoachQuestionnaire profile={{...profile,runStructure:genRunStructure}} races={races} generationErrors={generationErrors} generationIssues={reviewIssues} reviewField={reviewField} onComplete={handleAssessmentComplete} />;
   }
 
   // Estatísticas do plano (todos os treinos)
@@ -368,7 +370,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
       {generationErrors.length > 0 && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Confira os dados antes de gerar o plano</p><ul className="mt-2 list-disc space-y-1 pl-4">{generationErrors.map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
 
-      <AssessmentReview issues={reviewIssues} onReview={issue=>{setReviewField(issue.field);setShowQuestionnaire(true);}} />
+      <AssessmentReview issues={reviewIssues} onReview={issue=>{if(issue.field==='raceDate'){router.push('/provas');return;}setReviewField(issue.field);setShowQuestionnaire(true);}} />
 
       <Dialog open={showGenOptions} onOpenChange={setShowGenOptions}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto">
@@ -466,7 +468,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
               <StatTile icon={Flame} label="Carga (TSS)" value={workouts.length>0&&workouts.every(w=>w.tssEstimate!=null)?String(totalTss):'Sem estimativa'} color="#EF4444" />
             </div>
           </FadeIn>
-          <SeasonSummary workouts={workouts} /><TrainingDistributionSummary workouts={workouts.filter(w=>!w.paused)} title="Distribuição planejada do plano" />
+          {plan?.summary?.calculation?<PlanningAudit plan={plan} workouts={workouts} />:<><SeasonSummary workouts={workouts} /><TrainingDistributionSummary workouts={workouts.filter(w=>!w.paused)} title="Distribuição planejada do plano" /></>}
           {plan?.nutritionPlan && (
             <FadeIn>
               <Link href="/nutricao" className="block">
@@ -526,7 +528,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-3"><TrainingDistributionSummary workouts={(workouts ?? []).filter((workout: any) => (workout.weekNumber ?? 1) === weekNum)} title={`Tempo ativo da semana ${weekNum} · todas as modalidades`} compact /></div>
+                  {!plan?.summary?.calculation&&<div className="mb-3"><TrainingDistributionSummary workouts={(workouts ?? []).filter((workout: any) => (workout.weekNumber ?? 1) === weekNum)} title={`Tempo ativo da semana ${weekNum} · todas as modalidades`} compact /></div>}
                   <div className="space-y-2">
                     {weekWorkouts?.map((w: any) => {
                       const Icon = icons?.[w?.modality] ?? Dumbbell;
@@ -541,7 +543,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                                 <span className="truncate text-sm font-medium">{w?.title}</span>
                                 {w?.completed && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
                               </span>
-                              <span className="block text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {w?.duration}min · {w?.targetZone ?? ''}</span>
+                              <span className="block text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {workoutPrescription(w)} · {w?.targetZone ?? ''}</span>
                             </span>
                             </button>
                             <div className="flex w-full shrink-0 flex-wrap justify-end gap-1 sm:w-auto">
@@ -626,7 +628,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2"><Icon className="h-5 w-5 text-primary" /> {w?.title}</DialogTitle>
                   <DialogDescription>
-                    <SafeDate date={w?.date} options={{ weekday: 'long', day: 'numeric', month: 'long' }} locale="pt-BR" /> · {w?.duration}min · {w?.targetZone ?? ''}{w?.phase ? ` · ${phaseLabels?.[w.phase] ?? w.phase}` : ''}
+                    <SafeDate date={w?.date} options={{ weekday: 'long', day: 'numeric', month: 'long' }} locale="pt-BR" /> · {workoutPrescription(w)} · {w?.targetZone ?? ''}{w?.phase ? ` · ${phaseLabels?.[w.phase] ?? w.phase}` : ''}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-1">

@@ -65,6 +65,8 @@ const scenarioNames = [
   'pausa-reavalia-volume-semanal',
   'retomar-encurtar-e-substituir-preservam-blocos',
   'preferencias-persistidas-limitam-a-geracao',
+  'triagem-km-geracao-e-exportacao-real',
+  'telas-do-atleta-sem-erro-de-renderizacao',
 ];
 
 function client() {
@@ -159,7 +161,7 @@ try {
     assert.equal(await prisma.user.count({ where: { email: identities.convite.email } }), 0);
   });
   await check(async () => {
-    const response = await atletaA.request('/api/profile/assessment', { method: 'POST', body: { birthDate: '1990-01-01', heightCm:175, dailyMinutes:{seg:45,ter:50,qua:50,qui:50,sex:50,sab:75},strengthAvailable:true, currentWeight: 70, currentWeeklyVol: 5, level: 'intermediario', modality: 'triatlo', weeklyHours: 6, availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'], canSwim: true, hasPoolAccess: true, ftp: 200, runThresholdPace: '06:00', swimCssPace: '02:10' } });
+    const response = await atletaA.request('/api/profile/assessment', { method: 'POST', body: { planningPreferences:{recentMinutes:{corrida:100,ciclismo:120,natacao:80}},birthDate: '1990-01-01', heightCm:175, dailyMinutes:{seg:45,ter:50,qua:50,qui:50,sex:50,sab:75},strengthAvailable:true, currentWeight: 70, currentWeeklyVol: 5, level: 'intermediario', modality: 'triatlo', weeklyHours: 6, availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'], canSwim: true, hasPoolAccess: true, ftp: 200, runThresholdPace: '06:00', swimCssPace: '02:10' } });
     assert.equal(response.status, 200);
   });
   await check(async () => {
@@ -341,10 +343,28 @@ try {
     const sessions=(await atletaA.request('/api/workouts')).data.filter(w=>w.planId===generated.data.planId);assert.ok(sessions.length>0);assert.ok(sessions.every(w=>w.duration<=30));
     const profile=await atletaA.request('/api/profile');assert.equal(profile.data.planningPreferences.maxSessionMinutes,30);
   });
+  await check(async()=>{
+    const saved=await atletaA.request('/api/profile/assessment',{method:'POST',body:{modality:'corrida',trainingGoal:'5k',runStructure:'distancia',runThresholdPace:'05:00'}});
+    assert.equal(saved.status,200);
+    assert.equal((await atletaA.request('/api/profile')).data.runStructure,'distancia');
+    const generated=await atletaA.request('/api/plan/generate',{method:'POST',body:{weeks:1}});assert.equal(generated.status,200);
+    const workouts=(await atletaA.request('/api/workouts')).data.filter(w=>w.planId===generated.data.planId&&w.modality==='corrida');
+    assert.ok(workouts.length>0);assert.ok(workouts.every(w=>w.structure.prescriptionMode==='distancia'));
+    const item=workouts[0];
+    const exported=await atletaA.request('/api/workouts/export?id='+item.id+'&format=fit',{binary:true});assert.equal(exported.status,200);
+    const decoded=new Decoder(Stream.fromByteArray(exported.bytes)).read({applyScaleAndOffset:false,expandSubFields:false,mergeHeartRates:false});
+    assert.deepEqual(decoded.errors,[]);assert.ok(decoded.messages.workoutStepMesgs.every(s=>s.durationType==='distance'));
+    const tcx=await atletaA.request('/api/workouts/export?id='+item.id+'&format=tcx',{binary:true});assert.equal(tcx.status,200);assert.ok(tcx.bytes.toString().includes('Distance_t'));
+  });
+  await check(async()=>{
+    for(const path of ['/dashboard','/plano','/calendario','/planilha','/perfil','/configurar-treino','/provas','/evolucao','/nutricao','/exercicios','/guias','/strava']){
+      const response=await atletaA.request(path);assert.equal(response.status,200,'Tela '+path);
+    }
+  });
   console.log(JSON.stringify({ cenarios: scenario, aprovados: passed, falhas: 0, contasTemporarias: 4 }));
 } catch (error) {
   // Não registra corpos HTTP, links de convite, cookies, senhas ou dados do banco.
-  console.error(JSON.stringify({ cenarios: scenario, aprovados: passed, falhas: 1, cenarioComFalha: scenario, nomeDoCenario: scenarioNames[scenario - 1], tipoDoErro: error?.name, ...(typeof error?.actual === 'number' ? { valorObtido: error.actual } : {}), ...(typeof error?.expected === 'number' ? { valorEsperado: error.expected } : {}) }));
+  console.error(JSON.stringify({ cenarios: scenario, aprovados: passed, falhas: 1, cenarioComFalha: scenario, nomeDoCenario: scenarioNames[scenario - 1], tipoDoErro: error?.name, localDaFalha:error?.stack?.split('\n').find(line=>line.includes('integration-smoke.mjs:'))?.trim(), ...(typeof error?.actual === 'number' ? { valorObtido: error.actual } : {}), ...(typeof error?.expected === 'number' ? { valorEsperado: error.expected } : {}) }));
   process.exitCode = 1;
 } finally {
   await prisma.$disconnect();

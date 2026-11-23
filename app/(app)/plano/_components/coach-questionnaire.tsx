@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { FadeIn } from '@/components/ui/animate';
 import { formatRaceTime, parseRaceTime } from '@/lib/race-prediction';
 import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 import { SafeDate } from '@/components/safe-format';
 import { TRAINING_GOALS } from '@/lib/training-goals';
 
@@ -72,6 +73,7 @@ function dateField(value: unknown): string {
 }
 
 export function CoachQuestionnaire({ profile, races = [], generationErrors = [], generationIssues = [], reviewField, onComplete }: { profile: any; races?: { name: string; date: string | Date; distance?: string }[]; generationErrors?: string[]; generationIssues?: AssessmentIssue[]; reviewField?: string; onComplete: (opts?: { startDate?: string; weeks?: number }) => Promise<void> | void }) {
+  const router=useRouter();
   const confirmedProfile = Boolean(profile?.coachAssessmentDone || profile?.profileCompleted);
   const [step, setStep] = useState(()=>reviewField?assessmentIssue(reviewField,'')?.step??0:0);
   const [saving, setSaving] = useState(false);
@@ -84,6 +86,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const todayStr = useLocalDate();
   const [form, setForm] = useState({
     // Step 0 - Modalidade
+    runStructure: profile?.runStructure ?? 'zona',
+    planningPreferences:profile?.planningPreferences??{},
     modality: confirmedProfile ? profile?.modality ?? '' : '',
     // Step 1 - Experiência
     trainingYears: profile?.trainingYears ?? '',
@@ -157,7 +161,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const requiredIssues=attempted?missing.map(item=>assessmentIssue(item.field,'Preencha este campo.')!):[];
   const issues=[...requiredIssues,...[...generationIssues,...serverIssues].filter(item=>!editedFields.includes(item.field.split('.')[0])&&!requiredIssues.some(required=>required.field===item.field))];
   const {scope,focusField}=useAssessmentReview(issues,reviewField);
-  const review=(issue:AssessmentIssue)=>{setStep(issue.step);focusField(issue.field);};
+  const review=(issue:AssessmentIssue)=>{if(issue.field==='raceDate'){router.push('/provas');return;}setStep(issue.step);focusField(issue.field);};
   const fieldError=(field:string)=>issues.find(item=>item.field===field)?.message;
   const toggleDay = (d: string) => set('availableDays', form.availableDays.includes(d) ? form.availableDays.filter((x: string) => x !== d) : [...form.availableDays, d]);
 
@@ -325,6 +329,14 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     );
                   })}
                 </div>
+                {['corrida','triatlo'].includes(form.modality)&&<fieldset data-assessment-field="runStructure" className="space-y-3 rounded-xl border p-4">
+                  <legend className="px-2 font-semibold">Como deseja receber os treinos de corrida?</legend>
+                  <div className="flex flex-wrap gap-3">
+                    <OptionButton selected={form.runStructure==='distancia'} onClick={()=>set('runStructure','distancia')}>Por distância (km)</OptionButton>
+                    <OptionButton selected={form.runStructure==='zona'} onClick={()=>set('runStructure','zona')}>Por tempo e zona de intensidade</OptionButton>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Por km, os blocos têm distância e ritmo, calculados pelo seu pace de limiar. Informe esse pace em Métricas Atuais. Por zona, os blocos têm tempo e FC de limiar; sem FC medida, usam pace ou percepção de esforço. A escolha também vale para a corrida do triatlo.</p>
+                </fieldset>}
               </>
             )}
 
@@ -614,6 +626,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {/* ===== STEP: Objetivos ===== */}
             {current.key === 'objetivos' && (
               <>
+                {form.trainingGoal==='42k'&&<p className="rounded-lg border p-3 text-sm">A maratona precisa de dia, mês e ano para calcular o ciclo e a redução antes da prova. <Link className="text-primary underline" href="/provas">Cadastrar ou revisar a data da prova</Link></p>}
                 <div className="space-y-2"><Label htmlFor="training-focus">Foco específico da modalidade (opcional)</Label><select name="trainingGoal" id="training-focus" value={form.trainingGoal} onChange={event=>set('trainingGoal',event.target.value)} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="">Preparação geral, sem distância presumida</option>{Object.entries(TRAINING_GOALS[form.modality]??{}).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><p className="text-xs text-muted-foreground">O foco fica salvo e influencia as próximas gerações. Confira também a data e a prioridade das provas.</p></div>
                 <div className="rounded-lg border bg-muted/30 p-4 text-sm">
                   {races[0] ? <p>Prova principal cadastrada: <strong>{races[0].name}</strong> — <SafeDate date={races[0].date} options={{ day: 'numeric', month: 'long', year: 'numeric' }} locale="pt-BR" />.</p> : <p>Ainda não há prova principal com data cadastrada. Cadastre o evento para periodizar até a prova; sem evento, escolha um ciclo de treino por semanas.</p>}
@@ -684,7 +697,12 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {current.key === 'logistica' && (
               <>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label htmlFor="height-cm">Altura em cm (opcional)</Label><Input id="height-cm" type="number" min={80} max={250}  name="heightCm" error={fieldError('heightCm')} value={form.heightCm} onChange={event=>set('heightCm',event.target.value)} placeholder="Pode preencher depois" /></div>
+                  <fieldset className="space-y-3 rounded-xl border p-4"><legend className="font-semibold">Volume recente por modalidade</legend><p className="text-sm text-muted-foreground">Média semanal em minutos nas últimas quatro semanas. Use 0 para uma modalidade que ainda não pratica.</p>{(form.modality==='triatlo'?['corrida','ciclismo','natacao']:[form.modality]).map(sport=><label className="block" key={sport}>{sport} (min/semana)<Input name={'planningPreferences.recentMinutes.'+sport} error={fieldError('planningPreferences.recentMinutes.'+sport)} type="number" min={0} value={form.planningPreferences.recentMinutes?.[sport]??''} onChange={e=>set('planningPreferences',{...form.planningPreferences,recentMinutes:{...form.planningPreferences.recentMinutes,[sport]:e.target.value?Number(e.target.value):undefined}})} /></label>)}</fieldset>
+                  {form.modality==='corrida'&&<fieldset className="space-y-3 rounded-xl border p-4"><legend className="font-semibold">Base real de corrida — últimas quatro semanas</legend>
+                  <p className="text-sm text-muted-foreground">Esses dados definem a carga inicial e a progressão do longão. Não inclua ciclismo, natação ou força no volume de corrida.</p>
+                  {[['planningPreferences.recentLongRunMinutes','Maior longão recente (min)',form.planningPreferences.recentLongRunMinutes],['planningPreferences.recentLongRunKm','Maior longão recente (km, opcional)',form.planningPreferences.recentLongRunKm]].map(([name,label,value])=><label key={String(name)} className="block">{label}<Input name={String(name)} error={fieldError(String(name))} type="number" min={0} value={value??''} onChange={e=>{const prefs={...form.planningPreferences};const v=e.target.value?Number(e.target.value):undefined;if(name==='planningPreferences.recentMinutes.corrida')prefs.recentMinutes={...prefs.recentMinutes,corrida:v};else prefs[String(name).split('.').pop()!]=v;set('planningPreferences',prefs);}} /></label>)}
+                </fieldset>}
+                <div className="space-y-2"><Label htmlFor="height-cm">Altura em cm (opcional)</Label><Input id="height-cm" type="number" min={80} max={250}  name="heightCm" error={fieldError('heightCm')} value={form.heightCm} onChange={event=>set('heightCm',event.target.value)} placeholder="Pode preencher depois" /></div>
                   <div className="space-y-2"><Label htmlFor="inactivity-weeks">Semanas afastado dos treinos</Label><Input id="inactivity-weeks" type="number" min={0} max={104}  name="inactivityWeeks" error={fieldError('inactivityWeeks')} value={form.inactivityWeeks} onChange={event=>set('inactivityWeeks',event.target.value)} placeholder="0 se não houve afastamento" /></div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">

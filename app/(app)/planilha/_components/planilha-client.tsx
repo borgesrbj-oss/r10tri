@@ -1,4 +1,6 @@
 'use client';
+import {PlanningAudit} from '@/components/planning-audit';
+import {stepPrescription,workoutPrescription,prescribedDistance} from '@/lib/training-prescription';
 import { useState, useMemo } from 'react';
 import { Table as TableIcon, Waves, Bike, Timer, Dumbbell, CheckCircle2, Circle, Download, CalendarCheck, Clock, Flame, CalendarRange, Send, KeyRound, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -64,7 +66,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
     const lines = [String(workout?.description ?? '').trim()];
     if (structure) {
       lines.push('Blocos estruturados:');
-      structure.steps.forEach((step, index) => lines.push(`${index + 1}. ${stepLabels[step.kind]}: ${step.label} · ${formatTrainingDuration(step.durationSeconds)} · ${step.rest === 'passivo' ? 'pausa passiva' : step.zone || 'força/técnica'} · ${step.target.text}${step.rest === 'ativo' ? ' · recuperação ativa' : ''}`));
+      structure.steps.forEach((step, index) => lines.push(`${index + 1}. ${stepLabels[step.kind]}: ${step.label} · ${stepPrescription(structure,step,formatTrainingDuration)} · ${step.rest === 'passivo' ? 'pausa passiva' : step.zone || 'força/técnica'} · ${step.target.text}${step.rest === 'ativo' ? ' · recuperação ativa' : ''}`));
       lines.push(...(Array.isArray(structure.warnings) ? structure.warnings.filter((warning: unknown) => typeof warning === 'string').map(warning => `Atenção: ${warning}`) : []));
     }
     if (requiresCoachReview) lines.unshift('REVISÃO DO COACH NECESSÁRIA antes de executar este plano.');
@@ -149,7 +151,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
       modLabels[w?.modality] ?? w?.modality ?? '',
       w?.title ?? '',
       workoutExportDescription(w),
-      w?.duration ? `${w.duration}min` : '',
+      w?.duration ? workoutPrescription(w) : '',
       w?.targetZone ?? '',
       w?.tssEstimate != null ? String(Math.round(Number(w.tssEstimate))) : '',
       phaseLabels[w?.phase] ?? w?.phase ?? '',
@@ -168,7 +170,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
       startY = (doc as any).lastAutoTable.finalY + 6;
     }
     autoTable(doc, {
-      head: [['Sem.', 'Data', 'Modalidade', 'Treino', 'Descrição detalhada', 'Duração', 'Zona', 'TSS', 'Fase', 'OK']],
+      head: [['Sem.', 'Data', 'Modalidade', 'Treino', 'Descrição detalhada', 'Volume / tempo', 'Zona', 'TSS', 'Fase', 'OK']],
       body,
       startY,
       styles: { fontSize: 7.5, cellPadding: 2, valign: 'top', overflow: 'linebreak' },
@@ -196,13 +198,14 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
   };
 
   const exportCsv = () => {
-    const header = ['Semana', 'Data', 'Modalidade', 'Título', 'Duração (min)', 'Zona', 'Fase', 'TSS', 'Concluído', 'Descrição detalhada', 'Revisão do coach', 'Avisos do plano'];
+    const header = ['Semana', 'Data', 'Modalidade', 'Título', 'Tempo previsto (min)', 'Distância prescrita (km)', 'Zona', 'Fase', 'TSS', 'Concluído', 'Descrição detalhada', 'Revisão do coach', 'Avisos do plano'];
     const rows = (workouts ?? []).map((w: any) => [
       w?.weekNumber ?? '',
       w?.date ? new Date(w.date).toLocaleDateString('pt-BR') : '',
       modLabels[w?.modality] ?? w?.modality ?? '',
       w?.title ?? '',
       w?.duration ?? '',
+      getWorkoutStructure(w?.structure)?.prescriptionMode==='distancia'?prescribedDistance(getWorkoutStructure(w.structure)!)/1000:'',
       w?.targetZone ?? '',
       phaseLabels[w?.phase] ?? w?.phase ?? '',
       w?.tssEstimate ?? '',
@@ -271,7 +274,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
             </div>
           </FadeIn>
 
-          <TrainingDistributionSummary workouts={workouts ?? []} title="Distribuição real do plano por tempo ativo" />
+          {summary?.calculation?<PlanningAudit plan={plan} workouts={workouts??[]} />:<TrainingDistributionSummary workouts={workouts ?? []} title="Distribuição planejada por tempo ativo" />}
 
           <FadeIn>
             <Card className="border-primary/30">
@@ -316,7 +319,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                       <Download className="mr-1.5 h-4 w-4" /> MyWhoosh / Zwift (.ZWO)
                     </Button>
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-2">Cada download mantém os blocos e alvos disponíveis. No FIT, “por km” aplica distância estimada ao principal da corrida quando o plano contém pace e distância; os demais passos continuam por tempo. No ZIP Garmin, força sai em TXT e natação em FIT/TCX. No ZIP ZWO, natação e força saem em TXT. Alvos que o formato não suporta ficam nas notas. Se um treino exceder o limite de etapas do TCX, escolha FIT ou TXT.</p>
+                  <p className="text-[11px] text-muted-foreground mt-2">Cada download mantém os blocos e alvos disponíveis. Corridas geradas por km mantêm distâncias no FIT e no TCX. Pausas passivas continuam por tempo. Planos antigos com distância auxiliar usam o modo de exportação compatível. No ZIP Garmin, força sai em TXT e natação em FIT/TCX. No ZIP ZWO, natação e força saem em TXT. Alvos que o formato não suporta ficam nas notas. Se um treino exceder o limite de etapas do TCX, escolha FIT ou TXT.</p>
                   <p className="text-[11px] text-amber-500 mt-2"><strong>Atenção (Garmin):</strong> o site do Garmin Connect não importa treinos por arquivo — o menu Exercícios só permite criar à mão e a página "Importar Dados" é só para atividades concluídas. Use: <strong>(1)</strong> cabo USB — copie os <strong>.FIT</strong> para a pasta <strong>GARMIN/NewFiles</strong> do relógio (recomendado); ou <strong>(2) TrainingPeaks</strong> — importe o <strong>.TCX</strong> e sincronize com o Garmin; ou <strong>(3)</strong> recrie à mão em Treinam. e Planej. &gt; Exercícios. Passo a passo completo no arquivo COMO_IMPORTAR.txt dentro do ZIP.</p>
                 </div>
               </CardContent>
@@ -383,7 +386,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                         <th className="px-4 py-2 font-medium">Data</th>
                         <th className="px-4 py-2 font-medium">Modalidade</th>
                         <th className="px-4 py-2 font-medium">Treino</th>
-                        <th className="px-4 py-2 font-medium text-center">Duração</th>
+                        <th className="px-4 py-2 font-medium text-center">Volume / tempo</th>
                         <th className="px-4 py-2 font-medium text-center">Zona</th>
                         <th className="px-4 py-2 font-medium">Fase</th>
                         <th className="px-4 py-2 font-medium text-center">Status</th>
@@ -411,7 +414,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                                 <div className="mt-3"><WorkoutStructureView value={w?.structure} description={w?.description} /></div>
                               </details>
                             </td>
-                            <td className="px-4 py-2 text-center whitespace-nowrap font-mono">{w?.duration}min</td>
+                            <td className="px-4 py-2 text-center whitespace-nowrap font-mono">{workoutPrescription(w)}</td>
                             <td className="px-4 py-2 text-center">{w?.targetZone ? <Badge variant="outline">{w.targetZone}</Badge> : '-'}</td>
                             <td className="px-4 py-2 text-muted-foreground">{phaseLabels[w?.phase] ?? w?.phase ?? '-'}</td>
                             <td className="px-4 py-2 text-center">

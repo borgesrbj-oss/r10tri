@@ -1,3 +1,4 @@
+import {markRunningThreshold} from './training-audit';
 import type { Prisma } from '@prisma/client';
 import {
   readWorkoutStructure,
@@ -18,7 +19,7 @@ export function retargetBike(input: unknown, profile: TrainingProfile) {
       ? { target: targetForZone(profile, 'ciclismo', step.zone) }
       : {}),
   }));
-  return {
+  const result={
     ...structure,
     steps,
     distribution: distributionForSteps(steps, 'ciclismo'),
@@ -30,6 +31,8 @@ export function retargetBike(input: unknown, profile: TrainingProfile) {
       ]),
     ],
   };
+  delete result.thresholdReference;markRunningThreshold(result,profile);
+  return result;
 }
 export async function refreshFutureBikeTargets(
   tx: Prisma.TransactionClient,

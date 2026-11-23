@@ -37,6 +37,9 @@ export interface TrainingDistribution {
 
 export interface WorkoutStructure {
   origin?: 'coach';
+  /** Km são a prescrição; segundos continuam como estimativa para planejar carga. */
+  prescriptionMode?: 'distancia';
+  thresholdReference?: {basis:'run_threshold'|'threshold_hr'|'ftp'|'css';value:number};
   version: 1;
   modality: TrainingModality;
   phase: TrainingPhase;
@@ -138,6 +141,7 @@ export interface StructuredPlan {
   workouts: GeneratedWorkout[];
   warnings: string[];
   summary: {
+    calculation?: {version:1;method:string;initialMinutes:number;weeklyCapMinutes:number;growth:number;inputs:Record<string,unknown>;rules:string[];sourceIds:string[]};
     feedback?: { status: string; reasons: string[]; observedSessions: number };
     basis: 'tempo_aerobico_ativo';
     targetHighFraction: 0.2;

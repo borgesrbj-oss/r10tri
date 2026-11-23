@@ -1,0 +1,9 @@
+export const PLANNING_SOURCES=[
+ {id:'stoggl2015',title:'Stöggl e Sperlich (2015): distribuição de intensidade',url:'https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2015.00295/full',use:'Revisão científica: distribuições variam por método, atleta e fase. Não valida automaticamente 80/20 por minutos nem uma equivalência exata entre cinco zonas e limiares.'},
+ {id:'ioc2016',title:'Consenso do COI (2016): carga e risco de lesão',url:'https://bjsm.bmj.com/content/50/17/1030',use:'Individualização e relação entre carga e capacidade. Não é fonte de uma progressão universal de 3% ou 5%.'},
+ {id:'baa',title:'Boston Athletic Association: exemplos de planos de maratona',url:'https://www.baa.org/races/boston-marathon/info-for-athletes/boston-marathon-training/',use:'Exemplos de rodagem, longões e taper. Calendários de terceiros não são copiados nem tratados como prescrição individual.'},
+ {id:'coggan',title:'Andrew Coggan: níveis de potência',url:'https://www.trainingpeaks.com/blog/power-training-levels/',use:'Ciclismo: multiplicar FTP pelos limites da zona. FTP é referência funcional, não medição de lactato.'},
+ {id:'friel',title:'Joe Friel: limiares e zonas por modalidade',url:'https://www.trainingpeaks.com/learn/articles/joe-friel-s-quick-guide-to-setting-zones/',use:'Referência de limiar medido e zonas específicas. As cinco faixas operacionais do Gotri não reproduzem literalmente as sete zonas Friel.'},
+ {id:'css',title:'Swim Smooth: testes e treino por CSS',url:'https://blog.swimsmooth.com/p/just-how-much-faster-and-smoother',use:'Natação: testes de 400 m e 200 m; CSS por 100 m = (T400 − T200)/2. Ajustes de segundos em torno do CSS são parâmetros do app.'},
+ {id:'daniels',title:'V.O2 / Jack Daniels: calculadora e ritmos',url:'https://new.vdoto2.com/calculator',use:'Referência comparativa. O Gotri não implementa as tabelas licenciadas de VDOT; multiplicadores de pace do código não devem ser chamados de VDOT.'},
+];

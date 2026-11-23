@@ -1,5 +1,7 @@
 # Auditoria científica aplicada — 16 de novembro de 2026
 
+> Revisão de 23/11/2026: consulte [Memória de cálculo e fontes](MEMORIA_CALCULO_E_FONTES_2026.md) para modo km, dados por esporte, relatório até/acima do limiar e distinção entre referências e regras operacionais.
+
 ## Método e limites
 
 Revisão técnica direcionada, não revisão sistemática original nem validação clínica do aplicativo. Buscas em PubMed/PMC, BJSM, textos de artigos e documentação dos fornecedores, em 16/11/2026. Priorizados estudos revisados por pares, sínteses e consensos; páginas comerciais servem apenas ao benchmark. Não houve coleta de desfechos humanos. Os 12 perfis são sintéticos. Uma publicação de 2026 sobre distribuição de intensidade foi localizada (PMID 42171506), mas o texto recuperado foi insuficiente; ela não sustenta regras implementadas.

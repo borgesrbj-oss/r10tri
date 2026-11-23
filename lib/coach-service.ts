@@ -1,3 +1,4 @@
+import {preparationIssues} from './training-audit';
 import { assessmentIssue } from './assessment-review';
 import { buildWaLink } from './wa';
 import { randomUUID } from 'node:crypto';
@@ -532,6 +533,8 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
       where: { userId: b.athleteId },
       orderBy: { date: 'asc' },
     });
+    const specificIssues=preparationIssues(profile,races,b.startDate);
+    if(specificIssues.length)throw new CoachError('Complete os dados específicos da preparação de maratona.',422,specificIssues);
     const since = new Date(Date.now() - 7 * 86400000);
     const logs = await tx.workoutLog.findMany({
       where: { userId: b.athleteId, completedAt: { gte: since } },
@@ -583,7 +586,7 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
       tx,
       actor,
       b.athleteId,
-      { baseProfileAt: profile?.updatedAt.toISOString() ?? null, changes },
+      { baseProfileAt: profile?.updatedAt.toISOString() ?? null, changes,generation:generated.summary },
       b.instructions,
     );
   }, serial);
@@ -704,6 +707,7 @@ export async function publishDraft(actor: Actor, input: unknown) {
           !Array.isArray(plan.summary)
             ? plan.summary
             : {}),
+          ...(payload.generation?{calculation:payload.generation.calculation}:{}),
           coachPublicationId: publication.id,
         }),
       },

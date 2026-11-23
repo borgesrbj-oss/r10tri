@@ -1,3 +1,4 @@
+import { runThreshold } from './training-zones';
 import { assessmentIssue } from './assessment-review';
 import { z } from 'zod';
 import { TRAINING_GOALS } from './training-goals';
@@ -16,7 +17,8 @@ const date = z.preprocess(value => value === '' ? null : value, z.string().regex
 }, 'Data de calendário inválida.').nullable().optional());
 
 export const assessmentSchema = z.object({
-  planningPreferences:z.preprocess(value=>value==null?undefined:value,z.object({preferred:z.partialRecord(z.enum(['tiros','rodagem','longo','ritmo','brick','natacao','forca','descanso']),z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7)).optional(),doubleDays:z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7).optional(),maxSessionMinutes:z.number().int().min(10).max(480).optional(),recentMinutes:z.partialRecord(z.enum(['corrida','ciclismo','natacao']),z.number().int().min(0).max(1800)).optional()}).optional()),
+  planningPreferences:z.preprocess(value=>value==null?undefined:value,z.object({recentLongRunMinutes:z.number().int().min(1).max(480).optional(),recentLongRunKm:z.number().min(.1).max(100).optional(),preferred:z.partialRecord(z.enum(['tiros','rodagem','longo','ritmo','brick','natacao','forca','descanso']),z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7)).optional(),doubleDays:z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7).optional(),maxSessionMinutes:z.number().int().min(10).max(480).optional(),recentMinutes:z.partialRecord(z.enum(['corrida','ciclismo','natacao']),z.number().int().min(0).max(1800)).optional()}).optional()),
+  runStructure: z.preprocess(value=>value==null?undefined:value,option(['zona','distancia'])),
   birthDate: date,
   heightCm: number(80, 250),
   inactivityWeeks: number(0, 104, true),
@@ -61,7 +63,9 @@ export function assessmentReadiness(profile: Record<string, unknown> | null | un
   if (!(Number(profile?.weeklyHours) > 0)) requireField('weeklyHours','horas disponíveis por semana');
   if (!Array.isArray(profile?.availableDays) || profile.availableDays.length === 0) requireField('availableDays','dias disponíveis');
   if (!['triatlo','natacao','ciclismo','corrida'].includes(String(profile?.modality))) requireField('modality','modalidade');
-  return { complete: missing.length === 0, missing, issues: fields.map(field=>assessmentIssue(field,'Preencha ou corrija este campo.')!), completedPercent: Math.round((6-missing.length)/6*100) };
+  const distanceRequired=['corrida','triatlo'].includes(String(profile?.modality))&&profile?.runStructure==='distancia';
+  if(distanceRequired&&!runThreshold(profile))requireField('runThresholdPace','pace de limiar para prescrever por km');
+  return { complete: missing.length === 0, missing, issues: fields.map(field=>assessmentIssue(field,'Preencha ou corrija este campo.')!), completedPercent: Math.round(((distanceRequired?7:6)-missing.length)/(distanceRequired?7:6)*100) };
 }
 
 export function assessmentData(body: unknown, previous?: Record<string, unknown> | null) {

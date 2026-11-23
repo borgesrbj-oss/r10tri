@@ -1,6 +1,6 @@
 export const DAYS=['seg','ter','qua','qui','sex','sab','dom'] as const;
 export const SESSION_LABELS:Record<string,string>={tiros:'Tiros',rodagem:'Rodagem leve',longo:'Longo',ritmo:'Ritmo',brick:'Brick bike → corrida',natacao:'Natação',forca:'Força',descanso:'Descanso reservado'};
-export interface PlanningPreferences { preferred?:Record<string,string[]>; doubleDays?:string[]; maxSessionMinutes?:number; recentMinutes?:Record<string,number> }
+export interface PlanningPreferences { recentLongRunMinutes?:number; recentLongRunKm?:number; preferred?:Record<string,string[]>; doubleDays?:string[]; maxSessionMinutes?:number; recentMinutes?:Record<string,number> }
 export function preferences(value:unknown):PlanningPreferences {
  return value&&typeof value==='object'&&!Array.isArray(value)?value as PlanningPreferences:{};
 }

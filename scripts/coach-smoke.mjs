@@ -260,6 +260,7 @@ try {
       hasPoolAccess: true,
       canSwim: true,
       planningPreferences: {
+        recentMinutes:{corrida:100,ciclismo:120,natacao:80},
         doubleDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'],
         maxSessionMinutes: 120,
       },
