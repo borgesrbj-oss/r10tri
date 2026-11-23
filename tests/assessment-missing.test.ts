@@ -10,7 +10,7 @@ test('triagem identifica campos faltantes e suas etapas sem exigir limiares opci
  assert.ok(!result.some(item=>['ftp','swimCssPace','runThresholdPace'].includes(item.field)));
 });
 test('pendências desaparecem ao preencher e volume atual zero é permitido',()=>{
- assert.deepEqual(missingAssessmentFields({modality:'corrida',level:'iniciante',birthDate:'1990-01-01',currentWeight:70,availableDays:['seg'],weeklyHours:2,currentWeeklyVol:0}),[]);
+ assert.deepEqual(missingAssessmentFields({modality:'corrida',level:'iniciante',birthDate:'1990-01-01',currentWeight:70,availableDays:['seg'],weeklyHours:2,currentWeeklyVol:0,planningPreferences:{recentMinutes:{corrida:0}}}),[]);
 });
 
 test('todo campo obrigatório informado pelo servidor aponta para a mesma etapa da triagem',()=>{

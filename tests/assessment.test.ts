@@ -53,3 +53,17 @@ test('opções vazias significam campo omitido e não apagam a prontidão já co
     assert.equal(assessmentReadiness({ ...previous, ...result.data }).complete, true);
   }
 });
+
+test('triagem salva modo km e exige pace válido apenas para geração por distância',()=>{
+ const parsed=assessmentData({runStructure:'distancia'});assert.equal(parsed.ok,true);
+ if(parsed.ok)assert.equal(parsed.data.runStructure,'distancia');
+ assert.equal(assessmentData({runStructure:'inventado'}).ok,false);
+ const profile={birthDate:'1990-01-01',currentWeight:70,level:'intermediario',weeklyHours:5,availableDays:['seg'],modality:'corrida',runStructure:'distancia'};
+ const ready=assessmentReadiness(profile);assert.equal(ready.complete,false);assert.equal(ready.issues[0].field,'runThresholdPace');
+ assert.equal(assessmentReadiness({...profile,runThresholdPace:'05:00'}).complete,true);
+ assert.equal(assessmentReadiness({...profile,runStructure:'zona'}).complete,true);
+});
+
+test('perfis legados com modo de corrida nulo continuam aceitando atualização parcial',()=>{
+ assert.equal(assessmentData({ftp:250},{runStructure:null,modality:'triatlo',level:'intermediario'}).ok,true);
+});

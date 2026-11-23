@@ -1,3 +1,5 @@
+import {buildWorkoutStructure} from '../lib/training-structure';
+import {stepPrescription,workoutPrescription} from '../lib/training-prescription';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getWorkoutStructure, trainingDistribution, workoutWhatsappMessage } from '../components/workout-structure';
@@ -40,4 +42,17 @@ test('texto de WhatsApp compartilha apenas prescrição e não histórico sensí
   assert.ok(message.includes('10min'));
   assert.ok(message.includes('Z2'));
   assert.equal(message.includes('Observação médica'), false);
+});
+
+test('modo km mostra a distância como prescrição e tempo como estimativa na tela e WhatsApp',()=>{
+ const structure=buildWorkoutStructure({runStructure:'distancia',runThresholdPace:'05:00',currentWeeklyVol:5},'corrida','base',30);
+ const item={structure,duration:30,title:'Corrida por km',date:'2027-01-01'};
+ assert.match(workoutPrescription(item),/km.*~30 min/);
+ assert.match(stepPrescription(structure,structure.steps[0],seconds=>String(seconds)),/km.*tempo estimado/);
+ assert.match(workoutWhatsappMessage(item),/km.*tempo estimado/);
+});
+
+test('resumo por km não quebra ao receber estrutura antiga ou inválida',()=>{
+ assert.equal(workoutPrescription({duration:30,structure:{prescriptionMode:'distancia',steps:[null]}}),'30 min');
+ assert.equal(workoutPrescription({duration:30,structure:null}),'30 min');
 });

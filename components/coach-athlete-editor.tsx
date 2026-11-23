@@ -1,4 +1,6 @@
 'use client';
+import {PlanningAudit} from '@/components/planning-audit';
+import {workoutPrescription} from '@/lib/training-prescription';
 import { assessmentIssues, type AssessmentIssue } from '@/lib/assessment-review';
 import { AssessmentReview, useAssessmentReview } from '@/components/assessment-review';
 import { useState } from 'react';
@@ -341,6 +343,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
       phase: ['base', 'build', 'peak', 'race', 'transition'].includes(w.phase)
         ? w.phase
         : 'base',
+      prescriptionMode:s?.prescriptionMode,
       notes: w.description || '',
       blocks:
         s?.steps?.map((b: any) => ({
@@ -526,6 +529,12 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                   ))}
                 </select>
               </label>
+              <label>Prescrição da corrida
+                <select name="runStructure" className={input} value={profile.runStructure||'zona'} onChange={e=>setProfile({...profile,runStructure:e.target.value})}>
+                  <option value="zona">Por tempo e zona de intensidade</option><option value="distancia">Por distância (km)</option>
+                </select>
+                <span className="text-xs text-muted-foreground">Km exige pace de limiar informado. Vale também para a corrida do triatlo.</span>
+              </label>
               <label>
                 Nível
                 <select
@@ -615,6 +624,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
             </fieldset>
             <fieldset data-assessment-field="planningPreferences" className="space-y-3">
               <legend>Preferências para o planejamento</legend>
+              {[['recentLongRunMinutes','Maior longão recente (min)'],['recentLongRunKm','Maior longão recente (km, opcional)']].map(([key,label])=><label key={key} className="block">{label}<input name={'planningPreferences.'+key} className={input} type="number" min={0} value={profile.planningPreferences?.[key]??''} onChange={e=>setProfile({...profile,planningPreferences:{...profile.planningPreferences,[key]:e.target.value?Number(e.target.value):undefined}})} /></label>)}
               <label>
                 Máximo de minutos por sessão
                 <input
@@ -792,7 +802,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 className={input}
                 required
                 type="date"
-                value={race.date}
+                name="raceDate" value={race.date}
                 onChange={(e) => setRace({ ...race, date: e.target.value })}
               />
             </label>
@@ -1083,7 +1093,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 </p>
                 <h3 className="font-semibold">{w.title}</h3>
                 <p>
-                  {w.duration} min · {w.modality} ·{' '}
+                  {workoutPrescription(w)} · {w.modality} ·{' '}
                   {w.phase || 'fase não informada'} ·{' '}
                   {w.targetZone || 'sem zona'}
                 </p>
@@ -1175,6 +1185,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
           <h2 className="text-xl font-semibold">
             Revisar alterações antes de publicar
           </h2>
+          {draft?.payload?.generation?.calculation&&<><p className="text-sm text-muted-foreground">Memória da proposta gerada. Os totais abaixo incluem somente as sessões deste rascunho; alterações posteriores do coach aparecem nos blocos e na publicação.</p><PlanningAudit plan={{summary:draft.payload.generation,startDate:from,endDate:to}} workouts={draft.payload.changes.map((w:any)=>({...w,id:w.key}))} /></>}
           <label>
             Rascunho
             <select

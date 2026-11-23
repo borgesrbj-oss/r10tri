@@ -1,4 +1,5 @@
 'use client';
+import {distanceLabel,prescribedDistance,stepPrescription} from '@/lib/training-prescription';
 
 import type { WorkoutStructure as StructuredWorkout } from '@/lib/training-types';
 import { buildWaLink } from '@/lib/wa';
@@ -68,13 +69,13 @@ export function WorkoutStructure({ value, description }: { value: unknown; descr
   const structure = getWorkoutStructure(value);
   if (!structure) return <div className="space-y-2"><p className="text-sm whitespace-pre-wrap">{description || 'Sem descrição cadastrada.'}</p><p className="text-xs text-muted-foreground">Treino legado ou sem blocos válidos. Sua descrição original foi preservada; as etapas não foram inventadas a partir do texto.</p></div>;
   return <div className="space-y-3">
-    <p className="text-sm font-medium">Estrutura completa · {formatTrainingDuration(structure.durationSeconds)}</p>
+    <p className="text-sm font-medium">Estrutura completa · {structure.prescriptionMode==='distancia'?`${distanceLabel(prescribedDistance(structure))} · tempo estimado `:''}{formatTrainingDuration(structure.durationSeconds)}</p>
     <ol className="space-y-2">
       {structure.steps.map((step, index) => <li key={index} className="rounded-lg border bg-background/50 p-3 text-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2"><strong>{index + 1}. {KINDS[step.kind]}</strong><span className="tabular-nums">{formatTrainingDuration(step.durationSeconds)} · {step.rest === 'passivo' ? 'Pausa passiva' : step.zone || 'Força/técnica'}</span></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><strong>{index + 1}. {KINDS[step.kind]}</strong><span className="tabular-nums">{stepPrescription(structure,step,formatTrainingDuration)} · {step.rest === 'passivo' ? 'Pausa passiva' : step.zone || 'Força/técnica'}</span></div>
         {step.label && <p className="mt-1">{step.label}</p>}
         <p className="mt-1 text-xs text-muted-foreground">{step.rest==='passivo'?'Pausa sem esforço':`PSE: ${effortTarget(step.zone||'Z2').low}–${effortTarget(step.zone||'Z2').high}/10 · escala operacional de esforço`}</p>
-        <p className="mt-1 break-words text-muted-foreground">{step.target.text}{step.rest === 'ativo' ? ' · recuperação ativa' : ''}{Number.isFinite(step.distanceMeters) && Number(step.distanceMeters) > 0 ? ` · distância auxiliar ~${Math.round(Number(step.distanceMeters))} m` : ''}</p>
+        <p className="mt-1 break-words text-muted-foreground">{step.target.text}{step.rest === 'ativo' ? ' · recuperação ativa' : ''}{structure.prescriptionMode!=='distancia' && Number.isFinite(step.distanceMeters) && Number(step.distanceMeters) > 0 ? ` · distância auxiliar ~${Math.round(Number(step.distanceMeters))} m` : ''}</p>
       </li>)}
     </ol>
     {Array.isArray(structure.warnings) && structure.warnings.length > 0 && <ul className="list-disc space-y-1 pl-4 text-xs text-amber-500">{structure.warnings.filter(warning => typeof warning === 'string').map((warning, index) => <li key={index}>{warning}</li>)}</ul>}
@@ -89,7 +90,7 @@ export function workoutWhatsappMessage(workout: { title?: string; date?: string 
   const lines = ['Gotri — treino', workout.title || 'Treino', dateLabel];
   if (structure) {
     lines.push(`Duração: ${formatTrainingDuration(structure.durationSeconds)}`);
-    structure.steps.forEach((step, index) => lines.push(`${index + 1}. ${KINDS[step.kind]} · ${formatTrainingDuration(step.durationSeconds)} · ${step.rest === 'passivo' ? 'pausa' : step.zone || 'força/técnica'} · ${step.target.text}`));
+    structure.steps.forEach((step, index) => lines.push(`${index + 1}. ${KINDS[step.kind]} · ${stepPrescription(structure,step,formatTrainingDuration)} · ${step.rest === 'passivo' ? 'pausa' : step.zone || 'força/técnica'} · ${step.target.text}`));
   } else lines.push('Treino legado: abra o app para consultar a descrição e os detalhes.');
   return lines.join('\n');
 }

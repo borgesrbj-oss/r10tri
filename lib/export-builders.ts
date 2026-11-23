@@ -1,3 +1,4 @@
+import {distancePrescribed} from './training-prescription';
 // Construtores de arquivos de treino nos formatos nativos das plataformas.
 // buildFit -> Garmin Connect (.FIT, todas as modalidades).
 // buildZwo -> MyWhoosh / Zwift / Rouvy (.ZWO, ciclismo e corrida).
@@ -71,9 +72,9 @@ function buildStructuredFit(workout: any, structure: WorkoutStructure, mode: 'zo
     const speed = speedRange(step);
     const paceDistance = step.target.basis === 'run_threshold' && step.target.low > 0
       ? step.durationSeconds / ((step.target.low + step.target.high) / 2) * 1000 : null;
-    // Somente o principal de corrida usa a estimativa de distância calculada pelo motor com pace informado.
-    const estimatedDistance = mode === 'km' && structure.modality === 'corrida' && step.kind === 'principal'
-      && speed != null && step.distanceMeters != null && paceDistance != null && Math.abs(step.distanceMeters - paceDistance) <= 5.01;
+    // A prescrição por km é preservada. Para estruturas legadas, só o principal com distância coerente usa a opção de exportação.
+    const estimatedDistance = distancePrescribed(structure,step) || (mode === 'km' && structure.modality === 'corrida' && step.kind === 'principal'
+      && speed != null && step.distanceMeters != null && paceDistance != null && Math.abs(step.distanceMeters - paceDistance) <= 5.01);
     const target: Pick<WorkoutStepMesg, 'targetType' | 'targetValue' | 'customTargetValueLow' | 'customTargetValueHigh'> = step.target.basis === 'ftp' && step.target.unit === 'W' && step.rest !== 'passivo'
       ? { targetType: 'power', targetValue: 0, customTargetValueLow: 1000 + Math.round(step.target.low), customTargetValueHigh: 1000 + Math.round(step.target.high) }
       : step.target.basis === 'threshold_hr' && step.target.unit === 'bpm' && step.rest !== 'passivo'
@@ -192,7 +193,7 @@ export function buildFit(workout: any, opts?: { mode?: 'zona' | 'km'; thresholdP
 const TCX_SPORT: Record<string, string> = { corrida: 'Running', ciclismo: 'Biking', natacao: 'Other', forca: 'Other' };
 
 function repeatLabel(label: string): string {
-  return label.replace(/^Bloco \d+\/\d+ controlado$/, 'Bloco controlado').replace(/^Recuperação \d+\/\d+$/, 'Recuperação').replace(/^Série \d+:/,'Série:').replace(/^Pausa \d+ na borda$/,'Pausa na borda').replace(/^Ciclo \d+:/,'Ciclo:').replace(/^Caminhada \d+$/,'Caminhada');
+  return label.replace(/^Tiro \d+\/\d+ controlado$/,'Tiro controlado').replace(/^Fartlek \d+\/\d+:/,'Fartlek:').replace(/^Ritmo sustentado \d+\/\d+$/,'Ritmo sustentado').replace(/^Bloco \d+\/\d+ controlado$/, 'Bloco controlado').replace(/^Recuperação \d+\/\d+$/, 'Recuperação').replace(/^Série \d+:/,'Série:').replace(/^Pausa \d+ na borda$/,'Pausa na borda').replace(/^Ciclo \d+:/,'Ciclo:').replace(/^Caminhada \d+$/,'Caminhada');
 }
 
 function tcxGroups(steps: TrainingStep[]): { steps: TrainingStep[]; repetitions: number }[] {
@@ -240,7 +241,8 @@ export function buildTcx(workout: any): string {
         ? `<Target xsi:type="HeartRate_t"><HeartRateZone xsi:type="CustomHeartRateZone_t"><Low xsi:type="HeartRateInBeatsPerMinute_t"><Value>${Math.round(step.target.low)}</Value></Low><High xsi:type="HeartRateInBeatsPerMinute_t"><Value>${Math.round(step.target.high)}</Value></High></HeartRateZone></Target>`
         : '<Target xsi:type="None_t" />';
       const label = Array.from(`${step.zone ?? 'Repouso'} ${repeating ? repeatLabel(step.label) : step.label}`).slice(0, 15).join('');
-      return `      <${tag} xsi:type="Step_t"><StepId>${nextId++}</StepId><Name>${xmlEscape(label)}</Name><Duration xsi:type="Time_t"><Seconds>${step.durationSeconds}</Seconds></Duration><Intensity>${step.rest === 'passivo' ? 'Resting' : 'Active'}</Intensity>${target}</${tag}>`;
+      const duration=distancePrescribed(structure,step)?`<Duration xsi:type="Distance_t"><Meters>${step.distanceMeters}</Meters></Duration>`:`<Duration xsi:type="Time_t"><Seconds>${step.durationSeconds}</Seconds></Duration>`;
+      return `      <${tag} xsi:type="Step_t"><StepId>${nextId++}</StepId><Name>${xmlEscape(label)}</Name>${duration}<Intensity>${step.rest === 'passivo' ? 'Resting' : 'Active'}</Intensity>${target}</${tag}>`;
     };
     const steps = tcxGroups(structure.steps).map(group => {
       if (group.repetitions === 1) return renderStep(group.steps[0]);
@@ -307,7 +309,7 @@ export function buildZwo(workout: any, opts?: { ftp?: number | null }): string {
     const hasFtp = typeof ftp === 'number' && Number.isFinite(ftp) && ftp > 0;
     const instructions = 'Alvos em watts requerem o mesmo FTP no aplicativo de destino. Blocos livres preservam pace/percepção nas instruções, sem controle automático de potência.';
     const steps = structure.steps.map(step => {
-      const note = `<textevent timeoffset="0" message="${xmlEscape(`${step.label}: ${stepNotes(step)}`)}"/>`;
+      const note = `<textevent timeoffset="0" message="${xmlEscape(`${step.label}: ${distancePrescribed(structure,step)?step.distanceMeters+' m; ':''}${stepNotes(step)}`)}"/>`;
       if (hasFtp && step.target.basis === 'ftp' && step.target.unit === 'W' && step.rest !== 'passivo') {
         // ZWO trabalha com fração do FTP; o centro da faixa é o alvo executável, com a faixa original nas notas.
         const power = ((step.target.low + step.target.high) / 2 / ftp).toFixed(6);

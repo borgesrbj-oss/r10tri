@@ -1,3 +1,4 @@
+import {preparationIssues} from '../lib/training-audit';
 import { assessmentIssue } from '../lib/assessment-review';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,6 +31,7 @@ const profile = {
   modality: 'corrida',
   weeklyHours: 6,
   currentWeeklyVol: 5,
+  planningPreferences:{recentMinutes:{corrida:300},recentLongRunMinutes:75},
   availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab'],
   runThresholdPace: '05:00',
   thresholdHeartRate: 170,
@@ -122,6 +124,7 @@ function endpoint({
     },
     '@/lib/assessment-validation': { assessmentReadiness },
     '@/lib/assessment-review': { assessmentIssue },
+    '@/lib/training-audit': {preparationIssues},
     '@/lib/training-feedback': { trainingFeedback },
     '@/lib/training-goals': { TRAINING_GOALS },
     '@/lib/training-structure': {
@@ -306,4 +309,15 @@ test('opções de geração inválidas não são rotuladas como erro de triagem'
  const response=await endpoint().post({weeks:53});
  assert.equal(response.status,422);
  assert.equal((await response.json()).assessmentIssues,undefined);
+});
+
+test('km sem pace aponta a triagem e preserva o plano, sem voltar silenciosamente para minutos',async()=>{
+ const route=endpoint({savedProfile:{...profile,runThresholdPace:null}});
+ const response=await route.post({structure:'distancia'});assert.equal(response.status,422);
+ assert.equal((await response.json()).assessmentIssues[0].field,'runThresholdPace');assert.equal(route.state.archives,0);
+});
+test('preferência km salva na triagem é reutilizada sem opções adicionais',async()=>{
+ const route=endpoint({savedProfile:{...profile,runStructure:'distancia'}});
+ assert.equal((await route.post({weeks:1})).status,200);
+ assert.ok(route.state.savedWorkouts.filter(w=>w.modality==='corrida').every(w=>w.structure.prescriptionMode==='distancia'));
 });

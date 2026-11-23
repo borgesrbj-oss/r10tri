@@ -1,4 +1,5 @@
 'use client';
+import {workoutPrescription} from '@/lib/training-prescription';
 import {WeekReview} from '@/components/week-review';
 import {WorkoutActions} from '@/components/workout-actions';
 
@@ -117,7 +118,7 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
                         <Icon className="h-5 w-5 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">{w?.title}</p>
-                          <p className="text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {w?.duration}min · {w?.targetZone ?? ''}</p>
+                          <p className="text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {workoutPrescription(w)} · {w?.targetZone ?? ''}</p>
                         </div>
                         {w?.paused ? <Badge variant="secondary">Pausado</Badge> : w?.completed ? (
                           <Badge variant="secondary" className="shrink-0"><CheckCircle2 className="h-3 w-3 mr-1" /> Feito</Badge>

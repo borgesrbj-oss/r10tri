@@ -1,3 +1,4 @@
+import {preparationIssues} from '@/lib/training-audit';
 import { assessmentIssue } from '@/lib/assessment-review';
 import { canAccessAthlete } from '@/lib/coach-access';
 import { NextRequest, NextResponse } from 'next/server';
@@ -133,6 +134,8 @@ export async function POST(req: NextRequest) {
     where: { userId },
     orderBy: { date: 'asc' },
   });
+  const specificIssues=preparationIssues(selected,races,body.startDate??new Date());
+  if(specificIssues.length)return NextResponse.json({error:'Complete os dados específicos da preparação de maratona.',assessmentIssues:specificIssues},{status:422,...options});
   const now = new Date();
   const [logs, past] = await Promise.all([
     prisma.workoutLog.findMany({
