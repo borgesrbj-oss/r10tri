@@ -6,6 +6,7 @@ export class CoachError extends Error {
   constructor(
     message: string,
     public status = 403,
+    public assessmentIssues?: {field:string;message:string}[],
   ) {
     super(message);
   }
@@ -57,7 +58,7 @@ export async function activeLink(
 }
 export function coachErrorResponse(error: unknown) {
   if (error instanceof CoachError)
-    return Response.json({ error: error.message }, { status: error.status });
+    return Response.json({ error: error.message, ...(error.assessmentIssues ? {assessmentIssues:error.assessmentIssues} : {}) }, { status: error.status });
   if (
     typeof error === 'object' &&
     error &&

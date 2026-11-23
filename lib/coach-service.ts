@@ -1,3 +1,4 @@
+import { assessmentIssue } from './assessment-review';
 import { buildWaLink } from './wa';
 import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
@@ -280,6 +281,7 @@ export async function coachProfile(actor: Actor, input: unknown) {
         'Confira os campos: ' +
           parsed.errors.map((e) => e.field + ' — ' + e.message).join('; '),
         422,
+        parsed.errors,
       );
     const profile = await tx.athleteProfile.upsert({
       where: { userId: b.athleteId },
@@ -524,6 +526,7 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
       throw new CoachError(
         'Complete a triagem: ' + ready.missing.join(', '),
         422,
+        ready.issues,
       );
     const races = await tx.targetRace.findMany({
       where: { userId: b.athleteId },
@@ -575,7 +578,7 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
     for (const w of generated.workouts)
       changes.push({ ...w, date:new Date(w.date).toISOString().slice(0,10),key: randomUUID(), paused: false });
     if (!generated.workouts.length)
-      throw new CoachError('Sem sessões viáveis para esta triagem.', 422);
+      throw new CoachError('Sem sessões viáveis para esta disponibilidade.', 422, ['weeklyHours','availableDays',...Object.keys(profile?.dailyMinutes && typeof profile.dailyMinutes==='object'?profile.dailyMinutes:{}).map(day=>'dailyMinutes.'+day)].map(field=>assessmentIssue(field,'Revise a disponibilidade: os limites atuais não permitem encaixar sessões.')!));
     return saveDraft(
       tx,
       actor,

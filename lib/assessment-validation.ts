@@ -1,3 +1,4 @@
+import { assessmentIssue } from './assessment-review';
 import { z } from 'zod';
 import { TRAINING_GOALS } from './training-goals';
 
@@ -52,13 +53,15 @@ export const assessmentSchema = z.object({
 
 export function assessmentReadiness(profile: Record<string, unknown> | null | undefined) {
   const missing: string[] = [];
-  if (!profile?.birthDate) missing.push('data de nascimento');
-  if (!(Number(profile?.currentWeight) > 0)) missing.push('peso atual');
-  if (!['iniciante','intermediario','avancado'].includes(String(profile?.level))) missing.push('experiência');
-  if (!(Number(profile?.weeklyHours) > 0)) missing.push('horas disponíveis por semana');
-  if (!Array.isArray(profile?.availableDays) || profile.availableDays.length === 0) missing.push('dias disponíveis');
-  if (!['triatlo','natacao','ciclismo','corrida'].includes(String(profile?.modality))) missing.push('modalidade');
-  return { complete: missing.length === 0, missing, completedPercent: Math.round((6-missing.length)/6*100) };
+  const fields: string[] = [];
+  const requireField=(field:string,label:string)=>{fields.push(field);missing.push(label);};
+  if (!profile?.birthDate) requireField('birthDate','data de nascimento');
+  if (!(Number(profile?.currentWeight) > 0)) requireField('currentWeight','peso atual');
+  if (!['iniciante','intermediario','avancado'].includes(String(profile?.level))) requireField('level','experiência');
+  if (!(Number(profile?.weeklyHours) > 0)) requireField('weeklyHours','horas disponíveis por semana');
+  if (!Array.isArray(profile?.availableDays) || profile.availableDays.length === 0) requireField('availableDays','dias disponíveis');
+  if (!['triatlo','natacao','ciclismo','corrida'].includes(String(profile?.modality))) requireField('modality','modalidade');
+  return { complete: missing.length === 0, missing, issues: fields.map(field=>assessmentIssue(field,'Preencha ou corrija este campo.')!), completedPercent: Math.round((6-missing.length)/6*100) };
 }
 
 export function assessmentData(body: unknown, previous?: Record<string, unknown> | null) {

@@ -1,4 +1,6 @@
 'use client';
+import { assessmentIssues, type AssessmentIssue } from '@/lib/assessment-review';
+import { AssessmentReview, useAssessmentReview } from '@/components/assessment-review';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -235,6 +237,8 @@ function Blocks({
 }
 export function CoachAthleteEditor({ data }: { data: any }) {
   const router = useRouter();
+  const [reviewIssues,setReviewIssues]=useState<AssessmentIssue[]>([]);
+  const {scope,focusField}=useAssessmentReview(reviewIssues);
   const [view, setView] = useState('calendario'),
     [spec, setSpec] = useState<any>(initial),
     [duplicate, setDuplicate] = useState(false),
@@ -272,6 +276,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
     setBusy(true);
     setMessage('');
     setFailed(false);
+    setReviewIssues([]);
     try {
       const r = await fetch('/api/coach/' + action, {
         method: 'POST',
@@ -279,13 +284,15 @@ export function CoachAthleteEditor({ data }: { data: any }) {
         body: JSON.stringify(body),
       });
       const d = await r.json();
-      if (!r.ok)
+      if (!r.ok) {
+        setReviewIssues(assessmentIssues(d.assessmentIssues));
         throw Error(
           [
             d.error,
             ...(d.details || []).map((e: any) => e.field + ' — ' + e.message),
           ].join('\n'),
         );
+      }
       if (d.id && ['session', 'batch', 'generate', 'rebase','notes'].includes(action)) {
         setDraftId(d.id);
         setView('revisao');
@@ -387,7 +394,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
     ['sleepHours', 'Sono (horas)'],
   ];
   return (
-    <div className="space-y-6">
+    <div ref={scope} className="space-y-6">
       <header className="space-y-3">
         <Link className="text-primary underline" href="/coach">
           Voltar ao painel do coach
@@ -443,6 +450,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
           {message}
         </p>
       )}
+      <AssessmentReview issues={reviewIssues} onReview={issue=>{setView('perfil');focusField(issue.field);}} />
       {view === 'perfil' && (
         <section className="rounded-xl border bg-card p-5 space-y-4">
           <h2 className="text-xl font-semibold">
@@ -467,6 +475,8 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                     className={input}
                     type="number"
                     step="any"
+                    name={key}
+                    aria-invalid={reviewIssues.some(issue=>issue.field===key)}
                     value={profile[key] ?? ''}
                     onChange={(e) =>
                       setProfile({
@@ -488,6 +498,8 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                   <input
                     className={input}
                     type={type}
+                    name={key}
+                    aria-invalid={reviewIssues.some(issue=>issue.field===key)}
                     value={String(profile[key] || '').slice(
                       0,
                       type === 'date' ? 10 : undefined,
@@ -502,11 +514,13 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 Modalidade
                 <select
                   className={input}
-                  value={profile.modality || 'triatlo'}
+                  name="modality"
+                  value={profile.modality || ''}
                   onChange={(e) =>
                     setProfile({ ...profile, modality: e.target.value })
                   }
                 >
+                  <option value="">Selecione a modalidade</option>
                   {['triatlo', 'corrida', 'ciclismo', 'natacao'].map((m) => (
                     <option key={m}>{m}</option>
                   ))}
@@ -516,11 +530,13 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 Nível
                 <select
                   className={input}
-                  value={profile.level || 'intermediario'}
+                  name="level"
+                  value={profile.level || ''}
                   onChange={(e) =>
                     setProfile({ ...profile, level: e.target.value })
                   }
                 >
+                  <option value="">Selecione a experiência</option>
                   {['iniciante', 'intermediario', 'avancado'].map((m) => (
                     <option key={m}>{m}</option>
                   ))}
@@ -539,6 +555,8 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                   <textarea
                     className={input}
                     rows={3}
+                    name={key}
+                    aria-invalid={reviewIssues.some(issue=>issue.field===key)}
                     value={profile[key] || ''}
                     onChange={(e) =>
                       setProfile({ ...profile, [key]: e.target.value })
@@ -547,8 +565,8 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 </label>
               ))}
             </div>
-            <fieldset>
-              <legend className="mb-2">
+            <fieldset data-assessment-field="availableDays">
+              <legend data-assessment-field="dailyMinutes" tabIndex={-1} className="mb-2">
                 Dias disponíveis e limite diário de minutos
               </legend>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -572,6 +590,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                       {day}
                     </span>
                     <input
+                      name={'dailyMinutes.'+day}
                       aria-label={'Minutos em ' + day}
                       className={input + ' mt-2'}
                       type="number"
@@ -594,7 +613,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 ))}
               </div>
             </fieldset>
-            <fieldset className="space-y-3">
+            <fieldset data-assessment-field="planningPreferences" className="space-y-3">
               <legend>Preferências para o planejamento</legend>
               <label>
                 Máximo de minutos por sessão
@@ -603,6 +622,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                   type="number"
                   min={10}
                   max={480}
+                  name="planningPreferences.maxSessionMinutes"
                   value={profile.planningPreferences?.maxSessionMinutes ?? ''}
                   onChange={(e) =>
                     setProfile({
@@ -657,6 +677,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                       className={input}
                       type="number"
                       min={0}
+                      name={'planningPreferences.recentMinutes.'+m}
                       value={
                         profile.planningPreferences?.recentMinutes?.[m] ?? ''
                       }
