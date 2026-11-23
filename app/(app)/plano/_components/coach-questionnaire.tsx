@@ -1,4 +1,5 @@
 'use client';
+import {DailyTimeLimit} from '@/components/daily-time-limit';
 import { useState, useMemo } from 'react';
 import { useLocalDate } from '@/hooks/use-browser-state';
 import { ChevronRight, ChevronLeft, ClipboardCheck, Activity, Target, Heart, Wrench, Dumbbell, Sparkles, CheckCircle2, FlaskConical, Info, Waves, Bike, Timer, Layers } from 'lucide-react';
@@ -206,7 +207,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     }
     if (key === 'logistica') {
       if (!form.availableDays.length) add('availableDays','Selecione pelo menos um dia disponível para treinar.');
-      if (!Number.isFinite(Number(form.weeklyHours)) || Number(form.weeklyHours) <= 0) add('weeklyHours','Informe suas horas efetivamente disponíveis por semana.');
+      if (form.weeklyHours!==''&&form.weeklyHours!=null&&(!Number.isFinite(Number(form.weeklyHours))||Number(form.weeklyHours)<=0))add('weeklyHours','Informe um limite semanal válido ou deixe vazio se não houver.');
       if (form.currentWeeklyVol === '' || !Number.isFinite(Number(form.currentWeeklyVol)) || Number(form.currentWeeklyVol) < 0) add('currentWeeklyVol','Informe o volume semanal atual; digite 0 apenas se ainda não está treinando.');
     }
     return messages;
@@ -707,9 +708,9 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-base">Horas DISPONÍVEIS por semana para treino</Label>
-                    <Input type="number" step="0.5" min={0.5} max={40}  name="weeklyHours" error={fieldError('weeklyHours')} value={form.weeklyHours} onChange={e => set('weeklyHours', e.target.value)} placeholder="Informe seu tempo disponível" />
-                    <p className="text-xs text-muted-foreground">Informe tempo efetivo de treino; não some deslocamentos.</p>
+                    <Label className="text-base">Limite semanal de horário, se houver (horas)</Label>
+                    <Input type="number" step="0.5" min={0.5} max={40}  name="weeklyHours" error={fieldError('weeklyHours')} value={form.weeklyHours} onChange={e => set('weeklyHours', e.target.value)} placeholder="Sem limite informado" />
+                    <p className="text-xs text-muted-foreground">Só informe se houver um teto real. A prescrição parte do histórico, objetivo e recuperação; não precisa ocupar todo o seu tempo livre.</p>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-base">Quantas horas você treina HOJE por semana?</Label>
@@ -726,7 +727,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 </div>
                 <div className="space-y-2">
                   <Label className="text-base">Sua rotina de trabalho</Label>
-                  <fieldset data-assessment-field="dailyMinutes" className="rounded-xl border p-4 space-y-3"><legend className="px-2 text-sm font-medium">Limite de treino por dia, em minutos</legend><p className="text-xs text-muted-foreground">Inclui todas as modalidades e força. 0 reserva o dia para descanso; vazio mantém o limite operacional por experiência. O limite semanal também será respeitado.</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{DAYS.filter(day=>form.availableDays.includes(day.key)).map(day=><div key={day.key}><Label htmlFor={`limit-${day.key}`}>{day.label}</Label><Input name={`dailyMinutes.${day.key}`} error={fieldError(`dailyMinutes.${day.key}`)} id={`limit-${day.key}`} type="number" min={0} max={480} value={form.dailyMinutes[day.key]??''} onChange={event=>set('dailyMinutes',{...form.dailyMinutes,[day.key]:event.target.value})} placeholder="Não informado" /></div>)}</div><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.strengthAvailable} onChange={event=>set('strengthAvailable',event.target.checked)} /> Tenho disponibilidade para força e mobilidade</label></fieldset>
+                  <fieldset data-assessment-field="dailyMinutes" className="rounded-xl border p-4 space-y-3"><legend className="px-2 text-sm font-medium">Restrições de horário por dia (opcional)</legend><p className="text-xs text-muted-foreground">Deixe sem limite nos dias em que não houver restrição de horário. O app calcula primeiro a sessão adequada; o horário só limita o encaixe. Dias sem treino devem ser desmarcados acima.</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{DAYS.filter(day=>form.availableDays.includes(day.key)).map(day=><DailyTimeLimit key={day.key} day={day.label} name={`dailyMinutes.${day.key}`} value={form.dailyMinutes[day.key]} error={fieldError(`dailyMinutes.${day.key}`)} onChange={value=>set('dailyMinutes',{...form.dailyMinutes,[day.key]:value})} />)}</div><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.strengthAvailable} onChange={event=>set('strengthAvailable',event.target.checked)} /> Tenho disponibilidade para força e mobilidade</label></fieldset>
                   <div className="flex flex-wrap gap-2">
                     {[{ k: 'flexivel', l: '🏠 Flexível/Remoto' }, { k: 'fixo_comercial', l: '🏢 Horário comercial' }, { k: 'turnos', l: '🔄 Turnos/Escalas' }].map(o => (
                       <OptionButton key={o.k} selected={form.workSchedule === o.k} onClick={() => set('workSchedule', o.k)}>{o.l}</OptionButton>

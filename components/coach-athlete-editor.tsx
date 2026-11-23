@@ -1,4 +1,5 @@
 'use client';
+import {DailyTimeLimit} from '@/components/daily-time-limit';
 import {PlanningAudit} from '@/components/planning-audit';
 import {workoutPrescription} from '@/lib/training-prescription';
 import { assessmentIssues, type AssessmentIssue } from '@/lib/assessment-review';
@@ -388,7 +389,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
   const numericFields = [
     ['currentWeight', 'Peso (kg)'],
     ['heightCm', 'Altura (cm)'],
-    ['weeklyHours', 'Horas disponíveis/semana'],
+    ['weeklyHours', 'Limite semanal, se houver (horas)'],
     ['currentWeeklyVol', 'Horas recentes/semana'],
     ['ftp', 'FTP (W)'],
     ['maxHeartRate', 'FC máxima'],
@@ -576,12 +577,12 @@ export function CoachAthleteEditor({ data }: { data: any }) {
             </div>
             <fieldset data-assessment-field="availableDays">
               <legend data-assessment-field="dailyMinutes" tabIndex={-1} className="mb-2">
-                Dias disponíveis e limite diário de minutos
+                Dias de treino e restrições de horário opcionais
               </legend>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {days.map((day) => (
-                  <label key={day} className="rounded-lg border p-3">
-                    <span className="flex gap-2">
+                  <div key={day} className="rounded-lg border p-3">
+                    <label className="flex gap-2">
                       <input
                         type="checkbox"
                         checked={profile.availableDays?.includes(day) || false}
@@ -597,28 +598,9 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                         }
                       />
                       {day}
-                    </span>
-                    <input
-                      name={'dailyMinutes.'+day}
-                      aria-label={'Minutos em ' + day}
-                      className={input + ' mt-2'}
-                      type="number"
-                      min={0}
-                      max={480}
-                      value={profile.dailyMinutes?.[day] ?? ''}
-                      onChange={(e) =>
-                        setProfile({
-                          ...profile,
-                          dailyMinutes: {
-                            ...profile.dailyMinutes,
-                            [day]: e.target.value
-                              ? Number(e.target.value)
-                              : null,
-                          },
-                        })
-                      }
-                    />
-                  </label>
+                    </label>
+                    <DailyTimeLimit day={day} name={'dailyMinutes.'+day} value={profile.dailyMinutes?.[day]} onChange={value=>setProfile({...profile,dailyMinutes:{...profile.dailyMinutes,[day]:value}})} />
+                  </div>
                 ))}
               </div>
             </fieldset>

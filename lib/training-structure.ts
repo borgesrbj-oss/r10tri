@@ -1,3 +1,4 @@
+import {fitTimeConstraints} from './time-constraints';
 import {recentLongRunLimit,markRunningThreshold} from './training-audit';
 import {distanceLabel,prescribedDistance,stepPrescription} from './training-prescription';
 import { effortTarget, numericValue, runThreshold, targetForZone, thresholdWarnings } from './training-zones';
@@ -306,8 +307,8 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   const start = calendarDay(startDate ?? new Date());
   if (!start) { warnings.push('Data de início inválida.'); return result(); }
   const capacity = numericValue(profile?.weeklyHours);
-  if (capacity == null || capacity <= 0 || capacity > 40) { warnings.push('Informe disponibilidade semanal maior que zero e de até 40 horas antes de gerar.'); return result(); }
-  const budget = Math.floor(capacity * 60);
+  if (capacity != null && (capacity <= 0 || capacity > 40)) { warnings.push('Se informar um limite semanal, use um valor maior que zero e de até 40 horas.'); return result(); }
+  const budget = capacity==null?null:Math.floor(capacity * 60);
   const days = [...new Set((daysAvail || []).filter(day => Object.prototype.hasOwnProperty.call(DAYS, day)))];
   if (!days.length) { warnings.push('Selecione os dias disponíveis; nenhum dia foi presumido.'); return result(); }
   const requested = weeks == null ? null : numericValue(weeks);
@@ -352,12 +353,12 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   const returning=(profile?.inactivityWeeks??0)>=4 || goal==='retorno';
   const declaredMinutes=modalities.map(sport=>numericValue(prefs.recentMinutes?.[sport]));
   const declaredTotal=declaredMinutes.every(value=>value!=null)?declaredMinutes.reduce((sum,value)=>sum+(value??0),0):null;
-  const reference = declaredTotal!=null&&declaredTotal>0&&!returning?Math.min(budget,Math.floor(declaredTotal)):currentHours != null && currentHours > 0 && !returning ? Math.min(budget, Math.floor(currentHours * 60)) : Math.min(budget, Math.floor(budget * 0.6), days.length * (level === 'iniciante' || returning ? 20 : 30));
+  const reference = declaredTotal!=null&&declaredTotal>0&&!returning?Math.floor(declaredTotal):currentHours != null && currentHours > 0 && !returning ? Math.floor(currentHours * 60) : days.length * (level === 'iniciante' || returning ? 20 : 30);
   const initial=Math.floor(reference*feedback.initialFactor);
   if (currentHours == null || currentHours <= 0) warnings.push('Volume atual ausente ou zero: início conservador, sem presumir uma hora de treino. Confirme com o treinador.');
   const growth = requiresCoachReview || returning ? 0 : feedback.growth;
   if(returning)warnings.push('Retorno após afastamento: sessões reduzidas e corrida/caminhada; reavaliar tolerância antes de aumentar.');
-  calculation.value={version:1,method:'Regras determinísticas auditáveis; sem pesquisa ou decisão de IA em tempo real',initialMinutes:initial,weeklyCapMinutes:budget,growth,inputs:{startDate:start.toISOString().slice(0,10),endDate:new Date(start.getTime()+(totalWeeks*7-1)*DAY_MS).toISOString().slice(0,10),modality:selected,level,goal,availableDays:days,recentMinutes:prefs.recentMinutes??null,recentLongRunMinutes:prefs.recentLongRunMinutes??null,dailyMinutes:profile?.dailyMinutes??null,raceDate:race?.toISOString().slice(0,10)??null,requiresCoachReview,feedbackStatus:feedback.status},rules:['Volume inicial = menor entre disponibilidade e volume recente declarado, vezes fator de feedback','Semana de recuperação a cada quatro semanas: 65% do orçamento','Peak: 75%; Race: 45%; Transition: 35% do orçamento','Carga, pausa e distribuição calculadas pela soma dos segundos de cada bloco','Limites e percentuais são regras operacionais, não resultados clínicos individuais','O relatório até/acima do limiar é calculado pelos alvos de cada bloco, sem converter PSE em limiar medido','Distribuição final pode divergir de 80/20 por adaptação, recuperação, restrição, tempo e referência de intensidade disponível'],sourceIds:['stoggl2015','ioc2016','baa','coggan','friel','css','daniels']};
+  calculation.value={version:1,method:'Regras determinísticas auditáveis; sem pesquisa ou decisão de IA em tempo real',initialMinutes:initial,weeklyCapMinutes:budget,growth,inputs:{startDate:start.toISOString().slice(0,10),endDate:new Date(start.getTime()+(totalWeeks*7-1)*DAY_MS).toISOString().slice(0,10),modality:selected,level,goal,availableDays:days,recentMinutes:prefs.recentMinutes??null,recentLongRunMinutes:prefs.recentLongRunMinutes??null,dailyMinutes:profile?.dailyMinutes??null,raceDate:race?.toISOString().slice(0,10)??null,requiresCoachReview,feedbackStatus:feedback.status},rules:['Prescrição inicial = volume recente por modalidade vezes fator de recuperação; horas livres não determinam a carga','Semana de recuperação a cada quatro semanas: 65% do orçamento','Peak: 75%; Race: 45%; Transition: 35% do orçamento','Limites de horário são aplicados depois da prescrição, sem compensar minutos em outros dias','Carga, pausa e distribuição calculadas pela soma dos segundos de cada bloco','Limites e percentuais são regras operacionais, não resultados clínicos individuais','O relatório até/acima do limiar é calculado pelos alvos de cada bloco, sem converter PSE em limiar medido','Distribuição final pode divergir de 80/20 por adaptação, recuperação, restrição, tempo e referência de intensidade disponível'],sourceIds:['stoggl2015','ioc2016','baa','coggan','friel','css','daniels']};
   const requiredWeeks:Record<string,number>={'5k':6,'10k':8,'21k':12,'42k':level==='avancado'&&Number(prefs.recentMinutes?.corrida)>0&&Number(prefs.recentLongRunMinutes)>0?12:16,'70.3':16,ironman:24};
   if(goal && race && requiredWeeks[goal] && Math.ceil(((race.getTime()-start.getTime())/DAY_MS+1)/7)<requiredWeeks[goal]) {requiresCoachReview=true;warnings.push(`Prazo curto para ${goal}: referência operacional de ${requiredWeeks[goal]} semanas, sem garantia de prontidão. Rever meta e participação com o coach.`);}
   let lastQualityDay: number | null = null;
@@ -370,10 +371,10 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
     const recovery = week % 4 === 3 && weekPhase !== 'race' && weekPhase !== 'transition';
     const weekWarnings: string[] = [];
     if (previousPhase === 'transition' && weekPhase === 'base') previousLoadBudget = Math.min(previousLoadBudget, Math.floor(initial * 0.7));
-    const normalBudget = week === 0 ? initial : Math.min(budget, Math.floor(previousLoadBudget * (1 + growth)));
+    const normalBudget = week === 0 ? initial : Math.floor(previousLoadBudget * (1 + growth));
     if (!recovery && weekPhase !== 'race' && weekPhase !== 'transition') previousLoadBudget = normalBudget;
     const reduction = weekPhase === 'transition' ? 0.35 : weekPhase === 'race' ? 0.45 : weekPhase === 'peak' ? 0.75 : recovery ? 0.65 : 1;
-    const weekBudget = Math.min(budget, Math.max(0, Math.floor(normalBudget * reduction)));
+    const weekBudget = Math.max(0, Math.floor(normalBudget * reduction));
     const drafts: SessionDraft[] = [];
     let index = week;
     for (let offset = 0; offset < 7; offset++) {
@@ -401,7 +402,9 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
       const long=eligible.find(d=>preferredDay(prefs,'longo',dayKey(d.date)))??eligible.find(d=>d.date.getUTCDay()===0)??eligible[0];
       if(long)long.kind='longo';else weekWarnings.push('Longão de fim de semana não encaixa na disponibilidade. Revise sábado/domingo; não foi movido silenciosamente para outro dia.');
     }
-    const sessions = allocateMinutes(drafts.filter(item=>item.modality!=='forca' || profile?.strengthAvailable!==false), weekBudget, level, goal, profile?.dailyMinutes,profile?.planningPreferences,week,growth);
+    const prescribed=allocateMinutes(drafts.filter(item=>item.modality!=='forca' || profile?.strengthAvailable!==false), weekBudget, level, goal, undefined,{...prefs,maxSessionMinutes:undefined},week,growth);
+    const sessions=fitTimeConstraints(prescribed,profile?.dailyMinutes,prefs.maxSessionMinutes,budget);
+    if(sessions.length<prescribed.length||sessions.some(session=>session.minutes<session.prescribedMinutes))weekWarnings.push('A prescrição calculada foi reduzida para caber nos limites de horário. A sobra não foi transferida para outros dias; revise o encaixe com o coach.');
     if (sessions.length < drafts.length) weekWarnings.push('Tempo insuficiente para todas as sessões de pelo menos 10 minutos; não foi ultrapassada a disponibilidade. Revise a distribuição com o treinador.');
     if (!sessions.length) weekWarnings.push('Nenhuma sessão cabe no orçamento desta semana; ajuste disponibilidade e agenda com o treinador.');
     let targetHigh = 0.2;
@@ -452,12 +455,12 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
       const title = `${kindLabel} · ${LABEL[draft.modality]} · ${PHASE_LABEL[draft.phase]} · ${draft.high > 0 ? 'Intervalos estruturados' : recovery ? 'Recuperação' : 'Aeróbico e técnica'}`;
       const targetZone=structure.steps.filter(step=>step.kind==='principal'&&step.zone).sort((a,b)=>Number(b.zone!.slice(1))-Number(a.zone!.slice(1)))[0]?.zone||'Z1';
       const purpose=draft.kind==='longo'?'Desenvolver resistência de duração, respeitando o longão recente e a recuperação.':draft.kind==='fartlek'?'Alternar trechos rápidos e leves em corrida contínua, com recuperação em movimento; difere dos tiros pela alternância fluida dentro da sessão.':draft.kind==='ritmo'?'Sustentar intensidade de limiar em blocos controlados, sem transformar a sessão em teste máximo.':draft.high>0?'Acumular repetições controladas na intensidade indicada, separadas pelas recuperações prescritas.':draft.modality==='natacao'?'Consolidar técnica e resistência aquática com séries e pausas explícitas.':draft.modality==='ciclismo'?'Construir resistência específica de ciclismo e controlar a cadência e o esforço.':draft.modality==='forca'?'Complementar a preparação com força e mobilidade orientadas; não somar ao volume aeróbico.':'Construir volume confortável e favorecer a recuperação entre estímulos.';
-      const workout: GeneratedWorkout = { date: draft.date.toISOString(), modality: draft.modality, title, description: withEnvironment('Objetivo desta sessão: '+purpose+'\n'+describeStructure(structure), profile, draft), duration: draft.minutes, targetZone, tssEstimate: null, phase: draft.phase, weekNumber: week + 1, structure };
+      const workout: GeneratedWorkout = { date: draft.date.toISOString(), modality: draft.modality, title, description: withEnvironment('Objetivo desta sessão: '+purpose+(draft.minutes<draft.prescribedMinutes?'\nAjuste de agenda: '+draft.prescribedMinutes+' min prescritos; '+draft.minutes+' min após aplicar o limite. Sem compensação em outros dias.':'')+'\n'+describeStructure(structure), profile, draft), duration: draft.minutes, targetZone, tssEstimate: null, phase: draft.phase, weekNumber: week + 1, structure };
       return workout;
     });
     const distribution = combineDistributions(built.map(workout => workout.structure.distribution));
     if (targetHigh > 0 && distribution.highFraction < targetHigh - 0.025) weekWarnings.push('O alvo de intensidade foi reduzido para manter intervalos viáveis e dias de recuperação; não foram criadas sessões extras para atingir uma porcentagem.');
-    if (distribution.totalSeconds < weekBudget * 60 - 60 && sessions.length) weekWarnings.push('Parte do tempo disponível não foi alocada por limites operacionais de duração da sessão/dia; ajuste individual com o treinador.');
+    if (distribution.totalSeconds < weekBudget * 60 - 60 && sessions.length) weekWarnings.push('A carga proposta não coube integralmente nos limites das sessões ou da agenda. Não é necessário preencher todo o tempo livre; revise a prescrição e o encaixe com o coach.');
     const qualityDates = sessions.filter(session => session.high > 0).map(session => Math.round(session.date.getTime() / DAY_MS));
     if (qualityDates.length) lastQualityDay = Math.max(...qualityDates);
     workouts.push(...built);
