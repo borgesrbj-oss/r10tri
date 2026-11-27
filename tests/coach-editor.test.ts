@@ -154,7 +154,7 @@ test('vínculo ativo é obrigatório mesmo quando o ator tem papel de coach', as
   );
 });
 
-test('prescrição manual curta é lida sem relaxar o contrato do gerador',()=>{const parts=compileSession(sessionSchema.parse({...spec(),modality:'brick',transitionSeconds:120,runBlocks:[{kind:'principal',label:'Corrida',seconds:600,zone:'Z2'}]}),profile);for(const part of parts)assert.ok(readWorkoutStructure(part.structure));const transition=parts[1].structure as any;assert.equal(readWorkoutStructure({...transition,origin:undefined}),null);assert.equal((parts[2].structure as any).distribution.lowSeconds,600);assert.deepEqual(parts.map(w=>w.partOrder),[0,1,2]);assert.equal(new Set(parts.map(w=>w.brickGroupId)).size,1);});
+test('prescrição manual curta é lida sem relaxar o contrato do gerador',()=>{const parts=compileSession(sessionSchema.parse({...spec(),modality:'brick',transitionSeconds:120,runBlocks:[{kind:'principal',label:'Corrida',seconds:600,zone:'Z2'}]}),profile);for(const part of parts)assert.ok(readWorkoutStructure(part.structure));const transition=parts[1].structure as any;assert.equal(readWorkoutStructure({...transition,origin:undefined,transition:undefined}),null);assert.equal((parts[2].structure as any).distribution.lowSeconds,600);assert.deepEqual(parts.map(w=>w.partOrder),[0,1,2]);assert.equal(new Set(parts.map(w=>w.brickGroupId)).size,1);});
 
 test('edição de corrida por km conserva a unidade mesmo após mudar a preferência do perfil',()=>{
  const edit=sessionSchema.parse({date:'2027-01-04',title:'Corrida por km',modality:'corrida',prescriptionMode:'distancia',blocks:[{kind:'principal',label:'Corrida',seconds:600,repeat:2,recoverySeconds:60,distanceMeters:1500,zone:'Z2'}]});

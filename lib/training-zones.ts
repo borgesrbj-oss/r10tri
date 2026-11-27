@@ -1,7 +1,8 @@
 import type { TrainingModality, TrainingProfile, TrainingTarget, TrainingZone } from './training-types';
+import { criticalSwimSpeed } from './triathlon-metrics';
 
 export function numericValue(value: unknown): number | null {
-  if (value === '' || value == null || typeof value === 'boolean') return null;
+  if (typeof value !== 'number' && (typeof value !== 'string' || !value.trim())) return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
@@ -23,8 +24,13 @@ export function cssFromTests(time400: unknown, time200: unknown): number | null 
   const longer = parsePaceSeconds(time400);
   const shorter = parsePaceSeconds(time200);
   if (!longer || !shorter || longer < shorter * 2) return null;
-  const pace = (longer - shorter) / 2;
-  return pace >= 25 && pace <= 600 ? pace : null;
+  const pace = criticalSwimSpeed(longer, shorter)?.secondsPer100m;
+  return pace != null && pace >= 25 && pace <= 600 ? pace : null;
+}
+
+export function ftpFromTwentyMinutes(watts: unknown): number | null {
+  const value = numericValue(watts);
+  return value != null && value >= 1 && value <= 1500 ? Math.max(1, Math.round(value * 0.95)) : null;
 }
 
 export function runThreshold(profile: TrainingProfile | null): number | null {
@@ -33,12 +39,12 @@ export function runThreshold(profile: TrainingProfile | null): number | null {
 }
 
 export function swimThreshold(profile: TrainingProfile | null): number | null {
-  const value = parsePaceSeconds(profile?.swimCssPace) ?? parsePaceSeconds(profile?.testCSSPace) ?? cssFromTests(profile?.testCSS400, profile?.testCSS200);
+  const value = parsePaceSeconds(profile?.swimCssPace) ?? cssFromTests(profile?.testCSS400, profile?.testCSS200) ?? parsePaceSeconds(profile?.testCSSPace);
   return value != null && value >= 25 && value <= 600 ? value : null;
 }
 
 export function bikeThreshold(profile: TrainingProfile | null): number | null {
-  const value = numericValue(profile?.ftp) ?? numericValue(profile?.testFTPEstimated);
+  const value = numericValue(profile?.ftp) ?? ftpFromTwentyMinutes(profile?.testFTP20min) ?? numericValue(profile?.testFTPEstimated);
   return value != null && value > 0 && value <= 1500 ? value : null;
 }
 
@@ -91,7 +97,8 @@ export function targetForZone(profile: TrainingProfile | null, modality: Trainin
   if (css) {
     const [lo, hi] = SWIM[zone];
     const low = Math.max(20, Math.round(css + lo)), high = Math.max(20, Math.round(css + hi));
-    return { basis: 'css', unit: 's/100m', low, high, source: 'CSS informado ou calculado pelos testes 400/200 m; ajustar ao tamanho da piscina.', text: `${formatPaceSeconds(low)}–${formatPaceSeconds(high)}/100 m` };
+    const source = parsePaceSeconds(profile?.swimCssPace) ? 'CSS informado no perfil.' : 'CSS derivado dos testes de 400/200 m.';
+    return { basis: 'css', unit: 's/100m', low, high, source: `${source} Ajustar ao tamanho da piscina.`, text: `${formatPaceSeconds(low)}–${formatPaceSeconds(high)}/100 m` };
   }
   return effortTarget(zone, 'CSS não informado; não foram inventados ritmos de natação.');
 }

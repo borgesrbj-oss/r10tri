@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import * as training from '../lib/training-structure';
@@ -108,6 +109,7 @@ function endpoint({
     ) => callback(database),
   };
   const dependencies: Record<string, unknown> = {
+    'node:crypto': { createHash },
     'next/server': {
       NextResponse: {
         json: (body: unknown, options?: ResponseInit) =>
@@ -168,6 +170,48 @@ function endpoint({
       ),
   };
 }
+
+test('triatlo com agenda parcial gera prévia com três modalidades e séries antes de gravar', async () => {
+  const route = endpoint({ savedProfile: {
+    ...profile, modality: 'triatlo', hasPoolAccess: true, canSwim: true,
+    swimCssPace: '02:00', ftp: 220, swimLevel: 'intermediario',
+    daySchedule: JSON.stringify({ seg: ['ciclismo'], qua: ['corrida'] }),
+    planningPreferences: { recentMinutes: { natacao: 80, ciclismo: 190, corrida: 130 } },
+  } });
+  const options = { startDate: '2027-01-04', weeks: 10 };
+  const response = await route.post({ ...options, preview: true });
+  assert.equal(response.status, 200);
+  const preview = await response.json();
+  assert.ok(preview.highMinutes > 0);
+  assert.ok(preview.sports.some((sport: {modality:string}) => sport.modality === 'natacao'));
+  assert.equal(route.state.archives, 0);
+  const stale = await route.post({ ...options, weeks: 8, previewToken: preview.previewToken });
+  assert.equal(stale.status, 409);
+  assert.equal(route.state.archives, 0);
+  const confirmed = await route.post({ ...options, previewToken: preview.previewToken });
+  assert.equal(confirmed.status, 200);
+  assert.equal(route.state.archives, 1);
+  assert.equal(route.state.savedWorkouts.length, preview.workoutsCount);
+  for (const label of ['Tiros', 'Fartlek', 'Ritmo sustentado']) {
+    const item = route.state.savedWorkouts.find(workout => workout.modality === 'corrida' && workout.title.includes(label));
+    assert.ok(item, label);
+    assert.ok(item.structure.steps.some((step: {zone:string}) => ['Z4', 'Z5'].includes(step.zone)));
+  }
+});
+
+test('triatlo impossível de encaixar natação indica agenda e preserva o plano ativo', async () => {
+  const route = endpoint({ savedProfile: {
+    ...profile, modality: 'triatlo', hasPoolAccess: true, canSwim: true,
+    daySchedule: JSON.stringify({ seg: ['ciclismo'], qua: ['corrida'] }),
+    availableDays: ['seg', 'qua'],
+    planningPreferences: { recentMinutes: { natacao: 80, ciclismo: 190, corrida: 130 }, doubleDays: [] },
+  } });
+  const response = await route.post({ startDate: '2027-01-04', weeks: 8 });
+  assert.equal(response.status, 422);
+  assert.equal(route.state.archives, 0);
+  const data = await response.json();
+  assert.ok(data.assessmentIssues.some((issue: {field:string,message:string}) => issue.field === 'daySchedule' && issue.message.includes('Natação')));
+});
 
 test('handler preserva Auto omitido e salva prova, transição e resumo de 22 semanas', async () => {
   const route = endpoint();

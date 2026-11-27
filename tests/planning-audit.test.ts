@@ -2,7 +2,7 @@ import {editWorkoutStructure} from '../lib/workout-edit';
 import {retargetBike} from '../lib/workout-reassessment';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {generateStructuredPlan,readWorkoutStructure,buildWorkoutStructure} from '../lib/training-structure';
-import {preparationIssues,thresholdMinutes,markRunningThreshold} from '../lib/training-audit';
+import {preparationIssues,thresholdMinutes,markRunningThreshold,swimmingAccessIssue} from '../lib/training-audit';
 import {trainingFeedback} from '../lib/training-feedback';
 const start='2027-02-15';const race={date:'2027-05-09',distance:'42k',priority:'A'};
 const profile={birthDate:'1990-01-01',currentWeight:70,level:'avancado',modality:'corrida',trainingGoal:'42k',runStructure:'distancia',runThresholdPace:'05:00',currentWeeklyVol:5,weeklyHours:8,availableDays:['seg','ter','qua','qui','sex','sab','dom'],strengthAvailable:false,planningPreferences:{recentMinutes:{corrida:300},recentLongRunMinutes:75}};
@@ -12,6 +12,16 @@ test('todas as modalidades exigem base própria e identificam agenda contraditó
  assert.ok(preparationIssues({...profile,daySchedule:JSON.stringify({ter:['corrida']}),dailyMinutes:{ter:0}},[race]).some(i=>i.field==='dailyMinutes.ter'));
  assert.ok(preparationIssues(profile,[]).some(i=>i.field==='raceDate'));
  assert.deepEqual(preparationIssues(profile,[race]),[]);
+});
+
+test('triagem não troca um triatlo por bike e corrida quando falta acesso à natação',()=>{
+ const profileTri={...profile,modality:'triatlo',trainingGoal:'sprint',runStructure:'zona',planningPreferences:{recentMinutes:{natacao:0,ciclismo:120,corrida:90}}};
+ assert.deepEqual(preparationIssues(profileTri,[]),[]);
+ assert.deepEqual(preparationIssues({...profileTri,canSwim:true,hasPoolAccess:false,poolSize:'mar_aberto'},[]),[]);
+ assert.deepEqual(preparationIssues({...profileTri,canSwim:true,hasPoolAccess:true,swimLevel:'basico'},[]),[]);
+ assert.deepEqual(preparationIssues({...profileTri,canSwim:true,hasPoolAccess:false},[]).map(issue=>issue.field),['hasPoolAccess']);
+ assert.equal(swimmingAccessIssue({...profileTri,canSwim:false,hasPoolAccess:false,poolSize:'mar_aberto'})?.field,'canSwim');
+ assert.deepEqual(preparationIssues({...profile,hasPoolAccess:false,canSwim:false},[race]),[]);
 });
 test('maratona com base confirmada gera longão no fim de semana, progressão e taper, com sessões distintas',()=>{
  const plan=generateStructuredPlan(profile,[race],profile.availableDays,start,12,feedback);

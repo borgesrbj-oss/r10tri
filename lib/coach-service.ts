@@ -9,19 +9,23 @@ import { activeLink, CoachError, type Actor } from './coach-access';
 import {
   compileSession,
   draftPreview,
+  hasIncompleteDraftBrick,
+  orderedDraftChanges,
   sessionSchema,
   type DraftChange,
   type DraftPayload,
 } from './coach-editor';
 import { assessmentData, assessmentReadiness } from './assessment-validation';
 import { publicProfile } from './profile-public';
-import { calendarDay, generateStructuredPlan } from './training-structure';
+import { calendarDay, generateStructuredPlan, readWorkoutStructure } from './training-structure';
+import { buildBrickTransition, describeBrickTransition, isBrickTransition } from './brick-transition';
 import { editWorkoutStructure } from './workout-edit';
 import { describeStructure } from './training-structure';
 import { newInvitation, invitationUrl } from './invitations';
 import { configuredAppOrigin } from './auth-policy';
 import { retargetBike } from './workout-reassessment';
 import { trainingFeedback } from './training-feedback';
+import { coachRaceTargetsSchema, configuredRaceTargets, getTriathlonFormat, getTriathlonRaceTarget, triathlonLevel } from './triathlon-race';
 
 const json = (v: unknown) =>
   JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
@@ -354,9 +358,23 @@ export async function upsertSession(actor: Actor, input: unknown) {
         : await editable(tx, b.athleteId, b.session.id);
       if (!original) throw new CoachError('Sessão não encontrada.', 404);
     }
+    const prior = !b.duplicate ? changedDraft ?? original : null;
+    const priorStructure = prior?.brickGroupId ? readWorkoutStructure(prior.structure) : null;
     let compiled: DraftChange[];
     try {
-      compiled = compileSession(b.session, profile);
+      if (prior && priorStructure && isBrickTransition(prior, priorStructure)) {
+        const [block] = b.session.blocks;
+        if (b.session.blocks.length !== 1 || block.kind !== 'recuperacao' || !block.passive || block.repeat !== 1 || block.distanceMeters || block.seconds > 1800) {
+          throw new Error('Edite o tempo da transição como um único bloco passivo de até 30 minutos.');
+        }
+        const structure = { ...buildBrickTransition(block.seconds, b.session.phase, priorStructure.transition), origin: 'coach' as const };
+        const description = describeBrickTransition(structure);
+        compiled = [{
+          key: randomUUID(), date: b.session.date, title: b.session.title, modality: 'descanso',
+          duration: Math.ceil(block.seconds / 60), phase: b.session.phase, targetZone: null, paused: false, structure,
+          description: b.session.notes && b.session.notes !== prior.description ? description + '\n\nOrientação do coach: ' + b.session.notes : description,
+        }];
+      } else compiled = compileSession(b.session, profile);
     } catch (e) {
       throw new CoachError((e as Error).message, 422);
     }
@@ -370,10 +388,17 @@ export async function upsertSession(actor: Actor, input: unknown) {
       if(pending?.baseUpdatedAt!==undefined && pending.baseUpdatedAt!==original.updatedAt.toISOString())
         throw new CoachError('A sessão publicada mudou. Retire a alteração pendente e reabra a versão atual antes de editar.',409);
       compiled[0].id = original.id;
-      compiled[0].brickGroupId=original.brickGroupId;compiled[0].partOrder=original.partOrder;
       compiled[0].baseUpdatedAt = original.updatedAt.toISOString();
       payload.changes = payload.changes.filter((c) => c.id !== original.id);
     }
+    if (prior?.brickGroupId) {
+      if (compiled.length !== 1 || compiled[0].modality !== prior.modality) {
+        throw new CoachError('Mantenha a modalidade da parte do brick. Para substituir o combinado, remova ou cancele suas partes e crie um novo brick.', 422);
+      }
+      compiled[0].brickGroupId = prior.brickGroupId;
+      compiled[0].partOrder = prior.partOrder;
+    }
+    if (prior?.weekNumber != null && compiled.length === 1) compiled[0].weekNumber = prior.weekNumber;
     if (b.changeKey) {
       payload.changes = payload.changes.filter((c) => c.key !== b.changeKey);
     }
@@ -514,7 +539,7 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
     .and(
       z.object({
         startDate: z.string(),
-        weeks: z.number().int().min(1).max(12),
+        weeks: z.number().int().min(1).max(24),
       }),
     )
     .parse(input);
@@ -534,7 +559,7 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
       orderBy: { date: 'asc' },
     });
     const specificIssues=preparationIssues(profile,races,b.startDate);
-    if(specificIssues.length)throw new CoachError('Complete os dados específicos da preparação de maratona.',422,specificIssues);
+    if(specificIssues.length)throw new CoachError('Revise os dados da triagem para esta modalidade.',422,specificIssues);
     const since = new Date(Date.now() - 7 * 86400000);
     const logs = await tx.workoutLog.findMany({
       where: { userId: b.athleteId, completedAt: { gte: since } },
@@ -552,6 +577,8 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
         workouts.filter((w) => !w.paused),
       ),
     );
+    if (generated.summary.assessmentIssues?.length)
+      throw new CoachError(generated.summary.assessmentIssues[0].message, 422, generated.summary.assessmentIssues);
     const end = new Date(
       new Date(b.startDate + 'T12:00:00Z').getTime() + b.weeks * 7 * 86400000,
     )
@@ -575,18 +602,31 @@ export async function generateCoachDraft(actor: Actor, input: unknown) {
       duration: w.duration,
       targetZone: w.targetZone,
       phase: w.phase ?? 'base',
+      weekNumber: w.weekNumber,
+      tssEstimate: w.tssEstimate,
       structure: w.structure,
       paused: true,
     }));
-    for (const w of generated.workouts)
-      changes.push({ ...w, date:new Date(w.date).toISOString().slice(0,10),key: randomUUID(), paused: false });
+    const groupIds = new Map<string, string>();
+    for (const { brickGroupKey, ...workout } of generated.workouts) {
+      if (brickGroupKey && !groupIds.has(brickGroupKey)) groupIds.set(brickGroupKey, randomUUID());
+      changes.push({ ...workout, date: workout.date.slice(0, 10), key: randomUUID(), paused: false,
+        ...(brickGroupKey ? { brickGroupId: groupIds.get(brickGroupKey) } : {}),
+      });
+    }
+    const reviewPending = generated.warnings.find(warning => warning.startsWith('Prescrição pendente'));
+    if (!generated.workouts.length && generated.summary.requiresCoachReview && reviewPending)
+      throw new CoachError(reviewPending, 422);
     if (!generated.workouts.length)
       throw new CoachError('Sem sessões viáveis para esta disponibilidade.', 422, ['weeklyHours','availableDays',...Object.keys(profile?.dailyMinutes && typeof profile.dailyMinutes==='object'?profile.dailyMinutes:{}).map(day=>'dailyMinutes.'+day)].map(field=>assessmentIssue(field,'Revise a disponibilidade: os limites atuais não permitem encaixar sessões.')!));
+    const race = races.find(item => item.id === generated.summary.raceId);
     return saveDraft(
       tx,
       actor,
       b.athleteId,
-      { baseProfileAt: profile?.updatedAt.toISOString() ?? null, changes,generation:generated.summary },
+      { baseProfileAt: profile?.updatedAt.toISOString() ?? null, changes, generation: generated.summary,
+        ...(race ? { baseRaceAt: race.updatedAt.toISOString() } : {}),
+      },
       b.instructions,
     );
   }, serial);
@@ -616,10 +656,18 @@ export async function publishDraft(actor: Actor, input: unknown) {
         'Triagem ou disponibilidade mudou. Atualize os alvos e revise a proposta antes de publicar.',
         409,
       );
+    if (payload.baseRaceAt && payload.generation?.raceId) {
+      const race = await tx.targetRace.findFirst({ where: { id: payload.generation.raceId, userId: b.athleteId }, select: { updatedAt: true } });
+      if (race?.updatedAt.toISOString() !== payload.baseRaceAt) {
+        throw new CoachError('A prova-alvo mudou. Gere outra proposta para revisar o calendário e as metas por segmento.', 409);
+      }
+    }
     if (!payload.changes.length)
       throw new CoachError('Rascunho sem alterações.', 422);
+    if (hasIncompleteDraftBrick(workouts, payload))
+      throw new CoachError('Revise o brick. O pedal e a corrida precisam permanecer juntos, na ordem e no mesmo dia.', 422);
     const snapshots = [];
-    for (const c of payload.changes) {
+    for (const c of orderedDraftChanges(payload.changes)) {
       future(c.date);
       if (c.id) {
         const original = await editable(tx, b.athleteId, c.id);
@@ -669,7 +717,8 @@ export async function publishDraft(actor: Actor, input: unknown) {
         coachManaged: true,
         brickGroupId:c.brickGroupId??null,partOrder:c.partOrder??0,
         coachPublicationId: publication.id,
-        tssEstimate: null,
+        weekNumber: c.weekNumber ?? undefined,
+        tssEstimate: c.tssEstimate ?? null,
       };
       if (c.id) {
         const result = await tx.workout.updateMany({
@@ -702,14 +751,14 @@ export async function publishDraft(actor: Actor, input: unknown) {
         startDate: bounds._min.date ?? plan.startDate,
         endDate: bounds._max.date ?? plan.endDate,
         summary: json({
-          ...(plan.summary &&
+          ...(payload.generation ?? (plan.summary &&
           typeof plan.summary === 'object' &&
           !Array.isArray(plan.summary)
             ? plan.summary
-            : {}),
-          ...(payload.generation?{calculation:payload.generation.calculation}:{}),
+            : {})),
           coachPublicationId: publication.id,
         }),
+        ...(payload.generation ? { raceId: payload.generation.raceId ?? null } : {}),
       },
     });
     await tx.coachDraft.update({
@@ -752,6 +801,13 @@ export async function rebaseDraft(actor: Actor, input: unknown) {
       b.revision,
     );
     const { profile } = await state(tx, b.athleteId);
+    if (payload.generation?.raceId) {
+      const race = await tx.targetRace.findFirst({ where: { id: payload.generation.raceId, userId: b.athleteId } });
+      if (!race || (payload.baseRaceAt && race.updatedAt.toISOString() !== payload.baseRaceAt)) {
+        throw new CoachError('A prova-alvo mudou. Gere outra proposta para revisar o calendário e as metas por segmento.', 409);
+      }
+      payload.generation.raceTarget = getTriathlonRaceTarget(race, profile);
+    }
     for (const c of payload.changes) {
       if (c.id) {
         const original = await editable(tx, b.athleteId, c.id);
@@ -824,17 +880,18 @@ export async function coachAthleteData(actor: Actor, athleteId: string) {
       races,
       workouts,
       history,
-      drafts: drafts.map((d) => ({
-        ...d,
-        review: draftPreview(
-          workouts,
-          d.payload as unknown as DraftPayload,
-          profile,
-        ),
-        profileConflict:
-          (d.payload as unknown as DraftPayload).baseProfileAt !==
-          (profile?.updatedAt.toISOString() ?? null),
-      })),
+      drafts: drafts.map(draft => {
+        const payload = draft.payload as unknown as DraftPayload;
+        const race = races.find(item => item.id === payload.generation?.raceId);
+        return {
+          ...draft,
+          payload: { ...payload, changes: orderedDraftChanges(payload.changes) },
+          review: draftPreview(workouts, payload, profile),
+          profileConflict: payload.baseProfileAt !== (profile?.updatedAt.toISOString() ?? null),
+          raceConflict: Boolean(payload.baseRaceAt && payload.baseRaceAt !== race?.updatedAt.toISOString()),
+          brickConflict: hasIncompleteDraftBrick(workouts, payload),
+        };
+      }),
       publications,
       audits,
     };
@@ -912,27 +969,40 @@ export async function coachRace(actor: Actor, input: unknown) {
       distance: z.string().trim().min(1).max(100),
       priority: z.enum(['A', 'B', 'C']),
       notes: z.string().max(2000).default(''),
+      segmentTargets: coachRaceTargetsSchema.optional(),
     })
     .parse(input);
   return prisma.$transaction(async (tx) => {
     const link = await activeLink(tx, actor, b.athleteId, true);
-    const { athleteId, id, ...values } = b;
+    const { athleteId, id, segmentTargets, ...values } = b;
+    const format = getTriathlonFormat(values);
+    if (segmentTargets && !format)
+      throw new CoachError('As metas por segmento exigem formato sprint, olímpico, 70.3 ou Ironman.', 422);
+    const old = id ? await tx.targetRace.findFirst({ where: { id, userId: athleteId } }) : null;
+    if (id && !old) throw new CoachError('Prova não encontrada.', 404);
+    const config = old && configuredRaceTargets(old);
+    const sameEvent = config && config.format === format && old.name === b.name && old.date.toISOString().slice(0, 10) === b.date;
+    let nextTargets: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined;
+    if (segmentTargets && format) {
+      const { confirmed, ...fields } = segmentTargets;
+      const profile = confirmed ? await tx.athleteProfile.findUnique({ where: { userId: athleteId }, select: { level: true } }) : null;
+      const reviewedLevel = triathlonLevel(profile?.level);
+      if (confirmed && !reviewedLevel)
+        throw new CoachError('Informe o nível do atleta na triagem antes de confirmar as referências.', 422);
+      nextTargets = json({ ...fields, format, reviewedLevel });
+    } else if (config && !sameEvent) nextTargets = Prisma.DbNull;
+    const data = { ...values, date: new Date(b.date + 'T12:00:00Z'), segmentTargets: nextTargets };
     let race;
     if (id) {
-      const old = await tx.targetRace.findFirst({
-        where: { id, userId: athleteId },
-      });
-      if (!old) throw new CoachError('Prova não encontrada.', 404);
       race = await tx.targetRace.update({
         where: { id, userId: athleteId },
-        data: { ...values, date: new Date(b.date + 'T12:00:00Z') },
+        data,
       });
     } else
       race = await tx.targetRace.create({
         data: {
-          ...values,
+          ...data,
           userId: athleteId,
-          date: new Date(b.date + 'T12:00:00Z'),
         },
       });
     await audit(tx, link.id, actor.id, 'prova_atualizada', { race });

@@ -3,6 +3,7 @@ import { assessmentIssue } from '@/lib/assessment-review';
 import { canAccessAthlete } from '@/lib/coach-access';
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
+import { createHash } from 'node:crypto';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { generateNutrition } from '@/lib/plan-engine';
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
     orderBy: { date: 'asc' },
   });
   const specificIssues=preparationIssues(selected,races,body.startDate??new Date());
-  if(specificIssues.length)return NextResponse.json({error:'Complete os dados específicos da preparação de maratona.',assessmentIssues:specificIssues},{status:422,...options});
+  if(specificIssues.length)return NextResponse.json({error:'Revise os dados da triagem para esta modalidade.',assessmentIssues:specificIssues},{status:422,...options});
   const now = new Date();
   const [logs, past] = await Promise.all([
     prisma.workoutLog.findMany({
@@ -179,6 +180,17 @@ export async function POST(req: NextRequest) {
     reasons: feedback.reasons,
     observedSessions: feedback.observedSessions,
   };
+  if (generated.summary.assessmentIssues?.length) {
+    return NextResponse.json({
+      error: generated.summary.assessmentIssues[0].message,
+      warnings: generated.warnings,
+      assessmentIssues: generated.summary.assessmentIssues,
+    }, { status: 422, ...options });
+  }
+  if (!generated.workouts.length && generated.summary.requiresCoachReview) {
+    const review = generated.warnings.find(warning => warning.startsWith('Prescrição pendente'));
+    if (review) return NextResponse.json({ error: review, warnings: generated.warnings }, { status: 422, ...options });
+  }
   if (!generated.workouts.length)
     return NextResponse.json(
       {
@@ -189,11 +201,35 @@ export async function POST(req: NextRequest) {
       { status: 422, ...options },
     );
   const workouts = generated.workouts;
-  const upcomingRaces = races.filter(
-    (r) => new Date(r.date) >= new Date(workouts[0].date),
-  );
-  const targetRace =
-    upcomingRaces.find((r) => r.priority === 'A') ?? upcomingRaces[0];
+  if (body.preview === true || typeof body.previewToken === 'string') {
+    const token = createHash('sha256')
+      .update(JSON.stringify({ userId, profileUpdatedAt: profile?.updatedAt, generated }))
+      .digest('hex');
+    if (body.preview === true) {
+      const bySport = new Map<string, { modality: string; minutes: number; sessions: number }>();
+      for (const workout of workouts) {
+        const count = bySport.get(workout.modality) ?? { modality: workout.modality, minutes: 0, sessions: 0 };
+        count.minutes += workout.duration;
+        count.sessions++;
+        bySport.set(workout.modality, count);
+      }
+      const firstWeek = workouts.filter(workout => workout.weekNumber === 1).map(workout => ({
+        date: workout.date, title: workout.title, duration: workout.duration, zone: workout.targetZone,
+      }));
+      return NextResponse.json({
+        previewToken: token,
+        weeks: generated.summary.weeks.length,
+        workoutsCount: workouts.length,
+        sports: [...bySport.values()],
+        firstWeek,
+        highMinutes: generated.summary.distribution.highSeconds / 60,
+        warnings: generated.warnings,
+      }, options);
+    }
+    if (token !== body.previewToken) {
+      return NextResponse.json({ error: 'A triagem ou o calendário mudou. Gere outra prévia para confirmar a versão atual.' }, { status: 409, ...options });
+    }
+  }
   const plan = await prisma.$transaction(
     async (tx) => {
       // Só arquiva o plano anterior após validar o novo; todas as gravações são atômicas.
@@ -207,7 +243,7 @@ export async function POST(req: NextRequest) {
           name: `Plano ${modality} — ${new Date(workouts[0].date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`,
           startDate: new Date(workouts[0].date),
           endDate: new Date(workouts[workouts.length - 1].date),
-          raceId: targetRace?.id || null,
+          raceId: generated.summary.raceId ?? null,
           generatedBy: 'app-estruturado',
           nutritionPlan: generateNutrition(selected),
           summary: JSON.parse(
@@ -228,6 +264,8 @@ export async function POST(req: NextRequest) {
           tssEstimate: workout.tssEstimate,
           phase: workout.phase,
           weekNumber: workout.weekNumber,
+          brickGroupId: workout.brickGroupKey ? created.id + ':' + workout.brickGroupKey : null,
+          partOrder: workout.partOrder ?? 0,
           structure: JSON.parse(
             JSON.stringify(workout.structure),
           ) as Prisma.InputJsonValue,

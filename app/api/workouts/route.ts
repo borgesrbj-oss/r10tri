@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
+import { BRICK_ADJUSTMENT_MESSAGE } from '@/lib/workout-adjustment';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
         },
         { status: 409 },
       );
+    if (workout.brickGroupId)
+      return Response.json({ error: BRICK_ADJUSTMENT_MESSAGE }, { status: 409 });
     const w = await prisma.workout.update({
       where: { id: workout.id, userId: workout.userId },
       data: {

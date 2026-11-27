@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
+import { readWorkoutStructure } from '@/lib/training-structure';
+import { workoutMetricThreshold } from '@/lib/triathlon-metrics';
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -42,6 +44,10 @@ export async function POST(req: NextRequest) {
     sleepHours: [0, 24, false],
     fatigueScore: [0, 10, true],
     painScore: [0, 10, true],
+    ...(workout.modality === 'ciclismo' ? {
+      normalizedPowerWatts: [0, 2000, false],
+      averagePowerWatts: [0, 2000, false],
+    } : {}),
   };
   const values: Record<string, number | null> = {};
   for (const [field, [min, max, integer]] of Object.entries(fields)) {
@@ -51,7 +57,7 @@ export async function POST(req: NextRequest) {
       continue;
     }
     const value =
-      typeof data[field] === 'number' || typeof data[field] === 'string'
+      typeof data[field] === 'number' || (typeof data[field] === 'string' && data[field].trim())
         ? Number(data[field])
         : NaN;
     if (
@@ -77,6 +83,7 @@ export async function POST(req: NextRequest) {
     );
 
   try {
+    const metricThreshold = workoutMetricThreshold(readWorkoutStructure(workout.structure));
     const log = await prisma.$transaction(async (transaction) => {
       const changed = await transaction.workout.updateMany({
         where: {
@@ -96,6 +103,7 @@ export async function POST(req: NextRequest) {
           userId: session.user.id,
           ...values,
           notes: data.notes,
+          ...(metricThreshold ? { metricThreshold } : {}),
         },
       });
 

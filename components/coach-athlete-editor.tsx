@@ -7,6 +7,9 @@ import { AssessmentReview, useAssessmentReview } from '@/components/assessment-r
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { configuredRaceTargets, getTriathlonFormat, getTriathlonRaceTarget } from '@/lib/triathlon-race';
+import { raceTargetDraft, raceTargetPayload, TriathlonRaceEditor } from '@/components/triathlon-race-editor';
+import { TriathlonRaceTargetSummary } from '@/components/triathlon-race-target';
 const input =
   'w-full min-w-0 rounded-lg border bg-background px-3 py-2 text-base';
 const button = 'rounded-lg border px-4 py-2 min-h-11 disabled:opacity-50';
@@ -269,6 +272,8 @@ export function CoachAthleteEditor({ data }: { data: any }) {
       priority: 'A',
       notes: '',
     });
+  const [raceDraft, setRaceDraft] = useState(() => raceTargetDraft());
+  const raceFormat = getTriathlonFormat(race);
   const draft = data.drafts.find((d: any) => d.id === draftId);
   const envelope = {
     athleteId: data.athlete.id,
@@ -718,18 +723,26 @@ export function CoachAthleteEditor({ data }: { data: any }) {
           </form>
           <h3 className="font-semibold">Provas e objetivos cadastrados</h3>
           <ul>
-            {data.races.map((r: any) => (
-              <li key={r.id}>
+            {data.races.map((r: any) => {
+              const target = getTriathlonRaceTarget(r, data.profile);
+              return <li key={r.id} className="space-y-2 py-2">
                 {r.name} · {String(r.date).slice(0, 10)} · {r.distance} ·
                 prioridade {r.priority || 'não informada'}
-              </li>
-            ))}
+                {target && <TriathlonRaceTargetSummary target={target} />}
+              </li>;
+            })}
           </ul>
           <form
             className="grid gap-3 sm:grid-cols-2"
             onSubmit={(e) => {
               e.preventDefault();
-              send('race', { athleteId: data.athlete.id, ...race });
+              try {
+                const segmentTargets = raceFormat ? raceTargetPayload(raceDraft) : undefined;
+                send('race', { athleteId: data.athlete.id, ...race, segmentTargets });
+              } catch (error) {
+                setFailed(true);
+                setMessage((error as Error).message);
+              }
             }}
           >
             <label>
@@ -741,6 +754,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                   const r = data.races.find(
                     (r: any) => r.id === e.target.value,
                   );
+                  setRaceDraft(r ? raceTargetDraft(configuredRaceTargets(r), data.profile?.level) : raceTargetDraft());
                   setRace(
                     r
                       ? {
@@ -775,7 +789,10 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 className={input}
                 required
                 value={race.name}
-                onChange={(e) => setRace({ ...race, name: e.target.value })}
+                onChange={(e) => {
+                  setRace({ ...race, name: e.target.value });
+                  setRaceDraft({ ...raceDraft, confirmed: false });
+                }}
               />
             </label>
             <label>
@@ -785,7 +802,10 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 required
                 type="date"
                 name="raceDate" value={race.date}
-                onChange={(e) => setRace({ ...race, date: e.target.value })}
+                onChange={(e) => {
+                  setRace({ ...race, date: e.target.value });
+                  setRaceDraft({ ...raceDraft, confirmed: false });
+                }}
               />
             </label>
             <label>
@@ -795,7 +815,10 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 required
                 placeholder="Ex.: 70.3, sprint, 21k"
                 value={race.distance}
-                onChange={(e) => setRace({ ...race, distance: e.target.value })}
+                onChange={(e) => {
+                  if (getTriathlonFormat({ distance: e.target.value }) !== raceFormat) setRaceDraft(raceTargetDraft());
+                  setRace({ ...race, distance: e.target.value });
+                }}
               />
             </label>
             <label>
@@ -810,6 +833,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                 ))}
               </select>
             </label>
+            {raceFormat && <TriathlonRaceEditor format={raceFormat} value={raceDraft} onChange={setRaceDraft} />}
             <button className={primary} disabled={busy}>
               Salvar prova e objetivo
             </button>
@@ -1139,7 +1163,7 @@ export function CoachAthleteEditor({ data }: { data: any }) {
               pelo coach. Revise cada conflito antes de publicar.
             </p>
             <div className="flex flex-wrap gap-2">
-              {[1, 4, 12].map((weeks) => (
+              {(data.profile?.modality === 'triatlo' ? [1, 4, 12, 14, 16, 24] : [1, 4, 12]).map((weeks) => (
                 <button
                   key={weeks}
                   className={button}
@@ -1203,6 +1227,8 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                   novamente.
                 </p>
               )}
+              {draft.raceConflict && <p role="alert" className="text-destructive">A prova-alvo mudou. Gere outra proposta para revisar o calendário e as metas por segmento.</p>}
+              {draft.brickConflict && <p role="alert" className="text-destructive">Revise o brick para manter pedal e corrida no mesmo dia e em sequência.</p>}
               <button
                 disabled={busy}
                 className={button}
@@ -1320,6 +1346,8 @@ export function CoachAthleteEditor({ data }: { data: any }) {
                   busy ||
                   !ack ||
                   draft.profileConflict ||
+                  draft.raceConflict ||
+                  draft.brickConflict ||
                   !draft.payload.changes.length
                 }
                 onClick={() =>

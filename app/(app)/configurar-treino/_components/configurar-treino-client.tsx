@@ -31,7 +31,16 @@ const MODALITIES = [
 
 function parseSchedule(raw: string | null | undefined): Record<string, string[]> {
   if (!raw) return {};
-  try { return JSON.parse(raw) ?? {}; } catch { return {}; }
+  try {
+    const saved: unknown = JSON.parse(raw);
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {};
+    return Object.fromEntries(DAYS.flatMap(day => {
+      const values = (saved as Record<string,unknown>)[day.key];
+      if (!Array.isArray(values)) return [];
+      const known = [...new Set(values.filter(value => MODALITIES.some(modality => modality.key === value)))];
+      return known.length ? [[day.key, known]] : [];
+    }));
+  } catch { return {}; }
 }
 
 function parseEnv(raw: string | null | undefined): Record<string, string> {
@@ -41,6 +50,7 @@ function parseEnv(raw: string | null | undefined): Record<string, string> {
 
 export function ConfigurarTreinoClient({ profile }: { profile: any }) {
   const [schedule, setSchedule] = useState<Record<string, string[]>>(parseSchedule(profile?.daySchedule));
+  const [availableDays, setAvailableDays] = useState<string[]>(profile?.availableDays ?? []);
   const [bikeEnv, setBikeEnv] = useState<Record<string, string>>(parseEnv(profile?.bikeEnvByDay));
   const [runEnv, setRunEnv] = useState<Record<string, string>>(parseEnv(profile?.runEnvByDay));
   const [weeklyHours, setWeeklyHours] = useState<string>(profile?.weeklyHours != null ? String(profile.weeklyHours) : '');
@@ -58,7 +68,9 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
     });
   };
 
-  const activeDays = Object.keys(schedule).filter((d) => (schedule[d] ?? []).length > 0).length;
+  const fixedDays = availableDays.filter(day => (schedule[day] ?? []).length > 0);
+  const scheduleCoversWeek = fixedDays.length > 0 && fixedDays.length === availableDays.length;
+  const hasSwimDay = fixedDays.some(day => schedule[day].includes('natacao'));
 
   const handleSave = async () => {
     setSaving(true);
@@ -76,7 +88,7 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
         }),
       });
       if (res.ok) { toast.success('Configuração de treino salva!'); router.refresh(); }
-      else toast.error('Erro ao salvar configuração');
+      else { const data = await res.json().catch(() => null); toast.error(data?.details?.[0]?.message ?? data?.error ?? 'Erro ao salvar configuração'); }
     } catch { toast.error('Erro ao salvar configuração'); }
     finally { setSaving(false); }
   };
@@ -106,19 +118,21 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
         </Card>
       </FadeIn>
 
-      <PlanningPreferencesForm ref={preferencesRef} profile={profile} />
+      <PlanningPreferencesForm ref={preferencesRef} profile={profile} availableDays={availableDays} setAvailableDays={setAvailableDays} fixedDoubleDays={fixedDays.filter(day => schedule[day].length > 1)} />
       <FadeIn delay={0.2}>
-        <Card>
+        <Card id="modalidades-por-dia" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Modalidades por Dia</span>
-              <span className="text-sm font-normal text-muted-foreground">{activeDays} dia(s) ativo(s)</span>
+              <span>Modalidades por dia</span>
+              <span className="text-sm font-normal text-muted-foreground">{fixedDays.length} de {availableDays.length} dias definidos</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Marque as modalidades nos dias em que quer fixá-las. Nos outros dias disponíveis, o Gotri completa a distribuição.</p>
+            {profile?.modality === 'triatlo' && scheduleCoversWeek && !hasSwimDay && <p role="status" className="rounded-md border border-destructive/40 p-3 text-sm text-destructive">Os dias disponíveis já estão definidos e nenhum inclui natação. Marque natação em um dia em que possa nadar ou deixe um dia disponível para a distribuição automática.</p>}
             {DAYS.map((d) => (
               <div key={d.key} className="rounded-lg border p-3">
-                <p className="font-medium mb-2">{d.label}</p>
+                <p className="font-medium mb-2">{d.label} <span className="font-normal text-sm text-muted-foreground">· {availableDays.includes(d.key) ? (schedule[d.key]?.length ? 'Modalidade definida' : 'Distribuição automática') : 'Indisponível'}</span></p>
                 <div className="flex flex-wrap gap-2">
                   {MODALITIES.map((m) => {
                     const Icon = m.icon;
@@ -126,10 +140,14 @@ export function ConfigurarTreinoClient({ profile }: { profile: any }) {
                     return (
                       <button
                         key={m.key}
+                        type="button"
+                        disabled={!availableDays.includes(d.key) && !active}
+                        aria-pressed={active}
                         onClick={() => toggleModality(d.key, m.key)}
                         className={cn(
                           'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-all',
-                          active ? 'text-white border-transparent' : 'text-muted-foreground hover:border-primary/50'
+                          active ? 'text-white border-transparent' : 'text-muted-foreground hover:border-primary/50',
+                          !availableDays.includes(d.key) && !active && 'opacity-50 cursor-not-allowed'
                         )}
                         style={active ? { backgroundColor: m.color } : {}}
                       >

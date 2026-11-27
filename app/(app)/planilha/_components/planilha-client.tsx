@@ -11,6 +11,7 @@ import { FadeIn } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
 import { WorkoutStructure as WorkoutStructureView, TrainingDistributionSummary, getWorkoutStructure, formatTrainingDuration } from '@/components/workout-structure';
 import Link from 'next/link';
+import { plannedWorkoutMetrics } from '@/lib/triathlon-metrics';
 
 const modLabels: Record<string, string> = { natacao: 'Natação', ciclismo: 'Ciclismo', corrida: 'Corrida', forca: 'Força', descanso: 'Descanso' };
 const modIcons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
@@ -44,7 +45,9 @@ const exportMods = [
   { key: 'forca', label: 'Força' },
 ];
 
-export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { plan: any; workouts: any[]; hasIntervalsKey?: boolean }) {
+type MetricProfile = Parameters<typeof plannedWorkoutMetrics>[1];
+
+export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false, metricProfile = null }: { plan: any; workouts: any[]; hasIntervalsKey?: boolean; metricProfile?: MetricProfile }) {
   const [filter, setFilter] = useState<string>('todos');
   const [exportModality, setExportModality] = useState<string>('todos');
   // Envio direto para o Intervals.icu (com horario 04:30)
@@ -120,7 +123,9 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
   };
 
   const totalMin = (workouts ?? []).reduce((s: number, w: any) => s + (Number(w?.duration) || 0), 0);
-  const totalTss = Math.round((workouts ?? []).reduce((s: number, w: any) => s + (Number(w?.tssEstimate) || 0), 0));
+  const estimatedLoads = (workouts ?? []).map(workout => workout?.tssEstimate).filter((load): load is number => typeof load === 'number' && Number.isFinite(load) && load >= 0);
+  const totalTss = estimatedLoads.length ? Math.round(estimatedLoads.reduce((sum, load) => sum + load, 0)) : null;
+  const plannedLoadLabel = totalTss === null ? 'Sem carga estimada' : `${totalTss} em ${estimatedLoads.length} sessões`;
   const numWeeks = new Set((workouts ?? []).map((w: any) => w?.weekNumber).filter((n: any) => n != null)).size;
   const numTreinos = (workouts ?? []).length;
 
@@ -142,9 +147,8 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
     doc.text('Gotri - Nade. Pedale. Corra. Evolua.', 14, 22);
     const sorted = [...(workouts ?? [])].sort((a: any, b: any) => (a?.weekNumber ?? 0) - (b?.weekNumber ?? 0) || (new Date(a?.date ?? 0).getTime() - new Date(b?.date ?? 0).getTime()));
     const totalMin = sorted.reduce((s: number, w: any) => s + (Number(w?.duration) || 0), 0);
-    const totalTss = sorted.reduce((s: number, w: any) => s + (Number(w?.tssEstimate) || 0), 0);
     doc.setTextColor(60);
-    doc.text(`${sorted.length} treinos  •  ${Math.round(totalMin / 60)}h ${totalMin % 60}min totais  •  Carga (TSS): ${Math.round(totalTss)}`, 14, 26);
+    doc.text(`${sorted.length} treinos  •  ${Math.floor(totalMin / 60)}h ${totalMin % 60}min totais  •  Carga estimada: ${plannedLoadLabel}`, 14, 26);
     const body = sorted.map((w: any) => [
       String(w?.weekNumber ?? ''),
       w?.date ? new Date(w.date).toLocaleDateString('pt-BR') : '',
@@ -270,7 +274,7 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
               <StatTile icon={CalendarCheck} label="Treinos" value={String(numTreinos)} color="#1A8A7D" />
               <StatTile icon={Clock} label="Volume total" value={`${Math.floor(totalMin / 60)}h ${totalMin % 60}min`} color="#3B82F6" />
               <StatTile icon={CalendarRange} label="Semanas" value={String(numWeeks)} color="#F97316" />
-              <StatTile icon={Flame} label="Carga (TSS)" value={String(totalTss)} color="#EF4444" />
+              <StatTile icon={Flame} label={`Carga estimada · ${estimatedLoads.length} sessões`} value={totalTss === null ? '—' : String(totalTss)} color="#EF4444" />
             </div>
           </FadeIn>
 
@@ -396,6 +400,8 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                       {filtered.map((w: any) => {
                         const Icon = modIcons[w?.modality] ?? Dumbbell;
                         const color = modColors[w?.modality] ?? '#6B7280';
+                        const structure = getWorkoutStructure(w?.structure);
+                        const metrics = structure ? plannedWorkoutMetrics(structure, metricProfile) : null;
                         return (
                           <tr key={w?.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
                             <td className="px-4 py-2 font-mono text-muted-foreground">{w?.weekNumber ?? '-'}</td>
@@ -408,10 +414,13 @@ export function PlanilhaClient({ plan, workouts, hasIntervalsKey = false }: { pl
                             </td>
                             <td className="px-4 py-2 min-w-[280px] max-w-xl">
                               <p className="font-medium">{w?.title}</p>
-                              {getWorkoutStructure(w?.structure)?.requiresCoachReview && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">Revisar com o coach antes da execução.</p>}
+                              {structure?.requiresCoachReview && <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">Revisar com o coach antes da execução.</p>}
                               <details className="mt-2">
                                 <summary className="cursor-pointer text-xs text-primary">Ver blocos, zonas e descansos</summary>
                                 <div className="mt-3"><WorkoutStructureView value={w?.structure} description={w?.description} /></div>
+                                {w?.tssEstimate != null && <p className="mt-2 text-xs text-muted-foreground">{w.modality === 'corrida' ? 'rTSS simplificado estimado' : 'TSS estimado'}: {Math.round(w.tssEstimate)}.</p>}
+                                {metrics?.approximateKilocalories != null && <p className="text-xs text-muted-foreground">Energia estimada pela massa atual e distância planejada: ≈ {Math.round(metrics.approximateKilocalories)} kcal.</p>}
+                                {metrics?.fuel && <p className="text-xs text-muted-foreground">Estimativa de carboidrato pela duração planejada: {metrics.fuel.totalGrams.map(grams => Math.round(grams)).filter((grams, index, values) => index === 0 || grams !== values[0]).join('–')} g ({metrics.fuel.source}).</p>}
                               </details>
                             </td>
                             <td className="px-4 py-2 text-center whitespace-nowrap font-mono">{workoutPrescription(w)}</td>

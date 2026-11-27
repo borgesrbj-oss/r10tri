@@ -154,6 +154,44 @@ test('dono continua podendo registrar e concluir o próprio treino', async () =>
   assert.equal(writes[1][1].create.userId, 'atleta-a');
 });
 
+test('descanso confirmado é idempotente por data e gravado para a conta autenticada', async () => {
+  const writes = [];
+  const prisma = { workout: { upsert: async input => writes.push(input) } };
+  const route = 'app/api/workouts/rest/route.ts';
+  const body = { date: '2026-01-01', userId: 'atleta-b' };
+  assert.equal((await load(route, prisma, null).POST(request(body))).status, 401);
+  const own = load(route, prisma);
+  for (const date of ['2026-02-31', '2026-01-01T12:00:00Z', '2100-01-01']) {
+    assert.equal((await own.POST(request({ date }))).status, 422);
+  }
+  assert.equal(writes.length, 0);
+  assert.equal((await own.POST(request(body))).status, 200);
+  assert.equal((await own.POST(request(body))).status, 200);
+  assert.equal(writes[0].where.id, writes[1].where.id);
+  assert.equal(writes[0].create.userId, 'atleta-a');
+  assert.equal(writes[0].create.duration, 0);
+  assert.equal(writes[0].create.completed, true);
+});
+
+test('registro de bike guarda as potências separadas e usa o limiar da sessão no primeiro registro', async () => {
+  const { buildWorkoutStructure } = nativeRequire('../lib/training-structure.ts');
+  const { markRunningThreshold } = nativeRequire('../lib/training-audit.ts');
+  const structure = buildWorkoutStructure({ ftp: 250 }, 'ciclismo', 'base', 60);
+  markRunningThreshold(structure, { ftp: 250 });
+  const { prisma, writes } = workoutDatabase();
+  prisma.workout.findFirst = async ({ where }) => ({ ...where, modality: 'ciclismo', structure });
+  const route = load('app/api/workouts/log/route.ts', prisma);
+  const body = { workoutId: 'meu-treino', actualDuration: 60, normalizedPowerWatts: 188, averagePowerWatts: 160, metricThreshold: { basis: 'ftp', value: 500 } };
+  assert.equal((await route.POST(request({ ...body, averagePowerWatts: -1 }))).status, 422);
+  assert.equal(writes.length, 0);
+  assert.equal((await route.POST(request(body))).status, 200);
+  const saved = writes[1][1];
+  assert.equal(saved.create.normalizedPowerWatts, 188);
+  assert.equal(saved.create.averagePowerWatts, 160);
+  assert.equal(saved.create.metricThreshold.value, 250);
+  assert.equal(saved.update.metricThreshold, undefined);
+});
+
 test('atleta não pode alterar treino alheio por nenhuma rota de atualização', async () => {
   for (const file of [
     'app/api/workouts/route.ts',
@@ -164,6 +202,109 @@ test('atleta não pode alterar treino alheio por nenhuma rota de atualização',
       request({ id: 'treino-alheio', title: 'Alteração indevida' }),
     );
     assert.equal(response.status, 404, file);
+    assert.equal(writes.length, 0, file);
+  }
+});
+
+function adaptationDatabase(overrides = {}) {
+  const { buildWorkoutStructure } = nativeRequire('../lib/training-structure.ts');
+  const structure = buildWorkoutStructure({ runThresholdPace: '4:30' }, 'corrida', 'build', 60, 720, 'Z4');
+  const workout = {
+    id: 'sessao-ajustavel', userId: 'atleta-a', plan: null, planId: null,
+    date: new Date('2099-02-02T12:00:00Z'), updatedAt: new Date('2099-01-01T12:00:00Z'),
+    completed: false, coachManaged: false, paused: false, brickGroupId: null,
+    duration: 60, modality: 'corrida', targetZone: 'Z4', structure,
+    description: 'Orientação pessoal preservada.', ...overrides,
+  };
+  const calendar = [workout];
+  const writes = [];
+  const prisma = {
+    workout: {
+      findFirst: async ({ where }) => workout.id === where.id && workout.userId === where.userId ? workout : null,
+      findMany: async () => calendar,
+      updateMany: async ({ where, data }) => {
+        assert.equal(where.userId, workout.userId);
+        assert.equal(where.updatedAt, workout.updatedAt);
+        assert.equal(where.completed, false);
+        assert.equal(where.coachManaged, false);
+        assert.equal(where.brickGroupId, null);
+        writes.push(data);
+        return { count: 1 };
+      },
+    },
+    athleteProfile: {
+      findUnique: async () => ({ availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'], weeklyHours: 4 }),
+    },
+    targetRace: { findMany: async () => [] },
+    $transaction: async (callback) => callback(prisma),
+  };
+  return { workout, calendar, writes, prisma };
+}
+
+test('versão leve mostra a queda da intensidade e só grava após confirmar a prévia correspondente', async () => {
+  const { workout, prisma, writes } = adaptationDatabase();
+  const route = load('app/api/workouts/adapt/route.ts', prisma);
+  const body = { id: workout.id, action: 'leve' };
+  assert.equal((await route.POST(request(body))).status, 409);
+  const response = await route.POST(request({ ...body, preview: true }));
+  assert.equal(response.status, 200);
+  const proposal = await response.json();
+  assert.equal(writes.length, 0);
+  assert.equal(proposal.duration, 60);
+  assert.equal(proposal.review.weeks[0].before.highMinutes, 12);
+  assert.equal(proposal.review.weeks[0].after.highMinutes, 0);
+  assert.match(proposal.previewId, /^[0-9a-f]{64}$/);
+  assert.equal((await route.POST(request({ ...body, expectedPreview: proposal.previewId }))).status, 200);
+  assert.equal(writes[0].structure.distribution.highSeconds, 0);
+  assert.equal(writes[0].structure.durationSeconds, 3600);
+  assert.match(writes[0].description, /Orientação pessoal preservada/);
+});
+
+test('mudança de dia prevê a falta de espaço e menos de 48 horas sem gravar', async () => {
+  const { workout, prisma, writes, calendar } = adaptationDatabase();
+  const { dayKey } = nativeRequire('../lib/planning-preferences.ts');
+  const destination = '2099-02-05';
+  const closeWorkout = {
+    ...workout, id: 'sessao-intensa', date: new Date('2099-02-06T12:00:00Z'),
+  };
+  calendar.push(closeWorkout);
+  prisma.athleteProfile.findUnique = async () => ({
+    availableDays: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'],
+    dailyMinutes: { [dayKey(destination)]: 35 },
+  });
+  const route = load('app/api/workouts/adapt/route.ts', prisma);
+  const body = { id: workout.id, action: 'mover', date: destination };
+  const response = await route.POST(request({ ...body, preview: true }));
+  assert.equal(response.status, 200);
+  const proposal = await response.json();
+  assert.ok(proposal.review.conflicts.some((message) => message.includes('limite de 35 minutos')));
+  assert.ok(proposal.review.conflicts.some((message) => message.includes('48 horas')));
+  assert.equal((await route.POST(request({ ...body, expectedPreview: proposal.previewId }))).status, 409);
+  assert.equal(writes.length, 0);
+});
+
+test('confirmação recusa a prévia após mudança de carga na semana', async () => {
+  const { workout, prisma, writes, calendar } = adaptationDatabase();
+  const route = load('app/api/workouts/adapt/route.ts', prisma);
+  const body = { id: workout.id, action: 'encurtar', minutes: 35 };
+  const proposal = await (await route.POST(request({ ...body, preview: true }))).json();
+  assert.equal(proposal.review.weeks[0].after.minutes, 35);
+  calendar.push({ ...workout, id: 'nova-sessao' });
+  const response = await route.POST(request({ ...body, expectedPreview: proposal.previewId }));
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /mudou desde a prévia/);
+  assert.equal(writes.length, 0);
+});
+
+test('rotas do atleta preservam partes de treino combinado', async () => {
+  for (const file of [
+    'app/api/workouts/route.ts', 'app/api/workouts/update/route.ts',
+    'app/api/workouts/delete/route.ts', 'app/api/workouts/adapt/route.ts',
+  ]) {
+    const { workout, prisma, writes } = adaptationDatabase({ brickGroupId: 'brick-inteiro' });
+    const response = await load(file, prisma).POST(request({ id: workout.id, action: 'pausar' }));
+    assert.equal(response.status, 409, file);
+    assert.match((await response.json()).error, /treino combinado/);
     assert.equal(writes.length, 0, file);
   }
 });

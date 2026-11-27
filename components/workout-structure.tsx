@@ -5,6 +5,8 @@ import type { WorkoutStructure as StructuredWorkout } from '@/lib/training-types
 import { buildWaLink } from '@/lib/wa';
 import { Button } from '@/components/ui/button';
 import { effortTarget } from '@/lib/training-zones';
+import { swimMediaForWorkout } from '@/lib/swim-media-catalog';
+import { SwimMediaReferences } from '@/components/swim-media-references';
 
 const KINDS: Record<string, string> = { aquecimento: 'Aquecimento', principal: 'Bloco principal', recuperacao: 'Recuperação', desaquecimento: 'Desaquecimento' };
 const MODALITIES = ['corrida', 'ciclismo', 'natacao', 'forca'];
@@ -57,7 +59,7 @@ export function TrainingDistributionSummary({ workouts, title = 'Distribuição 
         <div><dt className="text-muted-foreground">Z3 · moderado</dt><dd className="font-medium">{formatTrainingDuration(total.moderate)} · {percent(total.moderate)}</dd></div>
         <div><dt className="text-muted-foreground">Z4–Z5 · intenso</dt><dd className="font-medium">{formatTrainingDuration(total.high)} · {percent(total.high)}</dd></div>
       </dl>
-      <p className="text-xs text-muted-foreground">Planejado: referência de bloco ~80% baixo / ~20% moderado + alto, somando Z3–Z5. Percentuais do tempo aeróbico ativo, incluindo aquecimento, recuperação ativa e desaquecimento. Força: {formatTrainingDuration(total.strength)}; pausas passivas: {formatTrainingDuration(total.rest)}, contabilizadas à parte. A intensidade pode ficar abaixo de 20% em adaptação, recuperação e transição.</p>
+      <p className="text-xs text-muted-foreground">Percentuais do tempo aeróbico ativo, incluindo aquecimento, recuperação ativa e desaquecimento. A memória de cálculo do plano mostra as metas por fase e os desvios. Força ({formatTrainingDuration(total.strength)}) e pausas passivas ({formatTrainingDuration(total.rest)}) são contabilizadas à parte.</p>
       {total.legacy > 0 && <p className="text-xs text-amber-500">{total.legacy} treino(s) sem estrutura válida não entram no cálculo de intensidade; os percentuais são parciais. O texto legado foi preservado.</p>}
       {total.unclassified > 0 && <p className="text-xs text-amber-500">Há {formatTrainingDuration(total.unclassified)} sem zona classificada; revise a prescrição antes de interpretar os percentuais.</p>}
       {total.endurance === 0 && <p className="text-xs text-muted-foreground">Ainda não há tempo aeróbico estruturado para calcular a distribuição 80/20.</p>}
@@ -68,6 +70,13 @@ export function TrainingDistributionSummary({ workouts, title = 'Distribuição 
 export function WorkoutStructure({ value, description }: { value: unknown; description?: string | null }) {
   const structure = getWorkoutStructure(value);
   if (!structure) return <div className="space-y-2"><p className="text-sm whitespace-pre-wrap">{description || 'Sem descrição cadastrada.'}</p><p className="text-xs text-muted-foreground">Treino legado ou sem blocos válidos. Sua descrição original foi preservada; as etapas não foram inventadas a partir do texto.</p></div>;
+  if (structure.transition) return (
+    <div className="space-y-2 text-sm">
+      <p className="font-medium">{structure.transition} · {structure.steps[0].label} · {formatTrainingDuration(structure.durationSeconds)}</p>
+      <p>{structure.steps[0].target.text}</p>
+      {description && <details><summary className="cursor-pointer text-muted-foreground">Observações da transição</summary><p className="mt-2 whitespace-pre-wrap">{description}</p></details>}
+    </div>
+  );
   return <div className="space-y-3">
     <p className="text-sm font-medium">Estrutura completa · {structure.prescriptionMode==='distancia'?`${distanceLabel(prescribedDistance(structure))} · tempo estimado `:''}{formatTrainingDuration(structure.durationSeconds)}</p>
     <ol className="space-y-2">
@@ -78,6 +87,7 @@ export function WorkoutStructure({ value, description }: { value: unknown; descr
         <p className="mt-1 break-words text-muted-foreground">{step.target.text}{step.rest === 'ativo' ? ' · recuperação ativa' : ''}{structure.prescriptionMode!=='distancia' && Number.isFinite(step.distanceMeters) && Number(step.distanceMeters) > 0 ? ` · distância auxiliar ~${Math.round(Number(step.distanceMeters))} m` : ''}</p>
       </li>)}
     </ol>
+    <SwimMediaReferences references={swimMediaForWorkout(structure)} />
     {Array.isArray(structure.warnings) && structure.warnings.length > 0 && <ul className="list-disc space-y-1 pl-4 text-xs text-amber-500">{structure.warnings.filter(warning => typeof warning === 'string').map((warning, index) => <li key={index}>{warning}</li>)}</ul>}
     {description && <details className="text-sm"><summary className="cursor-pointer text-muted-foreground">Descrição completa do treino</summary><p className="mt-2 whitespace-pre-wrap">{description}</p></details>}
   </div>;

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { editWorkoutStructure } from '@/lib/workout-edit';
+import { BRICK_ADJUSTMENT_MESSAGE } from '@/lib/workout-adjustment';
 import {
   calendarDay,
   describeStructure,
@@ -74,6 +75,8 @@ export async function POST(req: NextRequest) {
       },
       { status: 409 },
     );
+  if (existing.brickGroupId)
+    return Response.json({ error: BRICK_ADJUSTMENT_MESSAGE }, { status: 409 });
   const data: any = {};
   if (planId !== undefined) {
     if (planId) {

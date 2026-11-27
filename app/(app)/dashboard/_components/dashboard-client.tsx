@@ -103,7 +103,7 @@ export function DashboardClient({ data }: { data: any }) {
         </div>
       </FadeIn>
 
-      <TrainingOverview next={data?.next} week={data?.week??{minutes:0,completed:0,total:0}} />
+      <TrainingOverview today={data.today} todayWorkouts={data.todayWorkouts} next={data.next} week={data.week} />
       {isCoach && <CoachAlerts />}
 
       {prefs.sobre && profile?.aboutMe && (

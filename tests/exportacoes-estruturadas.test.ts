@@ -7,7 +7,10 @@ import ts from 'typescript';
 import { NextResponse } from 'next/server';
 import { Decoder, Stream } from '@garmin/fitsdk';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import JSZip from 'jszip';
+import { buildBrickTransition } from '../lib/brick-transition';
 import * as builders from '../lib/export-builders';
+import * as planEngine from '../lib/plan-engine';
 import * as zones from '../lib/training-zones';
 import {
   buildWorkoutStructure,
@@ -588,11 +591,93 @@ test('rota individual exige sessão, valida parâmetros e bloqueia acesso alheio
   );
 });
 
-test('envio ao Intervals conserva descrição e tempo estruturados e rejeita estrutura inválida', async () => {
-  for (const invalid of [false, true]) {
+function brickTransition(legacy = false) {
+  const base = workout('corrida');
+  const structure = buildBrickTransition(120, 'build');
+  if (legacy) {
+    delete structure.transition;
+    structure.origin = 'coach';
+  }
+  return {
+    ...base, id: 't2', brickGroupId: 'brick-a', partOrder: 1, modality: 'descanso',
+    title: 'Transição do brick', duration: 2, targetZone: null, structure,
+  };
+}
+
+test('transições explícitas e legadas são exportadas como texto, com grupo e duração', async () => {
+  for (const legacy of [false, true]) {
+    const transition = brickTransition(legacy);
+    assert.match(builders.buildTxt(transition), /Transição.*bike → corrida.*120 s/);
+    for (const builder of [builders.buildFit, builders.buildTcx, builders.buildZwo]) {
+      assert.throws(() => builder(transition), /exportação em TXT/);
+    }
+    assert.throws(() => builders.buildTxt({ ...transition, brickGroupId: null }), /Estrutura/);
+    const response = await endpoint(transition).get('id=t2&format=txt');
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /T2 · Transição bike → corrida/);
+  }
+  assert.throws(
+    () => builders.buildTxt({ ...brickTransition(), modality: 'corrida' }),
+    /Estrutura/,
+  );
+});
+
+test('ZIP de Garmin preserva arquivos e ordem de bike, T2 em TXT e corrida', async () => {
+  const transition = brickTransition();
+  const bike = { ...workout('ciclismo'), id: 'bike', brickGroupId: transition.brickGroupId, partOrder: 0, title: 'Pedal' };
+  const run = { ...workout('corrida'), id: 'run', brickGroupId: transition.brickGroupId, partOrder: 2, title: 'Corrida' };
+  const source = ts.transpileModule(
+    fs.readFileSync(path.resolve('app/api/plan/export/route.ts'), 'utf8'),
+    { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } },
+  ).outputText;
+  const sandbox = { exports: {} as any };
+  const dependencies: Record<string, unknown> = {
+    '@/lib/coach-access': { canAccessAthlete: async () => true },
+    'next/server': { NextResponse },
+    '@/auth': { auth: async () => ({ user: { id: transition.userId } }) },
+    '@/lib/db': {
+      prisma: {
+        trainingPlan: { findUnique: async () => ({ userId: transition.userId, name: 'Triatlo' }) },
+        athleteProfile: { findUnique: async () => profile },
+        workout: {
+          findMany: async ({ orderBy }: any) => {
+            assert.equal(orderBy.some((field: any) => field.partOrder === 'asc'), true);
+            return [bike, transition, run];
+          },
+        },
+      },
+    },
+    '@/lib/export-builders': builders,
+    '@/lib/plan-engine': planEngine,
+    '@/lib/training-zones': zones,
+    jszip: JSZip,
+  };
+  vm.runInNewContext(source, { module: sandbox, exports: sandbox.exports, require: (name: string) => dependencies[name] });
+  const response = await sandbox.exports.GET({
+    nextUrl: new URL('https://app.exemplo/api/plan/export?planId=plano-a&platform=garmin'),
+  });
+  assert.equal(response.status, 200);
+  const zip = await JSZip.loadAsync(await response.arrayBuffer());
+  const parts = Object.keys(zip.files).filter(name => name.includes('_brick'));
+  assert.match(parts[0], /_brick01_pedal\.fit$/);
+  assert.match(parts[1], /_brick02_transicao_do_brick\.txt$/);
+  assert.match(parts[2], /_brick03_corrida\.fit$/);
+  assert.match(await zip.file(parts[1])!.async('text'), /T2 · Transição bike → corrida · 120 s/);
+});
+
+test('envio ao Intervals conserva estrutura, agenda as partes do brick e rejeita dados inválidos', async () => {
+  for (const scenario of ['normal', 'inválido', 'brick'] as const) {
+    const invalid = scenario === 'inválido';
     const item = workout('corrida');
     item.description += '\nAmbiente informado: rua. Considere terreno e clima.';
     if (invalid) item.structure.version = 99 as 1;
+    const list = scenario === 'brick'
+      ? [
+          { ...workout('ciclismo'), id: 'bike', brickGroupId: 'brick-a', partOrder: 0 },
+          brickTransition(true),
+          { ...item, id: 'run', brickGroupId: 'brick-a', partOrder: 2 },
+        ]
+      : [item];
     const sent: any[] = [];
     const source = ts.transpileModule(
       fs.readFileSync(
@@ -627,7 +712,7 @@ test('envio ao Intervals conserva descrição e tempo estruturados e rejeita est
               intervalsIcuApiKey: 'credencial-de-teste',
             }),
           },
-          workout: { findMany: async () => [item] },
+          workout: { findMany: async () => list },
         },
       },
       '@/lib/export-builders': builders,
@@ -651,16 +736,25 @@ test('envio ao Intervals conserva descrição e tempo estruturados e rejeita est
       json: async () => ({ planId: 'plano-a' }),
     });
     assert.equal(response.status, invalid ? 422 : 200);
-    assert.equal(sent.length, invalid ? 0 : 1);
+    assert.equal(sent.length, invalid ? 0 : list.length);
+    if (scenario === 'brick') {
+      assert.equal(sent[0].type, 'Ride');
+      assert.equal(sent[1].category, 'NOTE');
+      assert.equal(sent[1].moving_time, undefined);
+      assert.match(sent[1].description, /T2 · Transição bike → corrida · 120 s/);
+      assert.equal(sent[2].type, 'Run');
+      assert.deepEqual(sent.map(event => event.start_date_local.slice(11)), ['04:30:00', '04:53:00', '04:55:00']);
+    }
     if (!invalid) {
-      assert.equal(sent[0].moving_time, 1380);
-      assert.ok(sent[0].description.includes(item.structure.steps[1].label));
+      const run = sent.at(-1);
+      assert.equal(run.moving_time, 1380);
+      assert.ok(run.description.includes(item.structure.steps[1].label));
       assert.ok(
-        sent[0].description.includes(item.structure.steps[1].target.text),
+        run.description.includes(item.structure.steps[1].target.text),
       );
-      assert.ok(sent[0].description.includes('Ambiente informado: rua.'));
+      assert.ok(run.description.includes('Ambiente informado: rua.'));
       assert.ok(
-        !sent[0].description.includes(
+        !run.description.includes(
           'Descrição antiga que não representa os intervalos.',
         ),
       );

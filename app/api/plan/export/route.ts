@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
   if (modality !== 'todos') where.modality = modality;
   const workouts = await prisma.workout.findMany({
     where,
-    orderBy: { date: 'asc' },
+    orderBy: [{ date: 'asc' }, { brickGroupId: 'asc' }, { partOrder: 'asc' }, { id: 'asc' }],
   });
   if (workouts.length === 0)
     return NextResponse.json(
@@ -90,7 +90,8 @@ export async function GET(req: NextRequest) {
         '0',
       );
       const ds = w.date ? new Date(w.date).toISOString().slice(0, 10) : null; // prefixo de data p/ agendar no calendário
-      const base = `${ds ? ds + '_' : ''}S${wk}_${slugify(w.title)}`;
+      const part = w.brickGroupId ? `brick${String(w.partOrder + 1).padStart(2, '0')}_` : '';
+      const base = `${ds ? ds + '_' : ''}S${wk}_${part}${slugify(w.title)}`;
       if (platform === 'garmin') {
         // Garmin: força/descanso como texto. Demais modalidades geram UM arquivo no formato escolhido
         // (.TCX para TrainingPeaks OU .FIT para o relógio via USB) — nunca os dois juntos.

@@ -2,20 +2,25 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
+import { summarizedPerformedLoad } from '@/lib/triathlon-metrics';
+import { calendarDayInBrazil, currentTrainingWeek, weeklyTrainingOverview } from '@/lib/weekly-training-overview';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
   const userId = session.user.id;
   
-  const workouts = await prisma.workout.findMany({ where: { userId }, orderBy: { date: 'asc' }, include: { log: true } });
+  const workouts = await prisma.workout.findMany({
+    where: { userId }, orderBy: { date: 'asc' }, include: { log: true, plan: { select: { status: true } } },
+  });
   const weightLogs = await prisma.weightLog.findMany({ where: { userId }, orderBy: { date: 'asc' } });
   const races = await prisma.targetRace.findMany({ where: { userId }, orderBy: { date: 'asc' } });
   const profile = await prisma.athleteProfile.findUnique({ where: { userId } });
 
   const weeklyLoad: any[] = [];
   const byWeek = new Map<string, { natacao: number; ciclismo: number; corrida: number; total: number }>();
-  for (const w of workouts ?? []) {
+  const sessions = workouts.filter(workout => workout.modality !== 'descanso' || workout.duration > 0);
+  for (const w of sessions) {
     const d = new Date(w.date);
     const weekStart = new Date(d);
     weekStart.setDate(d.getDate() - d.getDay());
@@ -32,11 +37,14 @@ export async function GET() {
     weeklyLoad.push({ week, ...data });
   }
 
-  const total = workouts?.length ?? 0;
-  const done = workouts?.filter((w: any) => w?.completed)?.length ?? 0;
+  const total = sessions.length;
+  const done = sessions.filter(workout => workout.completed).length;
+  const { start, end } = currentTrainingWeek(calendarDayInBrazil(new Date()));
 
   return NextResponse.json({
     weeklyLoad,
+    currentWeek: weeklyTrainingOverview(sessions.filter(workout => workout.date >= start && workout.date < end)),
+    performedLoad: summarizedPerformedLoad(workouts),
     weightLogs: (weightLogs ?? []).map((l: any) => ({ date: l?.date, weight: l?.weight })),
     compliance: { total, done, rate: total > 0 ? Math.round((done / total) * 100) : 0 },
     races: (races ?? []).map((r: any) => ({ name: r?.name, date: r?.date, distance: r?.distance })),

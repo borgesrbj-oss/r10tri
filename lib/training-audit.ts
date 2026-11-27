@@ -1,10 +1,21 @@
 import type {TrainingProfile,TrainingRace,TrainingPhase,WorkoutStructure} from './training-types';
 import {preferences} from './planning-preferences';
-import {runThreshold,swimThreshold,numericValue,formatPaceSeconds} from './training-zones';
+import {bikeThreshold,runThreshold,swimThreshold,numericValue,formatPaceSeconds} from './training-zones';
+
+export function swimmingAccessIssue(profile: Pick<TrainingProfile, 'canSwim' | 'hasPoolAccess' | 'poolSize'> | null): {field:'canSwim'|'hasPoolAccess';message:string} | null {
+ if(profile?.canSwim===false)return {field:'canSwim',message:'Para incluir sessões de natação, confirme que você sabe nadar. Se ainda está aprendendo, procure aulas com um professor.'};
+ if(profile?.hasPoolAccess===false&&profile.poolSize!=='mar_aberto')return {field:'hasPoolAccess',message:'Informe uma piscina ou um local seguro de treino em águas abertas para incluir a natação.'};
+ return null;
+}
+
 export function preparationIssues(profile:TrainingProfile|null,races:TrainingRace[],start:Date|string=new Date()) {
  if(!profile)return [];
  const sports=profile.modality==='triatlo'?['corrida','ciclismo','natacao']:['corrida','ciclismo','natacao'].includes(String(profile.modality))?[String(profile.modality)]:[];
  const issues:{field:string;message:string}[]=[];
+ if(sports.includes('natacao')) {
+   const access = swimmingAccessIssue(profile);
+   if(access) issues.push(access);
+ }
  const prefs=preferences(profile.planningPreferences);
  for(const sport of sports)if(prefs.recentMinutes?.[sport]==null||!Number.isFinite(Number(prefs.recentMinutes[sport])))issues.push({field:'planningPreferences.recentMinutes.'+sport,message:'Informe o volume semanal recente de '+sport+' em minutos. Use 0 se ainda não pratica; o app não presumirá uma base.'});
  let schedule:Record<string,string[]>={};
@@ -25,15 +36,16 @@ export function recentLongRunLimit(options:unknown,week:number,growth:number,pha
  return Math.max(10,Math.floor(Number(minutes)*Math.pow(1+growth,Math.max(0,week-Math.floor(week/4)))*factor));
 }
 /** Referência de limiar fica junto da prescrição, sem recalcular o histórico com o perfil atual. */
-export function markRunningThreshold(structure:WorkoutStructure,profile:TrainingProfile|null){
+export function markRunningThreshold(structure:WorkoutStructure,profile:TrainingProfile|null, preserveRunningBands = false){
  const pace=runThreshold(profile),hr=numericValue(profile?.thresholdHeartRate);
- if(structure.modality==='ciclismo'){const ftp=numericValue(profile?.ftp)??numericValue(profile?.testFTPEstimated);if(ftp&&structure.steps.some(s=>s.target.basis==='ftp'))structure.thresholdReference={basis:'ftp',value:ftp};return;}
+ if(structure.modality==='ciclismo'){const ftp=bikeThreshold(profile);if(ftp&&structure.steps.some(s=>s.target.basis==='ftp'))structure.thresholdReference={basis:'ftp',value:ftp};return;}
  if(structure.modality==='natacao'){const target=structure.steps.find(s=>s.target.basis==='css');if(target){const value=swimThreshold(profile);if(value)structure.thresholdReference={basis:'css',value};}return;}
  if(structure.modality!=='corrida')return;
  const useHr=structure.steps.some(s=>s.target.basis==='threshold_hr');
  const value=useHr?hr:pace;
  if(!value)return;
  structure.thresholdReference={basis:useHr?'threshold_hr':'run_threshold',value};
+ if(preserveRunningBands)return;
  for(const step of structure.steps)if(step.zone==='Z4'&&step.target.basis===structure.thresholdReference.basis){
    step.target={...step.target,low:value,high:value,text:useHr?`${value} bpm — limiar medido`:`${formatPaceSeconds(value)}/km — limiar medido`};
    if(step.distanceMeters)step.distanceMeters=Math.max(10,Math.round(step.durationSeconds/value*100)*10);

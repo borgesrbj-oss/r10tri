@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import * as assessment from '../lib/assessment-validation';
+import * as triathlon from '../lib/triathlon-race';
 import { publicProfile } from '../lib/profile-public';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -28,6 +29,7 @@ function handler(file: string, prisma: unknown, session: Session = { user: { id:
     '@/auth': { auth: async () => session },
     '@/lib/db': { prisma },
     '@/lib/assessment-validation': assessment,
+    '@/lib/triathlon-race': triathlon,
     '@/lib/profile-public': { publicProfile },
   };
   vm.runInNewContext(source, {
@@ -121,6 +123,30 @@ test('provas exigem sessão e a listagem usa somente o proprietário autenticado
   const response = await route.GET();
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), []);
+});
+
+test('mudança de meta do atleta preserva as faixas e a confirmação do coach', async () => {
+  const selected = { id: 'minha-prova', name: 'Olímpico', userId: 'atleta-atual', date: new Date('2027-04-05T12:00:00Z'), distance: 'olimpico' };
+  const segmentTargets = { format: 'olimpico', goalSeconds: 10000, rangeSource: 'Evento oficial', reviewedLevel: 'intermediario', ranges: { t1: { minSeconds: 60, maxSeconds: 300 } } };
+  const route = handler('app/api/races/route.ts', { targetRace: {
+    findFirst: async ({ where }: any) => {
+      assert.equal(where.userId, selected.userId);
+      return { ...selected, segmentTargets };
+    },
+    update: async ({ where, data }: any) => {
+      assert.equal(where.id, selected.id);
+      assert.equal(where.userId, selected.userId);
+      return { ...selected, ...data };
+    },
+  } });
+  const input = { name: selected.name, date: '2027-04-05', distance: 'olimpico', id: selected.id, segmentTargets: { goalSeconds: 10200 } };
+  const response = await route.POST(request(input));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).segmentTargets, { ...segmentTargets, goalSeconds: 10200 });
+  const moved = await route.POST(request({ ...input, date: '2027-05-10' }));
+  assert.equal(moved.status, 200);
+  assert.deepEqual((await moved.json()).segmentTargets, { format: 'olimpico', goalSeconds: 10200 });
+  assert.equal((await route.POST(request({ ...input, segmentTargets: { ...input.segmentTargets, reviewedLevel: 'avancado' } }))).status, 422);
 });
 
 for (const file of ['app/api/profile/route.ts', 'app/api/profile/assessment/route.ts']) {

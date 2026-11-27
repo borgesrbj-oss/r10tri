@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
+import { BRICK_ADJUSTMENT_MESSAGE } from '@/lib/workout-adjustment';
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -10,7 +11,6 @@ export async function POST(req: NextRequest) {
   const { id } = await req.json();
   if (!id)
     return NextResponse.json({ error: 'ID obrigatorio' }, { status: 400 });
-  // Coach pode excluir treino de qualquer atleta; atleta apenas o próprio
   const where = { id, userId: session.user.id };
   const w = await prisma.workout.findFirst({ where });
   if (!w)
@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
       },
       { status: 409 },
     );
-  await prisma.workout.delete({ where: { id } });
+  if (w.brickGroupId)
+    return Response.json({ error: BRICK_ADJUSTMENT_MESSAGE }, { status: 409 });
+  await prisma.workout.delete({ where: { id, userId: session.user.id, completed: false, coachManaged: false, brickGroupId: null } });
   return NextResponse.json({ ok: true });
 }

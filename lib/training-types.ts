@@ -1,3 +1,6 @@
+import type { PolarizedAudit } from './polarized-distribution';
+import type { TriathlonRaceTarget } from './triathlon-race';
+
 /** Contrato versionado de prescrição. Durações em segundos são a fonte de verdade. */
 export type TrainingZone = 'Z1' | 'Z2' | 'Z3' | 'Z4' | 'Z5';
 export type TrainingModality = 'corrida' | 'ciclismo' | 'natacao' | 'forca';
@@ -31,12 +34,15 @@ export interface TrainingDistribution {
   restSeconds: number;
   enduranceSeconds: number;
   strengthSeconds: number;
+  unknownSeconds?: number;
   totalSeconds: number;
   highFraction: number;
 }
 
 export interface WorkoutStructure {
   origin?: 'coach';
+  transition?: 'T1' | 'T2';
+  swimTechnique?: 'crawlAlignment';
   /** Km são a prescrição; segundos continuam como estimativa para planejar carga. */
   prescriptionMode?: 'distancia';
   thresholdReference?: {basis:'run_threshold'|'threshold_hr'|'ftp'|'css';value:number};
@@ -52,11 +58,13 @@ export interface WorkoutStructure {
 
 export interface GeneratedWorkout {
   date: string;
-  modality: TrainingModality;
+  modality: TrainingModality | 'descanso';
   title: string;
   description: string;
   duration: number;
-  targetZone: TrainingZone;
+  targetZone: TrainingZone | null;
+  brickGroupKey?: string;
+  partOrder?: number;
   tssEstimate: number | null;
   phase: TrainingPhase;
   weekNumber: number;
@@ -66,6 +74,7 @@ export interface GeneratedWorkout {
 export interface TrainingProfile {
   planningPreferences?:unknown;
   heightCm?: number | null;
+  carbohydrateRateGPerHour?: number | string | null;
   goalTime?: string | null;
   goalType?: string | null;
   dailyMinutes?: unknown;
@@ -74,6 +83,8 @@ export interface TrainingProfile {
   swimLevel?: string | null;
   runLevel?: string | null;
   bikeLevel?: string | null;
+  weakestSport?: string | null;
+  strongestSport?: string | null;
   /** Objetivo escolhido para este plano; não substitui a intenção esportiva do perfil. */
   trainingGoal?: string | null;
   runStructure?: string | null;
@@ -98,6 +109,7 @@ export interface TrainingProfile {
   hasTrainer?: boolean | null;
   hasHRM?: boolean | null;
   ftp?: number | string | null;
+  testFTP20min?: number | string | null;
   testFTPEstimated?: number | string | null;
   runThresholdPace?: string | null;
   testRunPace?: string | null;
@@ -120,6 +132,8 @@ export interface TrainingProfile {
 }
 
 export interface TrainingRace {
+  id?: string;
+  segmentTargets?: unknown;
   priority?: string | null;
   date: Date | string;
   name?: string | null;
@@ -135,12 +149,19 @@ export interface TrainingWeekSummary {
   targetHighFraction: number;
   distribution: TrainingDistribution;
   warnings: string[];
+  polarization?: PolarizedAudit;
+  reduction?: { kind: 'descarga' | 'polimento'; referenceMinutes: number; fraction: number };
 }
 
 export interface StructuredPlan {
   workouts: GeneratedWorkout[];
   warnings: string[];
   summary: {
+    assessmentIssues?: { field: string; message: string }[];
+    secondaryEvents?: { date: string; name: string; priority: 'B' | 'C' }[];
+    raceId?: string;
+    raceTarget?: TriathlonRaceTarget;
+    polarization?: PolarizedAudit;
     calculation?: {version:1;method:string;initialMinutes:number;weeklyCapMinutes:number|null;growth:number;inputs:Record<string,unknown>;rules:string[];sourceIds:string[]};
     feedback?: { status: string; reasons: string[]; observedSessions: number };
     basis: 'tempo_aerobico_ativo';

@@ -23,6 +23,9 @@ test('todo campo obrigatório informado pelo servidor aponta para a mesma etapa 
 test('aviso preserva o caminho do limite diário e ignora dados sem campo conhecido',()=>{
  assert.equal(assessmentIssue('dailyMinutes.seg','Reveja')?.step,7);
  assert.equal(assessmentIssue('restingHeartRate','Reveja')?.step,4);
+ assert.equal(assessmentIssue('hasPoolAccess','Reveja')?.step,7);
+ assert.equal(assessmentIssue('daySchedule','Reveja')?.label,'Modalidades por dia');
+ assert.equal(assessmentIssue('planningPreferences.recentMinutes.natacao','Reveja')?.label,'Volume semanal recente de natação');
  assert.deepEqual(assessmentIssues([{field:'password',message:'x'},'x',null]),[]);
  assert.equal(assessmentIssues([{field:'birthDate',message:'Data inválida'}])[0].label,'Data de nascimento');
 });

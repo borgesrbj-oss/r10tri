@@ -3,11 +3,60 @@ import {PLANNING_SOURCES} from '@/lib/planning-evidence';
 import {thresholdMinutes,type ThresholdMinutes} from '@/lib/training-audit';
 import {getWorkoutStructure} from './workout-structure';
 import {workoutPrescription} from '@/lib/training-prescription';
+import {auditPolarizedDistribution, type PolarizedWindow} from '@/lib/polarized-distribution';
+import {combineDistributions} from '@/lib/training-structure';
+import type {TrainingDistribution, TrainingWeekSummary} from '@/lib/training-types';
+import {TriathlonRaceTargetSummary} from './triathlon-race-target';
 const empty=():ThresholdMinutes=>({total:0,below:0,at:0,above:0,unknown:0});
 const add=(a:ThresholdMinutes,b:ThresholdMinutes)=>Object.fromEntries(Object.keys(a).map(k=>[k,a[k as keyof ThresholdMinutes]+b[k as keyof ThresholdMinutes]])) as ThresholdMinutes;
 const inputLabels:Record<string,string>={startDate:'Início do ciclo',endDate:'Fim do ciclo',modality:'Modalidade',level:'Experiência',goal:'Objetivo',availableDays:'Dias disponíveis',recentMinutes:'Volume recente por esporte (min/semana)',recentLongRunMinutes:'Longão recente (min)',dailyMinutes:'Limite diário (min)',raceDate:'Data da prova',requiresCoachReview:'Revisão do coach necessária',feedbackStatus:'Avaliação recente de tolerância'};
 const showInput=(value:unknown):string=>value==null?'Não informado':typeof value==='boolean'?value?'Sim':'Não':Array.isArray(value)?value.join(', '):typeof value==='object'?Object.entries(value).map(([k,v])=>`${k}: ${v}`).join('; '):String(value);
 const n=(value:number)=>value.toLocaleString('pt-BR',{maximumFractionDigits:2});
+
+const windowLabels: Record<PolarizedWindow, string> = {
+  regular: 'Regular', descarga: 'Descarga', polimento: 'Polimento', 'pos-prova': 'Pós-prova', ciclo: 'Ciclo',
+};
+
+function PolarizedCalendarAudit({weeks, workouts, complete, start, raceDate}: {weeks: TrainingWeekSummary[]; workouts: any[]; complete: boolean; start: string; raceDate?: string}) {
+ const byWeek = new Map<number,TrainingDistribution[]>();
+ const firstDay = Date.parse(start);
+ for (const workout of workouts) {
+   if (workout.paused) continue;
+   const structure = getWorkoutStructure(workout.structure);
+   const day = String(workout.date).slice(0,10);
+   if (raceDate && day >= raceDate) continue;
+   const offset = Date.parse(day) - firstDay;
+   const week = Number.isFinite(offset) && offset >= 0 ? 1 + Math.floor(offset / 604800000) : null;
+   if (!structure || week === null) continue;
+   const values = byWeek.get(week) ?? [];
+   values.push(structure.distribution);
+   byWeek.set(week, values);
+ }
+ const rows = weeks.flatMap(week => {
+   const window = week.polarization?.window;
+   if (!window || window === 'pos-prova') return [];
+   const distribution=combineDistributions(byWeek.get(week.weekNumber) ?? []);
+   return [{label: 'Semana '+week.weekNumber, distribution, audit:auditPolarizedDistribution(distribution,window)}];
+ });
+ const distribution=combineDistributions(rows.map(row=>row.distribution));
+ const cycle=auditPolarizedDistribution(distribution,'ciclo');
+ const all=[...rows,{label: 'Total do ciclo', distribution, audit:complete?cycle:{...cycle,status:'indeterminado'}}];
+ const percent=(value:number|null)=>value==null?'—':n(value*100)+'%';
+ const label={na_faixa:'Dentro da faixa',fora_da_faixa:'Fora da faixa',indeterminado:'Indeterminado',fora_do_ciclo:'Fora do ciclo'};
+ return <section className="space-y-2" aria-label="Distribuição por zonas">
+   <h3 className="font-semibold">Distribuição do triatlo por tempo nas zonas</h3>
+   <p className="text-xs text-muted-foreground">Meta regular e do ciclo · 75–85% em Z1–Z2, menos de 10% em Z3 e 15–25% em Z4–Z5. Descarga e polimento admitem até 10% em Z4–Z5. As zonas refletem a prescrição do Gotri. Limiares ventilatórios exigem avaliação específica.</p>
+   <div className="overflow-x-auto"><table className="w-full whitespace-nowrap text-sm">
+     <thead><tr>{['Período','Fase','Ativo min','Z1–Z2','Z3','Z4–Z5','Sem zona min','Resultado'].map(h=><th key={h} className="p-2 text-left">{h}</th>)}</tr></thead>
+     <tbody>{all.map(({label:period,distribution:a,audit})=><tr key={period} className="border-t">
+       <th className="p-2 text-left">{period}</th><td className="p-2">{windowLabels[audit.window]}</td><td className="p-2">{n(audit.activeSeconds/60)}</td>
+       {([['lowSeconds',audit.lowFraction],['moderateSeconds',audit.moderateFraction],['highSeconds',audit.highFraction]] as const).map(([key,ratio])=><td key={key} className="p-2">{n(a[key]/60)} min · {percent(ratio)}</td>)}
+       <td className="p-2">{n((a.unknownSeconds??0)/60)}</td><td className="p-2">{label[audit.status as keyof typeof label]}</td>
+     </tr>)}</tbody>
+   </table></div>
+ </section>;
+}
+
 export function PlanningAudit({plan,workouts}:{plan:any;workouts:any[]}){
  const calculation=plan?.summary?.calculation;
  if(!calculation)return null;
@@ -24,6 +73,8 @@ export function PlanningAudit({plan,workouts}:{plan:any;workouts:any[]}){
  <p className="text-sm">Gerador determinístico: usa os dados salvos e regras versionadas. Não consulta artigos nem inventa medidas fisiológicas a cada geração.</p>
  <dl className="grid gap-2 text-sm sm:grid-cols-3"><div><dt>Prescrição inicial pelo histórico</dt><dd>{calculation.initialMinutes} min</dd></div><div><dt>Limite semanal</dt><dd>{calculation.weeklyCapMinutes==null?'Sem limite informado':calculation.weeklyCapMinutes+' min'}</dd></div><div><dt>Progressão planejada de carga</dt><dd>{n(calculation.growth*100)}% por semana de carga, antes dos limites e reduções</dd></div></dl>
  <details><summary className="cursor-pointer text-primary">Dados considerados e regras aplicadas</summary><ul className="my-3 list-disc pl-5 text-sm">{calculation.rules.map((r:string)=><li key={r}>{r}</li>)}</ul><dl className="grid gap-3 text-sm sm:grid-cols-2">{Object.entries(calculation.inputs).map(([key,value])=><div key={key}><dt className="font-medium">{inputLabels[key]??key}</dt><dd className="break-words">{showInput(value)}</dd></div>)}</dl></details>
+ {plan.summary.raceTarget && <TriathlonRaceTargetSummary target={plan.summary.raceTarget} />}
+ {plan.summary.polarization && Array.isArray(plan.summary.weeks) && <PolarizedCalendarAudit weeks={plan.summary.weeks} workouts={workouts} start={start} raceDate={calculation.inputs?.raceDate} complete={plan.summary.polarization.status!=='indeterminado'} />}
  <div className="space-y-3"><h3 className="font-semibold">Distribuição calculada por tempo: até o limiar / acima do limiar</h3><p className="text-xs text-muted-foreground">Aquecimento, desaquecimento e recuperação ativa contam pela intensidade prescrita. Força, tempo parado e prova ficam fora. FC de limiar, FTP, CSS e pace são referências distintas; não são exames fisiológicos equivalentes. Alvos que cruzam o limiar, PSE sem referência ou estruturas antigas ficam indeterminados.</p>
  <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Semana','Total min','Abaixo min','No limiar min','Acima min','Indeterminado min','Até / acima (%)'].map(h=><th className="p-2 text-left" key={h}>{h}</th>)}</tr></thead><tbody>{rows.map(row=><tr className="border-t" key={row.label}><th className="p-2 text-left">{row.label}</th>{[row.value.total,row.value.below,row.value.at,row.value.above,row.value.unknown].map((v,i)=><td className="p-2" key={i}>{n(v)}</td>)}<td className="p-2">{ratio(row.value)}</td></tr>)}</tbody></table></div>
  <p className="text-sm font-medium">{total.unknown?'Não é possível confirmar 80/20: há minutos sem classificação verificável.':total.total&&Math.abs(total.above/total.total-.2)<.000001?'Os totais confirmam 80/20 na definição até/acima do limiar.':'O ciclo não atingiu 80/20. Não foi adicionada intensidade só para fechar a proporção; confira fase, disponibilidade, nível e alertas do plano.'}</p>

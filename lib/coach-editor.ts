@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
+import { buildBrickTransition, describeBrickTransition, isBrickTransition } from './brick-transition';
 import {
   calendarDay,
   combineDistributions,
@@ -66,6 +67,8 @@ export type SessionSpec = z.infer<typeof sessionSchema>;
 export type DraftChange = {
   brickGroupId?: string | null;
   partOrder?: number;
+  weekNumber?: number | null;
+  tssEstimate?: number | null;
   key: string;
   id?: string;
   baseUpdatedAt?: string;
@@ -82,9 +85,22 @@ export type DraftChange = {
 };
 export type DraftPayload = {
   generation?:import('./training-types').StructuredPlan['summary'];
+  baseRaceAt?: string;
   baseProfileAt: string | null;
   changes: DraftChange[];
 };
+
+export function orderedDraftChanges(changes: DraftChange[]) {
+  const firstGroupPosition = new Map<string, number>();
+  const numbered = changes.map((change, index) => {
+    const group = change.brickGroupId;
+    if (group && !firstGroupPosition.has(group)) firstGroupPosition.set(group, index);
+    return { change, index, position: group ? firstGroupPosition.get(group)! : index };
+  });
+  return numbered.sort((a, b) => a.change.date.localeCompare(b.change.date)
+    || a.position - b.position || (a.change.partOrder ?? 0) - (b.change.partOrder ?? 0)
+    || a.index - b.index).map(item => item.change);
+}
 export function today() {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo',
@@ -221,24 +237,19 @@ export function compileSession(
   if (spec.modality !== 'brick')
     return [make(spec.modality, spec.blocks, spec.title)];
   const bike = make('ciclismo', spec.blocks, spec.title + ' · 1. Bike');
-  const transition = make(
-    'corrida',
-    [
-      {
-        kind: 'recuperacao',
-        label: 'Transição bike → corrida',
-        seconds: spec.transitionSeconds,
-        repeat: 1,
-        recoverySeconds: 0,
-        zone: 'Z1',
-        passive: true,
-        notes: '',
-      },
-    ],
-    spec.title + ' · 2. Transição',
-  );
-  transition.modality = 'descanso';
-  transition.targetZone = null;
+  const transitionStructure = { ...buildBrickTransition(spec.transitionSeconds, spec.phase), origin: 'coach' as const };
+  const transition: DraftChange = {
+    key: randomUUID(),
+    date: spec.date,
+    title: spec.title + ' · 2. Transição',
+    description: describeBrickTransition(transitionStructure) + (spec.notes ? '\n\nOrientação do coach: ' + spec.notes : ''),
+    modality: 'descanso',
+    duration: Math.ceil(transitionStructure.durationSeconds / 60),
+    targetZone: null,
+    phase: spec.phase,
+    structure: transitionStructure,
+    paused: false,
+  };
   const run = make('corrida', spec.runBlocks!, spec.title + ' · 3. Corrida');
   const group = randomUUID();
   [bike,transition,run].forEach((part,index)=>{part.brickGroupId=group;part.partOrder=index;});
@@ -280,11 +291,8 @@ export function draftPreview(
   payload: DraftPayload,
   profile: TrainingProfile | null,
 ) {
-  const touched = new Set(payload.changes.filter((c) => c.id).map((c) => c.id));
-  const proposed = [
-    ...current.filter((w) => !touched.has(w.id)),
-    ...payload.changes.map((change) => ({ ...change, completed: false })),
-  ];
+  const touched = new Set(payload.changes.flatMap(change => change.id ? [change.id] : []));
+  const proposed = proposedDraftWorkouts(current, payload, touched);
   const starts = [
     ...new Set([
       ...payload.changes.map((c) => weekStart(c.date)),
@@ -327,4 +335,36 @@ export function draftPreview(
     after: metrics(proposed, start),
     warnings: [...new Set([...reviewWeek(proposed, profile, start).warnings,...(['reduzir','revisar'].includes(feedback.status)?feedback.reasons:[]),...(Number(metrics(proposed,start).nonLowFraction)>.2?['Tempo moderado/alto acima da referência de 20% nesta semana. Confira o bloco, a fase e a recuperação; não ajuste intensidade apenas para fechar uma proporção.']:[])])],
   }));
+}
+
+type CurrentBrickPart = Pick<DraftChange, 'brickGroupId' | 'partOrder' | 'modality' | 'structure' | 'paused'> & {
+  date: Date | string;
+  id?: string;
+  completed?: boolean;
+};
+
+function proposedDraftWorkouts<T extends { id?: string }>(current: T[], payload: DraftPayload, touched: Set<string>) {
+  return [
+    ...current.filter(workout => !workout.id || !touched.has(workout.id)),
+    ...payload.changes.map(change => ({ ...change, completed: false })),
+  ];
+}
+
+export function hasIncompleteDraftBrick(current: CurrentBrickPart[], payload: DraftPayload) {
+  const touched = new Set(payload.changes.flatMap(change => change.id ? [change.id] : []));
+  const groups = new Set(payload.changes.flatMap(change => change.brickGroupId ? [change.brickGroupId] : []));
+  const proposed = proposedDraftWorkouts(current, payload, touched);
+  for (const group of groups) {
+    const parts = proposed.filter(part => part.brickGroupId === group && !part.paused)
+      .sort((a, b) => (a.partOrder ?? 0) - (b.partOrder ?? 0));
+    if (!parts.length || parts.some(part => part.completed)) continue;
+    const sequence = parts.map(part => part.modality);
+    const hasBikeAndRun = sequence.join(',') === 'ciclismo,corrida' || sequence.join(',') === 'ciclismo,descanso,corrida';
+    const ordered = parts.every((part, index) => index === 0 || (part.partOrder ?? 0) > (parts[index - 1].partOrder ?? 0));
+    const oneDay = parts.every(part => new Date(part.date).toISOString().slice(0, 10) === new Date(parts[0].date).toISOString().slice(0, 10));
+    const transition = parts.find(part => part.modality === 'descanso');
+    const structure = transition && readWorkoutStructure(transition.structure);
+    if (!hasBikeAndRun || !ordered || !oneDay || (transition && (!structure || !isBrickTransition(transition, structure)))) return true;
+  }
+  return false;
 }

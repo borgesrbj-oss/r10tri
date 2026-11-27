@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { DashboardClient } from './_components/dashboard-client';
+import { calendarDayInBrazil, currentTrainingWeek, visibleCalendarWorkouts, weeklyTrainingOverview } from '@/lib/weekly-training-overview';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -21,46 +22,48 @@ export default async function DashboardPage() {
     where: { userId },
     orderBy: { date: 'asc' },
   });
+  const sessionScope = { userId, NOT: { modality: 'descanso', duration: 0 } };
   const recentWorkouts = await prisma.workout.findMany({
-    where: { userId },
+    where: { ...sessionScope, ...visibleCalendarWorkouts },
     orderBy: { date: 'desc' },
     take: 10,
   });
-  const totalWorkouts = await prisma.workout.count({ where: { userId } });
+  const totalWorkouts = await prisma.workout.count({ where: sessionScope });
   const completedWorkouts = await prisma.workout.count({
-    where: { userId, completed: true },
+    where: { ...sessionScope, completed: true },
   });
-  const localDay = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-  const today = new Date(`${localDay}T00:00:00Z`);
-  const monday = new Date(today);
-  monday.setUTCDate(today.getUTCDate() - ((today.getUTCDay() + 6) % 7));
-  const sunday = new Date(monday.getTime() + 7 * 86400000);
+  const localDay = calendarDayInBrazil(new Date());
+  const today = new Date(localDay + 'T00:00:00Z');
+  const tomorrow = new Date(today);
+  tomorrow.setUTCDate(today.getUTCDate() + 1);
+  const { start, end } = currentTrainingWeek(localDay);
   const activeScope = {
-    userId,
+    ...sessionScope,
     paused: false,
     OR: [{ planId: null }, { plan: { status: 'active' } }],
   };
-  const [next, week] = await Promise.all([
+  const overviewSelect = {
+    id: true, title: true, date: true, duration: true, structure: true,
+    description: true, phase: true, modality: true, completed: true,
+  } as const;
+  const overviewOrder = [{ date: 'asc' }, { partOrder: 'asc' }, { id: 'asc' }] as const;
+  const [todayWorkouts, next, week] = await Promise.all([
+    prisma.workout.findMany({
+      where: { ...activeScope, date: { gte: today, lt: tomorrow } },
+      orderBy: [...overviewOrder],
+      select: overviewSelect,
+    }),
     prisma.workout.findFirst({
-      where: { ...activeScope, date: { gte: today }, completed: false },
-      orderBy: { date: 'asc' },
-      select: {
-        title: true,
-        date: true,
-        duration: true,
-        structure: true,
-        description: true,
-        phase: true,
-      },
+      where: { ...activeScope, date: { gte: tomorrow }, completed: false },
+      orderBy: [...overviewOrder],
+      select: overviewSelect,
     }),
     prisma.workout.findMany({
-      where: { ...activeScope, date: { gte: monday, lt: sunday } },
-      select: { duration: true, completed: true },
+      where: { ...sessionScope, ...visibleCalendarWorkouts, date: { gte: start, lt: end } },
+      select: {
+        modality: true, duration: true, completed: true, paused: true,
+        plan: { select: { status: true } }, log: { select: { actualDuration: true } },
+      },
     }),
   ]);
   const upcomingRaces =
@@ -77,12 +80,10 @@ export default async function DashboardPage() {
     profile: profile
       ? JSON.parse(JSON.stringify(publicProfile(profile)))
       : null,
+    today: localDay,
+    todayWorkouts: JSON.parse(JSON.stringify(todayWorkouts)),
     next: next ? JSON.parse(JSON.stringify(next)) : null,
-    week: {
-      minutes: week.reduce((sum, item) => sum + (item.duration ?? 0), 0),
-      completed: week.filter((item) => item.completed).length,
-      total: week.length,
-    },
+    week: weeklyTrainingOverview(week),
     races: JSON.parse(JSON.stringify(races ?? [])),
     recentWorkouts: JSON.parse(JSON.stringify(recentWorkouts ?? [])),
     totalWorkouts: totalWorkouts ?? 0,

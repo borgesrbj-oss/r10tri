@@ -214,7 +214,19 @@ function CalendarView({ workouts, onSelect }: { workouts: any[]; onSelect: (w: a
 }
 
 export function PlanoClient({ plan, workouts, profile, races }: { plan: any; workouts: any[]; profile: any; races: any[] }) {
+  type PlanOptions = { modality?: string; advanced?: boolean; goal?: string; structure?: string; startDate?: string; weeks?: number };
+  type PlanPreview = {
+    request: PlanOptions;
+    previewToken: string;
+    weeks: number;
+    workoutsCount: number;
+    sports: { modality: string; minutes: number; sessions: number }[];
+    firstWeek: { date: string; title: string; duration: number; zone: string | null }[];
+    highMinutes: number;
+    warnings: string[];
+  };
   const [generating, setGenerating] = useState(false);
+  const [planPreview, setPlanPreview] = useState<PlanPreview | null>(null);
   const [reviewIssues,setReviewIssues]=useState<AssessmentIssue[]>([]);
   const [reviewField,setReviewField]=useState<string>();
   const [generationErrors, setGenerationErrors] = useState<string[]>([]);
@@ -280,23 +292,30 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
   const WEEKS_OPTIONS = [6, 8, 12, 16, 20, 24];
 
-  const handleGenerate = async (opts?: { modality?: string; advanced?: boolean; goal?: string; structure?: string; startDate?: string; weeks?: number }) => {
+  const handleGenerate = async (opts?: PlanOptions, previewToken?: string) => {
     setGenerationErrors([]);
     setReviewIssues([]);
     setGenerating(true);
+    const request = { ...opts, startDate: opts?.startDate ?? (todayStr || undefined) };
     try {
       const res = await fetch('/api/plan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(opts ?? {}),
+        body: JSON.stringify({ ...request, ...(previewToken ? { previewToken } : { preview: true }) }),
       });
       const data = await res.json();
+      if (res.ok && !previewToken) {
+        setPlanPreview({ ...data, request });
+        return;
+      }
       if (res.ok) {
+        setPlanPreview(null);
         const via = data?.generatedBy === 'ai-avancada' ? 'IA Avançada' : data?.generatedBy === 'ai' ? 'IA' : 'gerador automático';
         toast.success(`Plano gerado com ${data?.workoutsCount ?? 0} treinos (via ${via})! Abrindo sua planilha...`);
         router.push('/planilha');
         router.refresh();
       } else {
+        if (previewToken) setPlanPreview(null);
         const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
         const message = data?.error || 'Não foi possível gerar o plano.';
         setGenerationErrors([message, ...details]);
@@ -316,9 +335,39 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
     await handleGenerate(opts);
   };
 
+  const previewDialog = <Dialog open={Boolean(planPreview)} onOpenChange={open => { if (!open && !generating) setPlanPreview(null); }}>
+    {planPreview && <DialogContent className="max-h-[85dvh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Prévia do plano</DialogTitle>
+        <DialogDescription>{planPreview.weeks} semana(s) · {planPreview.workoutsCount} sessões. Seu histórico de treinos realizados é preservado.</DialogDescription>
+      </DialogHeader>
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        {planPreview.sports.filter(sport => sport.modality !== 'descanso').map(sport => <div key={sport.modality} className="rounded-lg border p-2">
+          <dt className="font-semibold">{modLabels[sport.modality] ?? sport.modality}</dt>
+          <dd>{sport.sessions} sessão(ões) · {sport.minutes} min no ciclo</dd>
+        </div>)}
+      </dl>
+      <p className="text-sm font-medium">{planPreview.highMinutes > 0 ? Number(planPreview.highMinutes.toFixed(1)).toLocaleString('pt-BR') + ' min em Z4–Z5 no ciclo.' : 'Este ciclo ficou em intensidade leve.'}</p>
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold">Primeira semana</h3>
+        {planPreview.firstWeek.length
+          ? planPreview.firstWeek.map((item, index) => <p key={item.date + index} className="text-sm"><SafeDate date={item.date} options={{ weekday: 'short', day: '2-digit', month: '2-digit' }} locale="pt-BR" /> · {item.title} · {item.duration} min</p>)
+          : <p className="text-sm text-muted-foreground">Nenhum treino nesta semana.</p>}
+      </div>
+      {planPreview.warnings.length > 0 && <details className="text-sm">
+        <summary className="cursor-pointer font-medium">Conferir avisos do plano</summary>
+        <ul className="mt-2 list-disc space-y-1 pl-5">{planPreview.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul>
+      </details>}
+      <DialogFooter>
+        <Button variant="outline" onClick={() => setPlanPreview(null)} disabled={generating}>Voltar</Button>
+        <Button onClick={() => handleGenerate(planPreview.request, planPreview.previewToken)} loading={generating}>Confirmar plano</Button>
+      </DialogFooter>
+    </DialogContent>}
+  </Dialog>;
+
   // Show questionnaire if assessment not done or user clicked "Refazer Avaliação"
   if (needsAssessment || showQuestionnaire) {
-    return <CoachQuestionnaire profile={{...profile,runStructure:genRunStructure}} races={races} generationErrors={generationErrors} generationIssues={reviewIssues} reviewField={reviewField} onComplete={handleAssessmentComplete} />;
+    return <><CoachQuestionnaire profile={{...profile,runStructure:genRunStructure}} races={races} generationErrors={generationErrors} generationIssues={reviewIssues} reviewField={reviewField} onComplete={handleAssessmentComplete} />{previewDialog}</>;
   }
 
   // Estatísticas do plano (todos os treinos)
@@ -372,6 +421,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
       <AssessmentReview issues={reviewIssues} onReview={issue=>{if(issue.field==='raceDate'){router.push('/provas');return;}setReviewField(issue.field);setShowQuestionnaire(true);}} />
 
+      {previewDialog}
       <Dialog open={showGenOptions} onOpenChange={setShowGenOptions}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader>

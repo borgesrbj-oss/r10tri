@@ -14,10 +14,13 @@ test('plano respeita modalidade única, agenda explícita e adaptação inicial'
   assert.ok(plan.every(w => Number.isFinite(w.duration) && w.duration > 0));
 });
 
-test('plano sem natação respeita perfil e não gera sessões de piscina', () => {
-  const plan = generateFallbackPlan({ canSwim: false, weeklyHours: 4, currentWeeklyVol: 3 }, [], ['seg', 'qua', 'sex'], '2026-11-16T12:00:00Z', 4);
-  assert.ok(plan.length > 0);
-  assert.ok(plan.every(w => w.modality !== 'natacao'));
+test('triatlo sem natação fica pendente e o modo ciclismo continua disponível', () => {
+  const profile = { canSwim: false, weeklyHours: 4, currentWeeklyVol: 3 };
+  const days = ['seg', 'qua', 'sex'];
+  const start = '2026-11-16T12:00:00Z';
+  assert.equal(generateFallbackPlan({ ...profile, modality: 'triatlo' }, [], days, start, 4).length, 0);
+  const plan = generateFallbackPlan({ ...profile, modality: 'ciclismo', strengthAvailable: false }, [], days, start, 4);
+  assert.ok(plan.length > 0 && plan.every(w => w.modality === 'ciclismo'));
 });
 
 test('limiar de corrida usa tempo do teste de 3 km', () => {

@@ -17,19 +17,25 @@ import { useRouter } from 'next/navigation';
 import { FadeIn } from '@/components/ui/animate';
 import { SafeDate } from '@/components/safe-format';
 import { WorkoutStructure } from '@/components/workout-structure';
+import { performedWorkoutMetrics } from '@/lib/triathlon-metrics';
 import { inCalendarPeriod, weekStart, type CalendarView } from '@/lib/calendar-period';
 
 const icons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
 const colors: Record<string, string> = { natacao: 'bg-blue-50 dark:bg-blue-950', ciclismo: 'bg-orange-50 dark:bg-orange-950', corrida: 'bg-green-50 dark:bg-green-950', forca: 'bg-purple-50 dark:bg-purple-950' };
+const initialLog = { actualDuration: '', actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '', normalizedPowerWatts: '', averagePowerWatts: '' };
+const metricNumber = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
-export function CalendarioClient({ workouts }: { workouts: any[] }) {
+export function CalendarioClient({ workouts, initialAnchor, initialView }: {
+  workouts: any[]; initialAnchor: string; initialView: CalendarView;
+}) {
   const [filter, setFilter] = useState('todos');
-  const [view,setView]=useState<CalendarView>('semana');
-  const [anchor,setAnchor]=useState(()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()));
+  const [view,setView]=useState<CalendarView>(initialView);
+  const [anchor,setAnchor]=useState(initialAnchor);
   const [logDialog, setLogDialog] = useState<any>(null);
-  const [logForm, setLogForm] = useState({ actualDuration: '', actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '' });
+  const [logForm, setLogForm] = useState(initialLog);
   const [logError, setLogError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmingRest, setConfirmingRest] = useState(false);
   const router = useRouter();
 
   const filtered = (workouts ?? []).filter(w=>(filter==='todos'||w.modality===filter)&&inCalendarPeriod(String(w.date),anchor,view));
@@ -50,6 +56,11 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
         setLogError(`${label}: informe um valor entre ${min} e ${max}${field === 'sleepHours' ? ' horas' : ', em números inteiros'}.`); return;
       }
     }
+    const powerFields = ['normalizedPowerWatts', 'averagePowerWatts'] as const;
+    if (logDialog.modality === 'ciclismo' && powerFields.some(field => logForm[field] && (!Number.isFinite(Number(logForm[field])) || Number(logForm[field]) < 0 || Number(logForm[field]) > 2000))) {
+      setLogError('Informe valores de potência entre 0 e 2.000 W ou deixe os campos vazios.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/workouts/log', {
@@ -64,6 +75,7 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
           sleepHours: logForm.sleepHours !== '' ? Number(logForm.sleepHours) : null,
           fatigueScore: logForm.fatigueScore !== '' ? Number(logForm.fatigueScore) : null,
           painScore: logForm.painScore !== '' ? Number(logForm.painScore) : null,
+          ...(logDialog.modality === 'ciclismo' ? Object.fromEntries(powerFields.map(field => [field, logForm[field] === '' ? null : Number(logForm[field])])) : {}),
         }),
       });
       if (res.ok) { toast.success('Treino registrado!'); setLogDialog(null); router.refresh(); }
@@ -76,6 +88,20 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
     } catch { setLogError('Sem conexão com o servidor. Reconecte antes de salvar o registro.'); toast.error('Erro ao registrar'); }
     finally { setSaving(false); }
   };
+
+  async function confirmRest() {
+    setConfirmingRest(true);
+    try {
+      const response = await fetch('/api/workouts/rest', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date: anchor }),
+      });
+      const result = await response.json();
+      if (!response.ok) { toast.error(result?.error || 'Não foi possível confirmar o descanso.'); return; }
+      toast.success('Descanso registrado.');
+      router.refresh();
+    } catch { toast.error('Sem conexão para confirmar o descanso.'); }
+    finally { setConfirmingRest(false); }
+  }
 
   return (
     <div className="space-y-6">
@@ -92,6 +118,11 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
         </div>
         <div className="space-y-1"><Label htmlFor="calendar-anchor">Data de referência</Label><Input id="calendar-anchor" type="date" value={anchor} onChange={event=>{if(event.target.value)setAnchor(event.target.value);}} className="w-auto" /></div>
       </div>
+
+      {view === 'dia' && <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3" aria-label="Descanso para o cálculo de carga">
+        <p className="text-sm text-muted-foreground">Se não houve bike ou corrida neste dia, confirme para registrar zero na série de carga.</p>
+        <Button variant="outline" size="sm" onClick={confirmRest} loading={confirmingRest} disabled={workouts.some(workout => workout.modality === 'descanso' && workout.duration === 0 && String(workout.date).slice(0, 10) === anchor)}>Confirmar descanso</Button>
+      </section>}
 
       <div className="flex gap-2 flex-wrap">
         {[{ key: 'todos', label: 'Todos' }, { key: 'natacao', label: 'Natação' }, { key: 'ciclismo', label: 'Ciclismo' }, { key: 'corrida', label: 'Corrida' }, { key: 'forca', label: 'Força' }].map((f: any) => (
@@ -113,17 +144,26 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
                 <div className="space-y-2">
                   {wkWorkouts?.map((w: any) => {
                     const Icon = icons?.[w?.modality] ?? Dumbbell;
+                    const metrics = performedWorkoutMetrics(w.modality, w.log);
+                    const realized = [
+                      metrics.intensityFactor != null ? `IF ${metricNumber.format(metrics.intensityFactor)}` : null,
+                      metrics.tss != null ? `${w.modality === 'corrida' ? 'rTSS simplificado' : 'TSS'} ${metricNumber.format(metrics.tss)}` : null,
+                      metrics.mechanicalKilojoules != null ? `${metricNumber.format(metrics.mechanicalKilojoules)} kJ mecânicos` : null,
+                      metrics.approximateKilocalories != null ? `≈ ${metricNumber.format(metrics.approximateKilocalories)} kcal` : null,
+                      metrics.secondsPer100m != null ? `${metricNumber.format(metrics.secondsPer100m)} s/100 m` : null,
+                    ].filter(Boolean);
                     return (
-                      <div key={w?.id}><div className={`flex items-center gap-3 p-3 rounded-lg ${colors?.[w?.modality] ?? 'bg-muted/50'} ${w?.completed ? 'opacity-60' : ''}`}>
+                      <div key={w?.id} id={'treino-' + w.id} className="scroll-mt-20"><div className={`flex items-center gap-3 p-3 rounded-lg ${colors?.[w?.modality] ?? 'bg-muted/50'} ${w?.completed ? 'opacity-60' : ''}`}>
                         <Icon className="h-5 w-5 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">{w?.title}</p>
                           <p className="text-xs text-muted-foreground"><SafeDate date={w?.date} options={{ weekday: 'short', day: 'numeric', month: 'short' }} locale="pt-BR" /> · {workoutPrescription(w)} · {w?.targetZone ?? ''}</p>
+                          {realized.length > 0 && <p className="text-xs text-muted-foreground">Registro realizado · {realized.join(' · ')}</p>}
                         </div>
                         {w?.paused ? <Badge variant="secondary">Pausado</Badge> : w?.completed ? (
                           <Badge variant="secondary" className="shrink-0"><CheckCircle2 className="h-3 w-3 mr-1" /> Feito</Badge>
                         ) : (
-                          <Button variant="outline" size="sm" onClick={() => { setLogDialog(w); setLogError(''); setLogForm({ actualDuration: String(w?.duration ?? ''), actualDistance: '', rpe: '', weight: '', notes: '', sleepHours: '', fatigueScore: '', painScore: '' }); }}>
+                          <Button variant="outline" size="sm" onClick={() => { setLogDialog(w); setLogError(''); setLogForm({ ...initialLog, actualDuration: String(w?.duration ?? '') }); }}>
                             <ClipboardEdit className="h-4 w-4 mr-1" /> Registrar
                           </Button>
                         )}
@@ -146,6 +186,12 @@ export function CalendarioClient({ workouts }: { workouts: any[] }) {
               <div className="space-y-2"><Label>Duração Real (min)</Label><Input type="number" value={logForm.actualDuration} onChange={(e: any) => setLogForm((p: any) => ({ ...p, actualDuration: e?.target?.value ?? '' }))} /></div>
               <div className="space-y-2"><Label>Distância (km)</Label><Input type="number" step="0.1" value={logForm.actualDistance} onChange={(e: any) => setLogForm((p: any) => ({ ...p, actualDistance: e?.target?.value ?? '' }))} /></div>
             </div>
+            {logDialog?.modality === 'ciclismo' && <fieldset className="grid grid-cols-2 gap-4 rounded-lg border p-3">
+              <legend className="px-1 text-sm font-semibold">Potência registrada no pedal (opcional)</legend>
+              <div className="space-y-2"><Label htmlFor="log-np">Normalizada (NP, W)</Label><Input id="log-np" type="number" min="0" max="2000" step="0.1" value={logForm.normalizedPowerWatts} onChange={event => setLogForm(previous => ({ ...previous, normalizedPowerWatts: event.target.value }))} /></div>
+              <div className="space-y-2"><Label htmlFor="log-average-power">Média (W)</Label><Input id="log-average-power" type="number" min="0" max="2000" step="0.1" value={logForm.averagePowerWatts} onChange={event => setLogForm(previous => ({ ...previous, averagePowerWatts: event.target.value }))} /></div>
+              <p className="col-span-2 text-xs text-muted-foreground">Copie do dispositivo, se disponível. A normalizada serve para carga e a média para estimar energia.</p>
+            </fieldset>}
             <fieldset className="space-y-3 rounded-lg border p-3">
               <legend className="px-1 text-sm font-semibold">Check-in de recuperação — opcional</legend>
               <p className="text-xs text-muted-foreground">Registre o que observou hoje, sem preencher o que não souber. As informações ajudam o coach a revisar a carga; não são um diagnóstico.</p>

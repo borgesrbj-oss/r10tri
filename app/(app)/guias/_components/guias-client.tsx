@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SwimMediaReferences } from '@/components/swim-media-references';
+import { SWIM_MEDIA } from '@/lib/swim-media-catalog';
 import { ChevronDown, ChevronUp, Play, CheckCircle2, AlertTriangle, Lightbulb, ExternalLink, ArrowLeft } from 'lucide-react';
 
 /* ─── guide data ─── */
@@ -159,7 +161,6 @@ const guides: Guide[] = [
     title: 'Teste de CSS (Natação)',
     subtitle: 'Critical Swim Speed — descubra suas zonas de nado',
     image: 'https://cdn.abacus.ai/images/580b4e64-d3af-4947-ac26-5c3d16de4d5d.png',
-    videoUrl: 'https://cdn.abacus.ai/videos/e464f023-cf38-47c3-9852-6a74cc4c2414.mp4',
     duration: '45 min total',
     steps: [
       {
@@ -185,9 +186,9 @@ const guides: Guide[] = [
         detail: 'Nade 200m o mais rápido possível com ritmo sustentável. Isso deve ser mais rápido que os 400m. Anote o tempo exato (ex: 3:20).',
       },
       {
-        title: '6. Registre no TriCoach',
-        detail: 'Vá em Plano → Questionário → Etapa de Natação. Insira os tempos de 400m e 200m. O TriCoach calcula automaticamente seu CSS (pace por 100m) e as zonas de treino.',
-        tip: 'CSS = (400m - 200m) / 2 em ritmo por 100m. Ex: se fez 7:30 (450s) nos 400m e 3:20 (200s) nos 200m: CSS = (450-200)/2 = 125s por 100m = 2:05/100m.',
+        title: '6. Registre no Gotri',
+        detail: 'Vá em Plano → Questionário → Etapa de Natação. Insira os tempos de 400 m e 200 m. O Gotri calcula o CSS e usa o ritmo de limiar para definir as zonas de treino.',
+        tip: 'CSS em m/s = 200 ÷ (tempo dos 400 m − tempo dos 200 m), com os tempos em segundos. Para 7:00 e 3:20, o CSS é 0,909 m/s e o ritmo é 1:50 por 100 m.',
       },
     ],
   },
@@ -366,6 +367,7 @@ function GuideDetail({ guide, onBack }: { guide: Guide; onBack: () => void }) {
         <h2 className="text-2xl font-bold mt-2">{guide.title}</h2>
         <p className="text-muted-foreground">{guide.subtitle}</p>
       </div>
+      {guide.id === 'test-css' && <SwimMediaReferences references={SWIM_MEDIA} />}
 
       {/* progress bar */}
       <div className="space-y-1">

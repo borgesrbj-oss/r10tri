@@ -7,6 +7,7 @@ import { Encoder, Profile } from '@garmin/fitsdk';
 import type { FileIdMesg, WorkoutMesg, WorkoutStepMesg } from '@garmin/fitsdk';
 import { describeStructure, readWorkoutStructure } from './training-structure';
 import type { TrainingStep, WorkoutStructure } from './training-types';
+import { describeBrickTransition, isBrickTransition } from './brick-transition';
 
 const M = Profile.MesgNum;
 
@@ -20,11 +21,22 @@ const sportMap: Record<string, WorkoutMesg['sport']> = {
 };
 
 // Estrutura presente e inválida deve ser revisada; nunca substituir seus intervalos por blocos genéricos.
-function structureForExport(workout: any): WorkoutStructure | null {
+export function structureForExport(workout: any): WorkoutStructure | null {
   if (workout?.structure == null) return null;
   const structure = readWorkoutStructure(workout.structure);
-  if (!structure || structure.modality !== workout.modality) {
+  const valid = structure && (structure.transition || structure.modality !== workout.modality
+    ? isBrickTransition(workout, structure)
+    : true);
+  if (!valid) {
     throw new WorkoutExportError('Estrutura do treino inválida. Peça ao treinador para revisar antes de exportar.');
+  }
+  return structure;
+}
+
+function structureForNativeExport(workout: any): WorkoutStructure | null {
+  const structure = structureForExport(workout);
+  if (structure && isBrickTransition(workout, structure)) {
+    throw new WorkoutExportError('A transição do brick está disponível para exportação em TXT.');
   }
   return structure;
 }
@@ -54,6 +66,7 @@ function structuredDescription(structure: WorkoutStructure): string {
 export function describeWorkoutForExport(workout: any): string {
   const structure = structureForExport(workout);
   if (!structure) return String(workout?.description ?? '');
+  if (isBrickTransition(workout, structure)) return describeBrickTransition(structure);
   // As instruções de ambiente são complementares; tempos e zonas sempre vêm da estrutura validada.
   const environment = String(workout?.description ?? '').split(/\r?\n/).filter(line => /^Ambiente informado:/.test(line));
   return [structuredDescription(structure), ...new Set(environment)].join('\n');
@@ -141,7 +154,7 @@ const FIT_RUN_OFFSETS: Record<string, [number, number]> = { Z1: [60, 90], Z2: [3
 //   caso contrário recai para o modo por tempo (arquivo sempre válido).
 export function buildFit(workout: any, opts?: { mode?: 'zona' | 'km'; thresholdPaceSec?: number | null }): Buffer {
   const mode = opts?.mode === 'km' ? 'km' : 'zona';
-  const structure = structureForExport(workout);
+  const structure = structureForNativeExport(workout);
   if (structure) return buildStructuredFit(workout, structure, mode);
   const thr = opts?.thresholdPaceSec ?? null;
   const sport = sportMap[workout.modality] ?? 'generic';
@@ -228,7 +241,7 @@ function tcxGroups(steps: TrainingStep[]): { steps: TrainingStep[]; repetitions:
 }
 
 export function buildTcx(workout: any): string {
-  const structure = structureForExport(workout);
+  const structure = structureForNativeExport(workout);
   if (structure) {
     const name = xmlEscape(Array.from(String(workout.title || 'Treino')).slice(0, 15).join(''));
     let nextId = 1;
@@ -300,7 +313,7 @@ ${steps}${ds ? `
 
 // Gera um arquivo .ZWO (Zwift/MyWhoosh/Rouvy). Ciclismo usa potência (%FTP); corrida usa Duration com nota de pace.
 export function buildZwo(workout: any, opts?: { ftp?: number | null }): string {
-  const structure = structureForExport(workout);
+  const structure = structureForNativeExport(workout);
   if (structure) {
     if (structure.modality !== 'corrida' && structure.modality !== 'ciclismo') {
       throw new WorkoutExportError('O formato ZWO é destinado a corrida e ciclismo. Para natação ou força, exporte FIT, TCX ou TXT.');
@@ -352,7 +365,7 @@ ${steps}
 export function buildTxt(workout: any): string {
   const structure = structureForExport(workout);
   const modLabels: Record<string, string> = { natacao: 'Natação', ciclismo: 'Ciclismo', corrida: 'Corrida', forca: 'Força' };
-  const mod = modLabels[workout?.modality] ?? workout?.modality ?? 'Treino';
+  const mod = structure && isBrickTransition(workout, structure) ? 'Transição' : modLabels[workout?.modality] ?? workout?.modality ?? 'Treino';
   return `=== ${mod}: ${workout?.title ?? 'Treino'} ===
 Data: ${workout?.date ? new Date(workout.date).toLocaleDateString('pt-BR') : ''}
 Duração: ${structure ? `${structure.durationSeconds} s (${structure.durationSeconds / 60} min)` : `${workout?.duration ?? 0} min`}

@@ -1,4 +1,4 @@
-import { runThreshold } from './training-zones';
+import { cssFromTests, formatPaceSeconds, ftpFromTwentyMinutes, runThreshold } from './training-zones';
 import { assessmentIssue } from './assessment-review';
 import { z } from 'zod';
 import { TRAINING_GOALS } from './training-goals';
@@ -40,6 +40,7 @@ export const assessmentSchema = z.object({
   testRun30min: number(0.1, 20), testRunPace: pace, testRunHR: number(30, 260, true), testRun3km: pace,
   canSwim: z.boolean().optional(), testsCompleted: z.boolean().optional(),
   injuryHistory: text(), currentInjuries: text(), medicalConditions: text(), sleepHours: number(0, 24), stressLevel: text(80), dietaryNotes: text(),
+  carbohydrateRateGPerHour: number(1, 120),
   weeklyHours: number(0, 40), currentWeeklyVol: number(0, 40),
   availableDays: z.array(z.enum(['seg','ter','qua','qui','sex','sab','dom'])).max(7).transform(days => [...new Set(days)]).optional(),
   workSchedule: text(100), travelFrequency: text(100), hasPoolAccess: z.boolean().optional(), poolSize: text(80),
@@ -73,6 +74,17 @@ export function assessmentData(body: unknown, previous?: Record<string, unknown>
   const result = assessmentSchema.safeParse(body);
   if (!result.success) return { ok:false as const, errors:result.error.issues.map(issue => ({ field:issue.path.join('.'), message:/^(Invalid|Too |Expected|Unrecognized)/.test(issue.message) ? 'Valor inválido. Confira o campo informado.' : issue.message })) };
   const patch = Object.fromEntries(Object.entries(result.data).filter(([, value]) => value !== undefined)) as z.infer<typeof assessmentSchema>;
+  const cssTimesChanged = patch.testCSS400 !== undefined || patch.testCSS200 !== undefined;
+  if (cssTimesChanged) {
+    const time400 = patch.testCSS400 !== undefined ? patch.testCSS400 : previous?.testCSS400;
+    const time200 = patch.testCSS200 !== undefined ? patch.testCSS200 : previous?.testCSS200;
+    const css = cssFromTests(time400, time200);
+    if ((time400 || time200) && css === null) {
+      return { ok:false as const, errors:[{ field: time400 ? 'testCSS200' : 'testCSS400', message:'Registre os dois tempos. O tempo de 400 m deve ser pelo menos duas vezes o de 200 m e gerar um CSS entre 0:25 e 10:00 por 100 m.' }] };
+    }
+    patch.testCSSPace = css === null ? null : formatPaceSeconds(css);
+  }
+  if (patch.testFTP20min !== undefined) patch.testFTPEstimated = ftpFromTwentyMinutes(patch.testFTP20min);
   if (previous) {
     const stored = { ...previous };
     // O banco devolve Date; o formulário envia dias de calendário. Só a entrada

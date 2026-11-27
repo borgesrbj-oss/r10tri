@@ -7,8 +7,8 @@ import {
   describeWorkoutForExport,
   intervalsStartLocal,
   DEFAULT_WORKOUT_TIME,
+  structureForExport,
 } from '@/lib/export-builders';
-import { readWorkoutStructure } from '@/lib/training-structure';
 
 // Envia os treinos do plano DIRETO para o calendario do Intervals.icu, ja com data E horario (04:30),
 // via a API gratuita do Intervals.icu (POST /events/bulk?upsert=true, Basic auth API_KEY:chave).
@@ -67,41 +67,31 @@ export async function POST(req: NextRequest) {
   if (modality !== 'todos') where.modality = modality;
   const workouts = await prisma.workout.findMany({
     where,
-    orderBy: { date: 'asc' },
+    orderBy: [{ date: 'asc' }, { brickGroupId: 'asc' }, { partOrder: 'asc' }, { id: 'asc' }],
   });
   if (workouts.length === 0)
     return NextResponse.json(
       { error: 'Nenhum treino para enviar' },
       { status: 404 },
     );
-  for (const workout of workouts) {
-    const structure = readWorkoutStructure(workout.structure);
-    if (
-      workout.structure != null &&
-      (!structure || structure.modality !== workout.modality)
-    ) {
-      return NextResponse.json(
-        {
-          error: 'ESTRUTURA_INVALIDA',
-          message:
-            'Revise a estrutura dos treinos antes de enviar ao Intervals.icu.',
-        },
-        { status: 422 },
-      );
-    }
-  }
-
   // Monta os eventos do calendario. start_date_local carrega a data + horario 04:30 (local).
-  const events = workouts
-    .map((w) => {
+  const brickOffsets = new Map<string, number>();
+  let events;
+  try {
+    events = workouts.flatMap((w) => {
+      const structure = structureForExport(w);
       const start = intervalsStartLocal(w, DEFAULT_WORKOUT_TIME);
-      if (!start) return null;
+      if (!start) return [];
       const type = TYPE_MAP[w.modality] ?? 'Other';
       const isRest = w.modality === 'descanso';
-      const structure = readWorkoutStructure(w.structure);
-      return {
+      const seconds = structure?.durationSeconds ?? (w.duration || 0) * 60;
+      // Aplica o deslocamento só entre as partes do combinado e mantém o horário dos demais treinos.
+      const brick = w.brickGroupId && `${start.slice(0, 10)}:${w.brickGroupId}`;
+      const offset = brick ? brickOffsets.get(brick) ?? 0 : 0;
+      if (brick) brickOffsets.set(brick, offset + seconds);
+      return [{
         external_id: `r10tri_${w.id}`,
-        start_date_local: start,
+        start_date_local: offset ? new Date(Date.parse(`${start}Z`) + offset * 1000).toISOString().slice(0, 19) : start,
         category: isRest ? 'NOTE' : 'WORKOUT',
         type,
         name: w.title || 'Treino',
@@ -110,11 +100,19 @@ export async function POST(req: NextRequest) {
         ...(isRest
           ? {}
           : {
-              moving_time: structure?.durationSeconds ?? (w.duration || 0) * 60,
+              moving_time: seconds,
             }),
-      };
-    })
-    .filter(Boolean);
+      }];
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        error: 'ESTRUTURA_INVALIDA',
+        message: 'Revise a estrutura dos treinos antes de enviar ao Intervals.icu.',
+      },
+      { status: 422 },
+    );
+  }
 
   // Chama a API do Intervals.icu. athlete/0 resolve para o dono da chave.
   const auth64 = Buffer.from(`API_KEY:${apiKey}`).toString('base64');

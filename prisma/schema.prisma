@@ -111,6 +111,7 @@ model AthleteProfile {
   availableDays     String[] // ["seg","ter","qua","qui","sex","sab","dom"]
   limitations       String?
   ftp               Float?
+  carbohydrateRateGPerHour Float?
   vo2max            Float?
   maxHeartRate      Int?
   restingHeartRate  Int?
@@ -179,6 +180,7 @@ model TargetRace {
   distance  String   // sprint, olimpico, 70.3, ironman
   priority  String?  // A: principal; B/C: secundária
   notes     String?
+  segmentTargets Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -245,6 +247,9 @@ model WorkoutLog {
   userId          String
   actualDuration  Int?     // minutos
   actualDistance  Float?   // km
+  normalizedPowerWatts Float?
+  averagePowerWatts Float?
+  metricThreshold Json?
   rpe             Int?     // 1-10
   weight          Float?
   heartRateAvg    Int?

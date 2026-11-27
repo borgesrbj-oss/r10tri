@@ -1,6 +1,6 @@
 'use client';
 import {DailyTimeLimit} from '@/components/daily-time-limit';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useLocalDate } from '@/hooks/use-browser-state';
 import { ChevronRight, ChevronLeft, ClipboardCheck, Activity, Target, Heart, Wrench, Dumbbell, Sparkles, CheckCircle2, FlaskConical, Info, Waves, Bike, Timer, Layers } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,8 @@ import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import { SafeDate } from '@/components/safe-format';
 import { TRAINING_GOALS } from '@/lib/training-goals';
+import { cssFromTests, formatPaceSeconds, ftpFromTwentyMinutes, numericValue } from '@/lib/training-zones';
+import { ageAt, karvonenHeartRate, maxHeartRateReference } from '@/lib/triathlon-metrics';
 
 const STEPS = [
   { key: 'modalidade', icon: Layers, title: 'Modalidade', subtitle: 'Escolha o foco do seu treino' },
@@ -125,8 +127,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     maxHeartRate: profile?.maxHeartRate ?? '',
     restingHeartRate: profile?.restingHeartRate ?? '',
     thresholdHeartRate: profile?.thresholdHeartRate ?? '',
-    runThresholdPace: profile?.runThresholdPace ?? profile?.testRunPace ?? '',
-    swimCssPace: profile?.swimCssPace ?? profile?.testCSSPace ?? '',
+    runThresholdPace: profile?.runThresholdPace ?? '',
+    swimCssPace: profile?.swimCssPace ?? '',
     // Step 5 - Objetivos
     goalType: profile?.goalType ?? '',
     trainingGoal:profile?.trainingGoal ?? '',
@@ -138,6 +140,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     sleepHours: profile?.sleepHours ?? '',
     stressLevel: profile?.stressLevel ?? '',
     dietaryNotes: profile?.dietaryNotes ?? '',
+    carbohydrateRateGPerHour: profile?.carbohydrateRateGPerHour ?? '',
     // Step 7 - Logística
     weeklyHours: profile?.weeklyHours ?? '',
     currentWeeklyVol: profile?.currentWeeklyVol ?? '',
@@ -148,7 +151,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
     availableDays: Array.isArray(profile?.availableDays) ? profile.availableDays : [],
     workSchedule: profile?.workSchedule ?? '',
     travelFrequency: profile?.travelFrequency ?? '',
-    hasPoolAccess: confirmedProfile ? profile?.hasPoolAccess ?? false : false,
+    hasPoolAccess: (confirmedProfile ? profile?.hasPoolAccess ?? null : null) as boolean | null,
     poolSize: profile?.poolSize ?? '',
     hasTrainer: profile?.hasTrainer ?? false,
     hasPowerMeter: profile?.hasPowerMeter ?? false,
@@ -162,7 +165,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const requiredIssues=attempted?missing.map(item=>assessmentIssue(item.field,'Preencha este campo.')!):[];
   const issues=[...requiredIssues,...[...generationIssues,...serverIssues].filter(item=>!editedFields.includes(item.field.split('.')[0])&&!requiredIssues.some(required=>required.field===item.field))];
   const {scope,focusField}=useAssessmentReview(issues,reviewField);
-  const review=(issue:AssessmentIssue)=>{if(issue.field==='raceDate'){router.push('/provas');return;}setStep(issue.step);focusField(issue.field);};
+  const review=(issue:AssessmentIssue)=>{if(issue.field==='raceDate'){router.push('/provas');return;}if(issue.field==='daySchedule'){router.push('/configurar-treino#modalidades-por-dia');return;}setStep(issue.step);focusField(issue.field);};
   const fieldError=(field:string)=>issues.find(item=>item.field===field)?.message;
   const toggleDay = (d: string) => set('availableDays', form.availableDays.includes(d) ? form.availableDays.filter((x: string) => x !== d) : [...form.availableDays, d]);
 
@@ -172,20 +175,13 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const showRun = form.modality === 'triatlo' || form.modality === 'corrida';
   const isTri = form.modality === 'triatlo';
 
-  // Calcular CSS automaticamente
-  const cssCalc = useMemo(() => {
-    if (!form.testCSS400 || !form.testCSS200) return null;
-    const s400 = parseRaceTime(form.testCSS400);
-    const s200 = parseRaceTime(form.testCSS200);
-    if (s400 === null || s200 === null || s400 <= s200) return null;
-    return formatRaceTime((s400 - s200) / 2);
-  }, [form.testCSS400, form.testCSS200]);
-
-  // Calcular FTP estimado
-  const ftpCalc = useMemo(() => {
-    if (!form.testFTP20min) return null;
-    return Math.round(Number(form.testFTP20min) * 0.95);
-  }, [form.testFTP20min]);
+  const cssSeconds = cssFromTests(form.testCSS400, form.testCSS200);
+  const cssCalc = cssSeconds === null ? null : formatPaceSeconds(cssSeconds);
+  const ftpCalc = ftpFromTwentyMinutes(form.testFTP20min);
+  const maximumReference = maxHeartRateReference(numericValue(form.maxHeartRate), todayStr ? ageAt(form.birthDate, todayStr) : null);
+  const restingHeartRate = numericValue(form.restingHeartRate);
+  const reserveLow = maximumReference && restingHeartRate ? karvonenHeartRate(maximumReference.bpm, restingHeartRate, .6) : null;
+  const reserveHigh = maximumReference && restingHeartRate ? karvonenHeartRate(maximumReference.bpm, restingHeartRate, .7) : null;
 
   function stepIssues(key: string): AssessmentIssue[] {
     const messages: AssessmentIssue[] = [];
@@ -198,15 +194,16 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
       if (form.recentRaceDate && todayStr && form.recentRaceDate > todayStr) add('recentRaceDate','A prova de referência deve estar concluída, com data até hoje.');
     }
     if (key === 'nivel' && showSwim && form.canSwim === null) add('canSwim','Informe se você sabe nadar antes de continuar.');
-    if (key === 'testes' && ((form.testCSS400 || form.testCSS200) && !cssCalc)) add('testCSS400','Confira os tempos CSS: use m:ss, com o tempo de 400 m maior que o de 200 m.');
+    if (key === 'testes' && ((form.testCSS400 || form.testCSS200) && !cssCalc)) add(form.testCSS400?'testCSS200':'testCSS400','Registre os dois tempos em m:ss. O tempo de 400 m deve ser pelo menos duas vezes o de 200 m e gerar um CSS entre 0:25 e 10:00 por 100 m.');
     if (key === 'metricas') {
       if (!form.birthDate || !Number.isFinite(new Date(`${form.birthDate}T00:00:00Z`).getTime()) || (todayStr && form.birthDate >= todayStr)) add('birthDate','Informe uma data de nascimento válida para a triagem.');
       for (const [label, value] of [['Limiar de corrida', form.runThresholdPace], ['CSS de natação', form.swimCssPace]] as const) if (value && !parseRaceTime(String(value))) add(label==='Limiar de corrida'?'runThresholdPace':'swimCssPace',`${label}: use o formato m:ss com segundos de 00 a 59.`);
       if (form.maxHeartRate && form.restingHeartRate && Number(form.restingHeartRate) >= Number(form.maxHeartRate)) add('restingHeartRate','A FC de repouso deve ser menor que a FC máxima informada.');
-      if (form.thresholdHeartRate && form.maxHeartRate && Number(form.thresholdHeartRate) >= Number(form.maxHeartRate)) add('thresholdHeartRate','A FC de limiar deve ser menor que a FC máxima informada.');
+      if (form.thresholdHeartRate && form.maxHeartRate && Number(form.thresholdHeartRate) > Number(form.maxHeartRate)) add('thresholdHeartRate','A FC de limiar não pode superar a FC máxima informada.');
     }
     if (key === 'logistica') {
       if (!form.availableDays.length) add('availableDays','Selecione pelo menos um dia disponível para treinar.');
+      if (showSwim && form.canSwim === true && form.hasPoolAccess === null && form.poolSize !== 'mar_aberto') add('hasPoolAccess','Informe onde você pode nadar.');
       if (form.weeklyHours!==''&&form.weeklyHours!=null&&(!Number.isFinite(Number(form.weeklyHours))||Number(form.weeklyHours)<=0))add('weeklyHours','Informe um limite semanal válido ou deixe vazio se não houver.');
       if (form.currentWeeklyVol === '' || !Number.isFinite(Number(form.currentWeeklyVol)) || Number(form.currentWeeklyVol) < 0) add('currentWeeklyVol','Informe o volume semanal atual; digite 0 apenas se ainda não está treinando.');
     }
@@ -228,14 +225,10 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
         birthDate: form.birthDate || null,
         dailyMinutes:Object.fromEntries(Object.entries(form.dailyMinutes).filter(([,value])=>value!=='' && value!=null).map(([day,value])=>[day,Number(value)])),
         recentRaceDate: form.recentRaceDate || null,
-        canSwim: form.canSwim === null ? undefined : form.canSwim,
+        canSwim: showSwim ? form.canSwim ?? undefined : undefined,
+        hasPoolAccess: showSwim ? form.hasPoolAccess ?? undefined : undefined,
+        poolSize: showSwim ? form.poolSize || null : undefined,
         recentRaceTimeSeconds: form.recentRaceTime ? parseRaceTime(form.recentRaceTime) : null,
-        testCSSPace: cssCalc || null,
-        testFTPEstimated: ftpCalc || null,
-        ftp: form.ftp !== '' ? Number(form.ftp) : ftpCalc,
-        swimPace: form.swimPace || cssCalc || null,
-        swimCssPace: form.swimCssPace || cssCalc || null,
-        runThresholdPace: form.runThresholdPace || form.testRunPace || null,
         testsCompleted: !!(form.testCSS400 || form.testFTP20min || form.testRun3km || form.testRun30min),
       };
       const res = await fetch('/api/profile/assessment', {
@@ -395,8 +388,8 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     <div data-assessment-field="canSwim" className="space-y-2">
                       <Label className="text-base">🏊 Você sabe nadar?</Label>
                       <div className="flex flex-wrap gap-2">
-                        <OptionButton selected={form.canSwim === true} onClick={() => set('canSwim', true)}>Sim, sei nadar</OptionButton>
-                        <OptionButton selected={form.canSwim === false} onClick={() => { set('canSwim', false); set('swimLevel', 'nenhuma'); }}>Não sei / muito básico</OptionButton>
+                        <OptionButton selected={form.canSwim === true} onClick={() => { set('canSwim', true); if (form.swimLevel === 'nenhuma') set('swimLevel', ''); }}>Sim, mesmo em nível básico</OptionButton>
+                        <OptionButton selected={form.canSwim === false} onClick={() => { set('canSwim', false); set('swimLevel', 'nenhuma'); }}>Ainda não sei nadar</OptionButton>
                       </div>
                       {form.canSwim === false && (
                         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-300">
@@ -572,7 +565,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {current.key === 'metricas' && (
               <>
                 <p className="text-sm text-muted-foreground">Informe sua data de nascimento. As demais referências medidas são opcionais: deixe em branco o que não souber, sem estimar números.</p>
-                <div className="space-y-2"><Label htmlFor="assessment-birth-date">Data de nascimento</Label><Input id="assessment-birth-date" type="date" max={todayStr || undefined}  name="birthDate" error={fieldError('birthDate')} value={form.birthDate} onChange={event => set('birthDate', event.target.value)} /><p className="text-xs text-muted-foreground">Usada na triagem; o app não estima sua FC máxima a partir da idade.</p></div>
+                <div className="space-y-2"><Label htmlFor="assessment-birth-date">Data de nascimento</Label><Input id="assessment-birth-date" type="date" max={todayStr || undefined}  name="birthDate" error={fieldError('birthDate')} value={form.birthDate} onChange={event => set('birthDate', event.target.value)} /></div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Peso atual (kg)</Label>
@@ -586,20 +579,23 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 <fieldset className="space-y-3 rounded-lg border p-4">
                   <legend className="px-1 text-sm font-semibold">Frequência cardíaca medida — opcional</legend>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-1"><Label htmlFor="max-heart-rate">FC máxima (bpm)</Label><Input id="max-heart-rate" type="number" min="30" max="250"  name="maxHeartRate" error={fieldError('maxHeartRate')} value={form.maxHeartRate} onChange={event => set('maxHeartRate', event.target.value)} /></div>
-                    <div className="space-y-1"><Label htmlFor="resting-heart-rate">FC de repouso (bpm)</Label><Input id="resting-heart-rate" type="number" min="25" max="150"  name="restingHeartRate" error={fieldError('restingHeartRate')} value={form.restingHeartRate} onChange={event => set('restingHeartRate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="max-heart-rate">FC máxima (bpm)</Label><Input id="max-heart-rate" type="number" min="30" max="260"  name="maxHeartRate" error={fieldError('maxHeartRate')} value={form.maxHeartRate} onChange={event => set('maxHeartRate', event.target.value)} /></div>
+                    <div className="space-y-1"><Label htmlFor="resting-heart-rate">FC de repouso (bpm)</Label><Input id="resting-heart-rate" type="number" min="20" max="220"  name="restingHeartRate" error={fieldError('restingHeartRate')} value={form.restingHeartRate} onChange={event => set('restingHeartRate', event.target.value)} /></div>
                     <div className="space-y-1"><Label htmlFor="threshold-heart-rate">FC de limiar (bpm)</Label><Input id="threshold-heart-rate" type="number" min="30" max="250"  name="thresholdHeartRate" error={fieldError('thresholdHeartRate')} value={form.thresholdHeartRate} onChange={event => set('thresholdHeartRate', event.target.value)} /></div>
                   </div>
+                  {maximumReference?.source === 'tanaka' && <p className="text-xs text-muted-foreground">FC máxima estimada pela idade (Tanaka): {Math.round(maximumReference.bpm)} bpm.</p>}
+                  {reserveLow !== null && reserveHigh !== null && <p className="text-xs text-muted-foreground">Karvonen a 60–70% da reserva: {Math.round(reserveLow)}–{Math.round(reserveHigh)} bpm. Referência separada das zonas por limiar.</p>}
                 </fieldset>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {showRun && <div className="space-y-2"><Label htmlFor="run-threshold-pace">Pace de limiar confirmado (m:ss/km)</Label><Input id="run-threshold-pace"  name="runThresholdPace" error={fieldError('runThresholdPace')} value={form.runThresholdPace} onChange={event => set('runThresholdPace', event.target.value)} placeholder="Somente se conhecido" /></div>}
+                  {showRun && <div className="space-y-2"><Label htmlFor="run-threshold-pace">Pace de limiar confirmado (m:ss/km)</Label><Input id="run-threshold-pace"  name="runThresholdPace" error={fieldError('runThresholdPace')} value={form.runThresholdPace} onChange={event => set('runThresholdPace', event.target.value)} placeholder={form.testRunPace || 'Somente se conhecido'} /></div>}
                   {showSwim && <div className="space-y-2"><Label htmlFor="swim-css-pace">CSS confirmado (m:ss/100 m)</Label><Input id="swim-css-pace"  name="swimCssPace" error={fieldError('swimCssPace')} value={form.swimCssPace} onChange={event => set('swimCssPace', event.target.value)} placeholder={cssCalc || 'Somente se conhecido'} /></div>}
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {showBike && (
                     <div className="space-y-2">
-                      <Label>FTP (watts) {ftpCalc && <span className="text-green-500">— calculado: {ftpCalc}W</span>}</Label>
-                      <Input name="ftp" type="number" value={form.ftp || ftpCalc || ''} onChange={e => set('ftp', e.target.value)} placeholder="200" />
+                      <Label htmlFor="confirmed-ftp">FTP confirmado (watts)</Label>
+                      <Input id="confirmed-ftp" name="ftp" error={fieldError('ftp')} type="number" step="0.1" value={form.ftp} onChange={e => set('ftp', e.target.value)} placeholder="Somente se conhecido" />
+                      {ftpCalc && <p className="text-xs text-muted-foreground">Estimativa pelo teste de 20 minutos: {ftpCalc} W.</p>}
                     </div>
                   )}
                   <div className="space-y-2">
@@ -610,14 +606,14 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                 <div className="grid sm:grid-cols-2 gap-4">
                   {showSwim && (
                     <div className="space-y-2">
-                      <Label>Pace natação (min/100m) {cssCalc && <span className="text-green-500">— CSS: {cssCalc}</span>}</Label>
-                      <Input name="swimPace" value={form.swimPace || cssCalc || ''} onChange={e => set('swimPace', e.target.value)} placeholder="2:15" />
+                      <Label>Pace habitual de natação (min/100 m)</Label>
+                      <Input name="swimPace" value={form.swimPace} onChange={e => set('swimPace', e.target.value)} placeholder="2:15" />
                     </div>
                   )}
                   {showRun && (
                     <div className="space-y-2">
                       <Label>Pace corrida (min/km)</Label>
-                      <Input name="runPace" value={form.runPace || form.testRunPace || ''} onChange={e => set('runPace', e.target.value)} placeholder="5:30" />
+                      <Input name="runPace" value={form.runPace} onChange={e => set('runPace', e.target.value)} placeholder="5:30" />
                     </div>
                   )}
                 </div>
@@ -691,6 +687,11 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   <Label>Restrições alimentares <span className="text-muted-foreground text-xs">(opcional)</span></Label>
                   <Input  name="dietaryNotes" error={fieldError('dietaryNotes')} value={form.dietaryNotes} onChange={e => set('dietaryNotes', e.target.value)} placeholder="Ex.: vegetariano, intolerante à lactose, sem glúten..." />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="carbohydrate-rate">Carboidrato em sessões prolongadas (g/h, opcional)</Label>
+                  <Input id="carbohydrate-rate" name="carbohydrateRateGPerHour" type="number" min="1" max="120" step="0.1" error={fieldError('carbohydrateRateGPerHour')} value={form.carbohydrateRateGPerHour} onChange={event => set('carbohydrateRateGPerHour', event.target.value)} />
+                  <p className="text-xs text-muted-foreground">Informe uma taxa já definida e tolerada em treino. Em branco, o app exibe uma faixa de referência nas sessões de duas horas ou mais.</p>
+                </div>
               </>
             )}
 
@@ -747,7 +748,6 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                   <p className="mb-3 text-xs text-muted-foreground">Marque apenas o que está disponível e confira os dados existentes. Opções desmarcadas serão consideradas indisponíveis.</p>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {[
-                      ...(showSwim ? [{ key: 'hasPoolAccess', label: '🏊 Acesso a piscina', val: form.hasPoolAccess }] : []),
                       ...(showBike ? [{ key: 'hasTrainer', label: '🚴 Rolo/Trainer indoor', val: form.hasTrainer }, { key: 'hasPowerMeter', label: '⚡ Medidor de potência', val: form.hasPowerMeter }] : []),
                       { key: 'hasHRM', label: '❤️ Frequencímetro', val: form.hasHRM },
                     ].map(eq => (
@@ -761,16 +761,26 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
                     ))}
                   </div>
                 </div>
-                {showSwim && form.hasPoolAccess && (
-                  <div className="space-y-2">
-                    <Label>Tamanho da piscina</Label>
+                {showSwim && (
+                  <div data-assessment-field="hasPoolAccess" className="space-y-2">
+                    <Label>Onde você pode treinar natação?</Label>
                     <div className="flex flex-wrap gap-2">
-                      {[{ k: '25m', l: '25m' }, { k: '50m', l: '50m' }, { k: 'mar_aberto', l: 'Mar aberto' }].map(o => (
-                        <OptionButton key={o.k} selected={form.poolSize === o.k} onClick={() => set('poolSize', o.k)}>{o.l}</OptionButton>
-                      ))}
+                      <OptionButton selected={form.hasPoolAccess === true && form.poolSize !== 'mar_aberto'} onClick={() => { set('hasPoolAccess', true); if (form.poolSize === 'mar_aberto') set('poolSize', ''); }}>Piscina</OptionButton>
+                      <OptionButton selected={form.poolSize === 'mar_aberto'} onClick={() => { set('hasPoolAccess', false); set('poolSize', 'mar_aberto'); }}>Águas abertas</OptionButton>
+                      <OptionButton selected={form.hasPoolAccess === false && form.poolSize !== 'mar_aberto'} onClick={() => { set('hasPoolAccess', false); set('poolSize', ''); }}>Ainda sem acesso</OptionButton>
                     </div>
+                    {form.hasPoolAccess === true && form.poolSize !== 'mar_aberto' && <div data-assessment-field="poolSize" className="space-y-2">
+                      <Label>Tamanho da piscina, se souber</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {[{ k: '25m', l: '25 m' }, { k: '50m', l: '50 m' }].map(o => <OptionButton key={o.k} selected={form.poolSize === o.k} onClick={() => set('poolSize', o.k)}>{o.l}</OptionButton>)}
+                      </div>
+                    </div>}
                   </div>
                 )}
+                {fieldError('daySchedule') && <div data-assessment-field="daySchedule" className="space-y-2 text-sm text-destructive">
+                  <p>{fieldError('daySchedule')}</p>
+                  <Button type="button" variant="outline" onClick={() => router.push('/configurar-treino#modalidades-por-dia')}>Revisar dias e modalidades</Button>
+                </div>}
                 {showBike && (
                   <div className="space-y-2">
                     <Label>Tipo de bike principal</Label>
