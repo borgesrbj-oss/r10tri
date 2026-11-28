@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
     orderBy: { date: 'asc' },
   });
   const specificIssues=preparationIssues(selected,races,body.startDate??new Date());
-  if(specificIssues.length)return NextResponse.json({error:'Revise os dados da triagem para esta modalidade.',assessmentIssues:specificIssues},{status:422,...options});
+  if(specificIssues.length)return NextResponse.json({error:specificIssues.map(issue=>issue.message).join(' '),assessmentIssues:specificIssues},{status:422,...options});
   const now = new Date();
   const [logs, past] = await Promise.all([
     prisma.workoutLog.findMany({

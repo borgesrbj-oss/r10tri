@@ -324,8 +324,10 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
         if (previewToken) setPlanPreview(null);
         const details = Array.isArray(data?.details) ? data.details.map((detail: unknown) => typeof detail === 'string' ? detail : detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string' ? detail.message : '').filter(Boolean) : [];
         const message = data?.error || 'Não foi possível gerar o plano.';
-        setGenerationErrors([message, ...details]);
-        setReviewIssues(assessmentIssues(data?.assessmentIssues));
+        const fields = assessmentIssues(data?.assessmentIssues);
+        setGenerationErrors([message, ...new Set([...details, ...fields.map(field => field.label + ' — ' + field.message)])]);
+        setReviewIssues(fields);
+        setGenModality(request.modality ?? profile?.modality ?? 'triatlo');
         toast.error(message);
       }
     } catch { setGenerationErrors(['Falha de conexão. Seus planos anteriores foram preservados; tente novamente quando estiver online.']); toast.error('Erro ao gerar plano'); }
@@ -337,7 +339,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
     handleGenerate({ modality: genModality, goal: genGoal || undefined, structure: genModality === 'corrida' ? genRunStructure : undefined, startDate: genStartDate || undefined, weeks: genWeeks ? Number(genWeeks) : undefined });
   };
 
-  const handleAssessmentComplete = async (opts?: { startDate?: string; weeks?: number }) => {
+  const handleAssessmentComplete = async (opts?: PlanOptions) => {
     await handleGenerate(opts);
   };
 
@@ -383,7 +385,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
   // Show questionnaire if assessment not done or user clicked "Refazer Avaliação"
   if (needsAssessment || showQuestionnaire) {
-    return <><CoachQuestionnaire profile={{...profile,runStructure:genRunStructure}} races={races} generationErrors={generationErrors} generationIssues={reviewIssues} reviewField={reviewField} onComplete={handleAssessmentComplete} />{previewDialog}</>;
+    return <><CoachQuestionnaire key={genModality} profile={{...profile,modality:genModality,runStructure:genRunStructure}} races={races} generationErrors={generationErrors} generationIssues={reviewIssues} reviewField={reviewField} onComplete={handleAssessmentComplete} />{previewDialog}</>;
   }
 
   // Estatísticas do plano (todos os treinos)
@@ -435,7 +437,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
       {generationErrors.length > 0 && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Confira os dados antes de gerar o plano</p><ul className="mt-2 list-disc space-y-1 pl-4">{generationErrors.map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
 
-      <AssessmentReview issues={reviewIssues} onReview={issue=>{if(issue.field==='raceDate'){router.push('/provas');return;}setReviewField(issue.field);setShowQuestionnaire(true);}} />
+      <AssessmentReview issues={reviewIssues} onReview={issue=>{if(issue.field==='raceDate'){router.push('/provas');return;}if(issue.field==='daySchedule'){router.push('/configurar-treino#modalidades-por-dia');return;}setReviewField(issue.field);setShowQuestionnaire(true);}} />
 
       {previewDialog}
       <Dialog open={showGenOptions} onOpenChange={setShowGenOptions}>

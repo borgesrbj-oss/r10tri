@@ -75,7 +75,7 @@ function dateField(value: unknown): string {
   return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : '';
 }
 
-export function CoachQuestionnaire({ profile, races = [], generationErrors = [], generationIssues = [], reviewField, onComplete }: { profile: any; races?: { name: string; date: string | Date; distance?: string }[]; generationErrors?: string[]; generationIssues?: AssessmentIssue[]; reviewField?: string; onComplete: (opts?: { startDate?: string; weeks?: number }) => Promise<void> | void }) {
+export function CoachQuestionnaire({ profile, races = [], generationErrors = [], generationIssues = [], reviewField, onComplete }: { profile: any; races?: { name: string; date: string | Date; distance?: string }[]; generationErrors?: string[]; generationIssues?: AssessmentIssue[]; reviewField?: string; onComplete: (opts?: { modality?: string; startDate?: string; weeks?: number }) => Promise<void> | void }) {
   const router=useRouter();
   const confirmedProfile = Boolean(profile?.coachAssessmentDone || profile?.profileCompleted);
   const [step, setStep] = useState(()=>reviewField?assessmentIssue(reviewField,'')?.step??0:0);
@@ -163,7 +163,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const set = (key: string, val: any) => { setEditedFields(fields=>[...fields,key]);setServerIssues(items=>items.filter(item=>item.field.split('.')[0]!==key));setForm(p => ({ ...p, [key]: val })); setErrors([]); };
   const missing=missingAssessmentFields(form);
   const requiredIssues=attempted?missing.map(item=>assessmentIssue(item.field,'Preencha este campo.')!):[];
-  const issues=[...requiredIssues,...[...generationIssues,...serverIssues].filter(item=>!editedFields.includes(item.field.split('.')[0])&&!requiredIssues.some(required=>required.field===item.field))];
+  const issues=[...new Map([...requiredIssues,...serverIssues.filter(item=>!editedFields.includes(item.field.split('.')[0])),...generationIssues].map(issue=>[issue.field,issue])).values()];
   const {scope,focusField}=useAssessmentReview(issues,reviewField);
   const review=(issue:AssessmentIssue)=>{if(issue.field==='raceDate'){router.push('/provas');return;}if(issue.field==='daySchedule'){router.push('/configurar-treino#modalidades-por-dia');return;}setStep(issue.step);focusField(issue.field);};
   const fieldError=(field:string)=>issues.find(item=>item.field===field)?.message;
@@ -244,7 +244,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
       }
       toast.success('Avaliação salva! Gerando plano personalizado...');
       setEditedFields([]);setServerIssues([]);
-      await onComplete({ startDate: planStartDate || undefined, weeks: planWeeks ? Number(planWeeks) : undefined });
+      await onComplete({ modality: form.modality, startDate: planStartDate || undefined, weeks: planWeeks ? Number(planWeeks) : undefined });
     } catch { setErrors(['Não foi possível conectar ao servidor. Confira a conexão antes de tentar novamente.']); toast.error('Erro ao salvar avaliação'); }
     finally { setSaving(false); }
   };

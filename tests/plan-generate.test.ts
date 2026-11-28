@@ -414,3 +414,16 @@ test('preferência km salva na triagem é reutilizada sem opções adicionais',a
  assert.equal((await route.post({weeks:1})).status,200);
  assert.ok(route.state.savedWorkouts.filter(w=>w.modality==='corrida').every(w=>w.structure.prescriptionMode==='distancia'));
 });
+
+test('prévia de triatlo identifica separadamente os campos de volume recente', async () => {
+  const route = endpoint({ savedProfile: { ...profile, hasPoolAccess: true } });
+  const response = await route.post({ modality: 'triatlo', startDate: '2027-01-04', preview: true });
+  assert.equal(response.status, 422);
+  const data = await response.json();
+  const fields = data.assessmentIssues.map((issue: {field:string}) => issue.field);
+  assert.ok(fields.includes('planningPreferences.recentMinutes.natacao'));
+  assert.ok(fields.includes('planningPreferences.recentMinutes.ciclismo'));
+  assert.match(data.error, /natacao/);
+  assert.match(data.error, /ciclismo/);
+  assert.equal(route.state.archives, 0);
+});
