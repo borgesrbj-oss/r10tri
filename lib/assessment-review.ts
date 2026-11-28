@@ -11,6 +11,7 @@ const groups: [number, Record<string, string>][] = [
 ];
 export type AssessmentIssue = {field:string;label:string;step:number;message:string};
 export function assessmentIssue(field:string,message:string): AssessmentIssue | null {
+  if(field==='recentPainCheckIn')return {field,message,label:'Registro recente de dor',step:6};
   const root=field.split('.')[0];
   const group=groups.find(([,fields])=>Object.prototype.hasOwnProperty.call(fields,root));
   if(!group)return null;

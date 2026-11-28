@@ -165,7 +165,7 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const requiredIssues=attempted?missing.map(item=>assessmentIssue(item.field,'Preencha este campo.')!):[];
   const issues=[...new Map([...requiredIssues,...serverIssues.filter(item=>!editedFields.includes(item.field.split('.')[0])),...generationIssues].map(issue=>[issue.field,issue])).values()];
   const {scope,focusField}=useAssessmentReview(issues,reviewField);
-  const review=(issue:AssessmentIssue)=>{if(issue.field==='raceDate'){router.push('/provas');return;}if(issue.field==='daySchedule'){router.push('/configurar-treino#modalidades-por-dia');return;}setStep(issue.step);focusField(issue.field);};
+  const review=(issue:AssessmentIssue)=>{if(issue.field==='recentPainCheckIn'){router.push('/calendario');return;}if(issue.field==='raceDate'){router.push('/provas');return;}if(issue.field==='daySchedule'){router.push('/configurar-treino#modalidades-por-dia');return;}setStep(issue.step);focusField(issue.field);};
   const fieldError=(field:string)=>issues.find(item=>item.field===field)?.message;
   const toggleDay = (d: string) => set('availableDays', form.availableDays.includes(d) ? form.availableDays.filter((x: string) => x !== d) : [...form.availableDays, d]);
 

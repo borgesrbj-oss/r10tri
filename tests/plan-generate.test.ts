@@ -427,3 +427,15 @@ test('prévia de triatlo identifica separadamente os campos de volume recente', 
   assert.match(data.error, /ciclismo/);
   assert.equal(route.state.archives, 0);
 });
+
+test('revisão de saúde aponta o campo preenchido e preserva o plano existente', async () => {
+  const route = endpoint({ savedProfile: {
+    ...profile, modality:'triatlo', hasPoolAccess:true, currentInjuries:'Lesão atual relatada',
+    limitations:'Restrição de horário',
+    planningPreferences:{ recentMinutes:{ natacao:90, ciclismo:120, corrida:120 } },
+  } });
+  const response = await route.post({ startDate:'2027-01-04', preview:true });
+  assert.equal(response.status,422);
+  assert.deepEqual((await response.json()).assessmentIssues.map((issue:{field:string})=>issue.field),['currentInjuries']);
+  assert.equal(route.state.archives,0);
+});

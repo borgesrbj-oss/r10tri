@@ -437,7 +437,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
 
       {generationErrors.length > 0 && <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm"><p className="font-semibold">Confira os dados antes de gerar o plano</p><ul className="mt-2 list-disc space-y-1 pl-4">{generationErrors.map((message, index) => <li key={index}>{message}</li>)}</ul></div>}
 
-      <AssessmentReview issues={reviewIssues} onReview={issue=>{if(issue.field==='raceDate'){router.push('/provas');return;}if(issue.field==='daySchedule'){router.push('/configurar-treino#modalidades-por-dia');return;}setReviewField(issue.field);setShowQuestionnaire(true);}} />
+      <AssessmentReview issues={reviewIssues} onReview={issue=>{if(issue.field==='recentPainCheckIn'){router.push('/calendario');return;}if(issue.field==='raceDate'){router.push('/provas');return;}if(issue.field==='daySchedule'){router.push('/configurar-treino#modalidades-por-dia');return;}setReviewField(issue.field);setShowQuestionnaire(true);}} />
 
       {previewDialog}
       <Dialog open={showGenOptions} onOpenChange={setShowGenOptions}>

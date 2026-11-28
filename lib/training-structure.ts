@@ -480,6 +480,14 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   requiresCoachReview = safety.review || feedback.status==='revisar';
   warnings.push(...safety.warnings,...feedback.reasons);
   if ((isTriathlon || isMarathon) && (safety.healthCondition || feedback.status === 'revisar')) {
+    for (const field of ['currentInjuries', 'medicalConditions'] as const) {
+      if (hasReportedCondition(profile?.[field])) {
+        assessmentIssues.push({ field, message: 'Este campo contém um relato de saúde que pede revisão profissional antes da geração automática.' });
+      }
+    }
+    if (feedback.status === 'revisar') {
+      assessmentIssues.push({ field: 'recentPainCheckIn', message: 'Um check-in dos últimos sete dias registrou dor. Confira o registro no calendário e converse com um profissional de saúde.' });
+    }
     warnings.push('Prescrição pendente: consulte um profissional de saúde e revise os dados com o treinador.');
     return result();
   }

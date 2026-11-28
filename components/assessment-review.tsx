@@ -8,7 +8,7 @@ export function AssessmentReview({issues,onReview}:{issues:AssessmentIssue[];onR
     <p className="font-semibold">Revise os campos da triagem antes de gerar o plano</p>
     <ul className="my-3 space-y-2">{issues.map(issue=><li key={issue.field}>
       <p><strong>{issue.label}:</strong> {issue.message}</p>
-      <button type="button" className="min-h-11 text-left underline font-medium" onClick={()=>onReview(issue)}>Revisar triagem: {issue.label}</button>
+      <button type="button" className="min-h-11 text-left underline font-medium" onClick={()=>onReview(issue)}>{issue.field==='recentPainCheckIn'?'Abrir calendário':'Revisar triagem: '+issue.label}</button>
     </li>)}</ul>
   </div>;
 }
