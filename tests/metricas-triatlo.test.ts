@@ -89,7 +89,7 @@ test('zonas batem com as faixas de potência, pace, FC de limiar e CSS', () => {
     { sport: 'corrida', profile: { runThresholdPace: '6:00' }, zone: 'Z5', reference: [324, 346] },
     { sport: 'corrida', profile: { runStructure: 'zona', thresholdHeartRate: 170 }, zone: 'Z2', reference: [133, 147] },
     { sport: 'corrida', profile: { runStructure: 'zona', thresholdHeartRate: 160 }, zone: 'Z4', reference: [151, 159] },
-    { sport: 'corrida', profile: { runStructure: 'zona', thresholdHeartRate: 180, maxHeartRate: 184 }, zone: 'Z5', reference: [180, 184] },
+    { sport: 'corrida', profile: { runStructure: 'zona', thresholdHeartRate: 180, maxHeartRate: 184 }, zone: 'Z5', reference: [181, 184] },
     { sport: 'natacao', profile: { swimCssPace: '1:50' }, zone: 'Z2', reference: [116, 122] },
     { sport: 'natacao', profile: { swimCssPace: '1:40' }, zone: 'Z3', reference: [103, 106] },
     { sport: 'natacao', profile: { swimCssPace: '2:10' }, zone: 'Z5', reference: [125, 128] },

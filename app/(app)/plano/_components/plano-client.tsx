@@ -21,6 +21,7 @@ import { CoachQuestionnaire } from './coach-questionnaire';
 import { TrainingDistributionSummary, WorkoutStructure, WorkoutWhatsappLink } from '@/components/workout-structure';
 import { TrainingZonesSummary } from '@/components/training-zones-summary';
 import { RacePrediction } from '@/components/race-prediction';
+import { TRAINING_GOALS } from '@/lib/training-goals';
 
 const icons: Record<string, any> = { natacao: Waves, ciclismo: Bike, corrida: Timer, forca: Dumbbell };
 const colors: Record<string, string> = { natacao: 'border-l-blue-500', ciclismo: 'border-l-orange-500', corrida: 'border-l-green-500', forca: 'border-l-purple-500' };
@@ -214,15 +215,20 @@ function CalendarView({ workouts, onSelect }: { workouts: any[]; onSelect: (w: a
 }
 
 export function PlanoClient({ plan, workouts, profile, races }: { plan: any; workouts: any[]; profile: any; races: any[] }) {
+  const savedGoal = (modality: string) => profile?.modality === modality && Object.prototype.hasOwnProperty.call(TRAINING_GOALS[modality] ?? {}, profile?.trainingGoal)
+    ? String(profile.trainingGoal) : '';
   type PlanOptions = { modality?: string; advanced?: boolean; goal?: string; structure?: string; startDate?: string; weeks?: number };
   type PlanPreview = {
     request: PlanOptions;
     previewToken: string;
+    goal: string | null;
     weeks: number;
     workoutsCount: number;
     sports: { modality: string; minutes: number; sessions: number }[];
     firstWeek: { date: string; title: string; duration: number; zone: string | null }[];
     highMinutes: number;
+    runningIntensity?: { total: number; below: number; at: number; above: number; unknown: number };
+    qualityExamples: { title: string; date: string; week: number }[];
     warnings: string[];
   };
   const [generating, setGenerating] = useState(false);
@@ -235,7 +241,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
   const [modFilter, setModFilter] = useState<string | null>(null);
   const [showGenOptions, setShowGenOptions] = useState(false);
   const [genModality, setGenModality] = useState<string>(profile?.modality ?? 'triatlo');
-  const [genGoal, setGenGoal] = useState<string>(plan?.summary?.goal ?? '');
+  const [genGoal, setGenGoal] = useState<string>(() => savedGoal(profile?.modality ?? 'triatlo'));
   const [genRunStructure, setGenRunStructure] = useState<string>(profile?.runStructure ?? 'zona');
   const [genStartDate, setGenStartDate] = useState<string>('');
   const [genWeeks, setGenWeeks] = useState<string>('');
@@ -335,10 +341,12 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
     await handleGenerate(opts);
   };
 
+  const lightMarathonWarning = planPreview?.warnings.find(warning => warning.startsWith('O bloco de maratona ficou só'));
+  const formatMinutes = (minutes: number) => minutes.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
   const previewDialog = <Dialog open={Boolean(planPreview)} onOpenChange={open => { if (!open && !generating) setPlanPreview(null); }}>
     {planPreview && <DialogContent className="max-h-[85dvh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Prévia do plano</DialogTitle>
+        <DialogTitle>{planPreview.runningIntensity ? 'Prévia da maratona' : 'Prévia do plano'}</DialogTitle>
         <DialogDescription>{planPreview.weeks} semana(s) · {planPreview.workoutsCount} sessões. Seu histórico de treinos realizados é preservado.</DialogDescription>
       </DialogHeader>
       <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -347,7 +355,15 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
           <dd>{sport.sessions} sessão(ões) · {sport.minutes} min no ciclo</dd>
         </div>)}
       </dl>
-      <p className="text-sm font-medium">{planPreview.highMinutes > 0 ? Number(planPreview.highMinutes.toFixed(1)).toLocaleString('pt-BR') + ' min em Z4–Z5 no ciclo.' : 'Este ciclo ficou em intensidade leve.'}</p>
+      {lightMarathonWarning && <p role="status" className="rounded-lg border border-amber-500/60 p-2 text-sm font-medium">{lightMarathonWarning}</p>}
+      {planPreview.runningIntensity ? <div className="space-y-2 text-sm">
+        <h3 className="font-semibold">Intensidade de corrida no ciclo</h3>
+        <p>{formatMinutes(planPreview.runningIntensity.below)} min abaixo · {formatMinutes(planPreview.runningIntensity.at)} min no limiar · {formatMinutes(planPreview.runningIntensity.above)} min acima</p>
+        {planPreview.runningIntensity.unknown > 0 && <p>{formatMinutes(planPreview.runningIntensity.unknown)} min sem classificação confirmada.</p>}
+        {planPreview.qualityExamples.length > 0 && <ul className="list-disc pl-5">
+          {planPreview.qualityExamples.map(example => <li key={example.title}>{example.title} · semana {example.week} · <SafeDate date={example.date} options={{ day: '2-digit', month: '2-digit' }} locale="pt-BR" /></li>)}
+        </ul>}
+      </div> : <p className="text-sm font-medium">{planPreview.highMinutes > 0 ? formatMinutes(planPreview.highMinutes) + ' min em Z4–Z5 no ciclo.' : 'Este ciclo ficou em intensidade leve.'}</p>}
       <div className="space-y-2">
         <h3 className="text-sm font-semibold">Primeira semana</h3>
         {planPreview.firstWeek.length
@@ -410,7 +426,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                 <Trash2 className="mr-1.5 h-4 w-4" /> Excluir Plano
               </Button>
             )}
-            <Button onClick={() => { setGenModality(profile?.modality ?? 'triatlo'); setGenStartDate(new Date().toLocaleDateString('en-CA')); setGenWeeks(races?.length > 0 ? '' : '12'); setShowGenOptions(true); }} loading={generating} size="lg">
+            <Button onClick={() => { const modality = profile?.modality ?? 'triatlo'; setGenModality(modality); setGenGoal(savedGoal(modality)); setGenStartDate(new Date().toLocaleDateString('en-CA')); setGenWeeks(races?.length > 0 ? '' : '12'); setShowGenOptions(true); }} loading={generating} size="lg">
               {plan ? <><RotateCcw className="mr-2 h-4 w-4" /> Novo Plano</> : <><Sparkles className="mr-2 h-4 w-4" /> Gerar Plano</>}
             </Button>
           </div>
@@ -458,7 +474,7 @@ export function PlanoClient({ plan, workouts, profile, races }: { plan: any; wor
                 {MODALITY_OPTIONS.map((m) => {
                   const Icon = m.icon;
                   return (
-                    <Button key={m.key} type="button" variant={genModality === m.key ? 'default' : 'outline'} onClick={() => { setGenModality(m.key); setGenGoal(''); }} className="justify-start">
+                    <Button key={m.key} type="button" variant={genModality === m.key ? 'default' : 'outline'} onClick={() => { setGenModality(m.key); setGenGoal(savedGoal(m.key)); }} className="justify-start">
                       <Icon className="mr-2 h-4 w-4" /> {m.label}
                     </Button>
                   );

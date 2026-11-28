@@ -43,7 +43,28 @@ test('classificação usa os alvos efetivos e soma aquecimento, recuperação at
 });
 test('condição relatada preserva bloqueio de intensidade e explica por que não há progressão',()=>{
  const plan=generateStructuredPlan({...profile,currentInjuries:'Restrição relatada'},[race],profile.availableDays,start,12,feedback);
- assert.equal(plan.summary.calculation?.growth,0);assert.equal(plan.summary.requiresCoachReview,true);assert.ok(plan.workouts.every(w=>w.structure.distribution.highSeconds===0));
+ assert.equal(plan.summary.requiresCoachReview,true);
+ assert.equal(plan.workouts.length,0);
+ assert.ok(plan.warnings.some(w=>w.includes('profissional de saúde')));
+});
+
+test('agenda que só comporta até 20 min explica na prévia por que a maratona ficou leve',()=>{
+ const constrained={...profile,level:'intermediario',planningPreferences:{...profile.planningPreferences,maxSessionMinutes:20}};
+ const plan=generateStructuredPlan(constrained,[race],profile.availableDays,start,12,feedback);
+ assert.ok(plan.workouts.length>0);
+ assert.ok(plan.workouts.every(w=>w.duration<=20 && !w.structure.distribution.highSeconds));
+ assert.ok(plan.warnings.some(w=>w.includes('ficou só em intensidade leve')&&w.includes('25 minutos')));
+});
+
+test('Z5 por FC fica integralmente acima do limiar e nunca passa da FC máxima informada',()=>{
+ const mode={...profile,runStructure:'zona',hasHRM:true,thresholdHeartRate:170,maxHeartRate:176};
+ const structure=buildWorkoutStructure(mode,'corrida','build',60,600,'Z5');
+ markRunningThreshold(structure,mode);
+ const block=structure.steps.find(step=>step.zone==='Z5')!;
+ assert.deepEqual([block.target.low,block.target.high],[171,176]);
+ assert.equal(thresholdMinutes(structure).above,10);
+ const noMargin=buildWorkoutStructure({...mode,maxHeartRate:170},'corrida','build',60,600,'Z5');
+ assert.ok(noMargin.steps.filter(step=>step.zone==='Z5').every(step=>step.target.unit==='s/km'));
 });
 
 test('encurtar corrida por km mantém as distâncias válidas e atualizar FTP muda a referência salva',()=>{

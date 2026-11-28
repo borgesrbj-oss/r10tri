@@ -1,4 +1,4 @@
-import {preparationIssues} from '@/lib/training-audit';
+import {preparationIssues, thresholdMinutes, type ThresholdMinutes} from '@/lib/training-audit';
 import { assessmentIssue } from '@/lib/assessment-review';
 import { canAccessAthlete } from '@/lib/coach-access';
 import { NextRequest, NextResponse } from 'next/server';
@@ -216,13 +216,26 @@ export async function POST(req: NextRequest) {
       const firstWeek = workouts.filter(workout => workout.weekNumber === 1).map(workout => ({
         date: workout.date, title: workout.title, duration: workout.duration, zone: workout.targetZone,
       }));
+      const marathon = generated.summary.goal === '42k' && modality === 'corrida';
+      const runningIntensity = marathon ? workouts.reduce<ThresholdMinutes>((total, workout) => {
+        if (workout.modality !== 'corrida') return total;
+        const minutes = thresholdMinutes(workout.structure);
+        return { total: total.total + minutes.total, below: total.below + minutes.below, at: total.at + minutes.at, above: total.above + minutes.above, unknown: total.unknown + minutes.unknown };
+      }, { total: 0, below: 0, at: 0, above: 0, unknown: 0 }) : undefined;
+      const qualityExamples = marathon ? ['Tiros', 'Fartlek', 'Ritmo sustentado'].flatMap(label => {
+        const session = workouts.find(workout => workout.modality === 'corrida' && workout.title.startsWith(label));
+        return session ? [{ title: label, date: session.date, week: session.weekNumber }] : [];
+      }) : [];
       return NextResponse.json({
         previewToken: token,
+        goal: generated.summary.goal,
         weeks: generated.summary.weeks.length,
         workoutsCount: workouts.length,
         sports: [...bySport.values()],
         firstWeek,
         highMinutes: generated.summary.distribution.highSeconds / 60,
+        runningIntensity,
+        qualityExamples,
         warnings: generated.warnings,
       }, options);
     }
@@ -275,7 +288,7 @@ export async function POST(req: NextRequest) {
         where: { userId },
         data: {
           modality,
-          trainingGoal: selected.trainingGoal,
+          trainingGoal: generated.summary.goal,
           ...(['zona', 'distancia'].includes(body.structure)
             ? { runStructure: body.structure }
             : {}),

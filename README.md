@@ -20,6 +20,8 @@ O fluxo de triatlo apresenta a prévia das três modalidades e da intensidade an
 
 O painel **Hoje e Esta semana** compara planejado e realizado por modalidade. Na agenda, as opções para encurtar, mover ou reduzir a intensidade de uma sessão mostram o impacto antes de salvar. Para alterar sessões publicadas pelo coach, o fluxo mantém a revisão na Área do Coach. [Metodologia do triatlo](docs/METODOLOGIA_TRIATLO.md)
 
+Na maratona, a prova de 42 km orienta a periodização mesmo quando há uma prova mais curta de prioridade A. Prazo abaixo da referência pede revisão sem zerar a intensidade por si só. A prévia de maratona mostra os primeiros tiros, fartlek e ritmo quando encaixados, além dos minutos abaixo, no e acima do limiar. A ausência de treinos de qualidade vem acompanhada do motivo.
+
 A revisão incremental acrescenta triagem orientada, alvos por limiar/FTP/CSS ou percepção, blocos completos de treino, resumo real do tempo 80/20, alertas para o coach, estimativa de corrida, compartilhamento por link de WhatsApp e check-in com sono, fadiga e dor. O calendário e os planos antigos continuam acessíveis. A estimativa de prova utiliza Riegel; o projeto não anuncia uma avaliação automática validada de VDOT.
 
 O motor respeita dias e horas informados e identifica as situações que exigem revisão do treinador. Sem dados suficientes, solicita completar a triagem. Objetivo e modo da corrida influenciam os blocos: FC de limiar funcional no modo por zona, quando os dados e equipamento permitem, ou pace/percepção; distâncias auxiliares exigem pace válido. O horizonte pode ser automático até a prova mais duas semanas ou explícito de 1 a 52 semanas, com aviso quando o automático excede o limite.

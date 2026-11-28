@@ -1,5 +1,6 @@
 import type {TrainingProfile,TrainingRace,TrainingPhase,WorkoutStructure} from './training-types';
-import {preferences} from './planning-preferences';
+import {inferRaceGoal,preferences} from './planning-preferences';
+import {selectTrainingRace} from './triathlon-race';
 import {bikeThreshold,runThreshold,swimThreshold,numericValue,formatPaceSeconds} from './training-zones';
 
 export function swimmingAccessIssue(profile: Pick<TrainingProfile, 'canSwim' | 'hasPoolAccess' | 'poolSize'> | null): {field:'canSwim'|'hasPoolAccess';message:string} | null {
@@ -21,12 +22,14 @@ export function preparationIssues(profile:TrainingProfile|null,races:TrainingRac
  let schedule:Record<string,string[]>={};
  try{schedule=typeof profile.daySchedule==='string'?JSON.parse(profile.daySchedule):profile.daySchedule??{};}catch{issues.push({field:'availableDays',message:'Revise a agenda por modalidade: o formato salvo é inválido.'});}
  if(schedule&&typeof schedule==='object'&&!Array.isArray(schedule))for(const [day,planned] of Object.entries(schedule))if(Array.isArray(planned)&&planned.some(sport=>sports.includes(sport))&&profile.availableDays?.includes(day)&&Number((profile.dailyMinutes as Record<string,unknown>|null)?.[day])===0)issues.push({field:'dailyMinutes.'+day,message:'Há modalidade marcada neste dia, mas o limite é zero minutos. Revise a agenda ou o limite diário.'});
- if(profile.modality!=='corrida'||profile.trainingGoal!=='42k')return issues;
+ if(profile.modality!=='corrida')return issues;
+ const plannedRace=selectTrainingRace(races,start,'corrida',profile.trainingGoal);
+ const goal=profile.trainingGoal||inferRaceGoal('corrida',plannedRace?.distance);
+ if(goal!=='42k')return issues;
  if(!(Number(prefs.recentLongRunMinutes)>0))issues.push({field:'planningPreferences.recentLongRunMinutes',message:'Informe a duração do maior longão concluído nas últimas quatro semanas.'});
  if(Number(prefs.recentLongRunMinutes)>Number(prefs.recentMinutes?.corrida))issues.push({field:'planningPreferences.recentLongRunMinutes',message:'O longão recente não pode superar o volume semanal de corrida informado.'});
  if(!runThreshold(profile)&&!(Number(profile.thresholdHeartRate)>0&&profile.hasHRM!==false))issues.push({field:'runThresholdPace',message:'Informe pace de limiar ou FC de limiar medida para definir as intensidades. Ritmo habitual não é limiar.'});
- const date=new Date(start).getTime();
- if(!races.some(r=>/^42(?:[.,](?:195|2))?(?:k|km)?$/i.test(String(r.distance).replace(/\s/g,''))&&Number.isFinite(new Date(r.date).getTime())&&new Date(r.date).getTime()>=date))issues.push({field:'raceDate',message:'Cadastre a maratona com dia, mês e ano. Apenas o mês não permite calcular a redução de volume antes da prova.'});
+ if(inferRaceGoal('corrida',plannedRace?.distance)!=='42k')issues.push({field:'raceDate',message:'Cadastre a maratona com dia, mês e ano. Apenas o mês não permite calcular a redução de volume antes da prova.'});
  return issues;
 }
 export function recentLongRunLimit(options:unknown,week:number,growth:number,phase:TrainingPhase,recovery:boolean){

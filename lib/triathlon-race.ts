@@ -51,9 +51,11 @@ export function selectTrainingRace<T extends TrainingRace>(
     const running = inferRaceGoal('corrida', race.distance);
     if (modality === 'triatlo' && (running || (triathlon && raceGoal && triathlon !== raceGoal))) return [];
     if (modality && modality !== 'triatlo' && (triathlon || (running && modality !== 'corrida'))) return [];
-    return [{ race, date, triathlon }];
+    if (modality === 'corrida' && goal === '42k' && running && running !== '42k') return [];
+    return [{ race, date, triathlon, running }];
   }).sort((a, b) => a.date.getTime() - b.date.getTime() || (a.race.id ?? '').localeCompare(b.race.id ?? ''));
-  const knownFormats = modality === 'triatlo' ? eligible.filter(item => item.triathlon !== null) : [];
+  const knownFormats = modality === 'triatlo' ? eligible.filter(item => item.triathlon !== null)
+    : modality === 'corrida' && goal === '42k' ? eligible.filter(item => item.running === '42k') : [];
   const candidates = knownFormats.length ? knownFormats : eligible;
   return (candidates.find(item => item.race.priority === 'A') ?? candidates[0])?.race ?? null;
 }

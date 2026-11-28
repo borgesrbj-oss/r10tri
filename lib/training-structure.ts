@@ -156,7 +156,8 @@ export function buildWorkoutStructure(profile: TrainingProfile | null, modality:
     } else {
       const recovery = Math.max(30, Math.round(duration * 0.1));
       let remaining=duration-warm-cool-recovery, repetition=1;
-      const returning=modality==='corrida' && (Number(profile?.currentWeeklyVol)===0 || preferences(profile?.planningPreferences).recentMinutes?.corrida===0 || (profile?.inactivityWeeks??0)>=4 || profile?.trainingGoal==='retorno');
+      const recentRunning=numericValue(preferences(profile?.planningPreferences).recentMinutes?.corrida);
+      const returning=modality==='corrida' && (recentRunning===0 || (recentRunning==null&&numericValue(profile?.currentWeeklyVol)===0) || (profile?.inactivityWeeks??0)>=4 || profile?.trainingGoal==='retorno');
       const technique=modality==='natacao' && (kind==='tecnica' || preferences(profile?.planningPreferences).recentMinutes?.natacao===0 || profile?.swimLevel==='basico' || profile?.level==='iniciante' || profile?.trainingGoal==='tecnica');
       const openWater = modality === 'natacao' && profile?.poolSize === 'mar_aberto';
       const swimSetting = openWater ? 'em local seguro de águas abertas com acompanhamento' : 'em piscina supervisionada';
@@ -243,17 +244,18 @@ export function readWorkoutStructure(input: unknown): WorkoutStructure | null {
 function hasReportedCondition(value: unknown): boolean {
   if (typeof value !== 'string') return false;
   const normalized = value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return Boolean(normalized) && !/^(nao|nenhum|nenhuma|sem|nenhuma lesao|sem lesao|sem lesoes|sem restricoes|nao tenho)[.!]?$/.test(normalized);
+  const absence = /^(nao|nenhum|nenhuma|sem|nenhuma lesao( atual)?|sem lesao( atual)?|sem lesoes( atuais)?|sem restricoes|sem dor|sem condicao medica|sem condicoes( medicas| de saude)?|nenhuma condicao medica|nao tenho|nao se aplica)[.!]?$/;
+  return Boolean(normalized) && !absence.test(normalized);
 }
 
-function safetyPolicy(profile: TrainingProfile | null, start: Date, triathlon = false) {
+function safetyPolicy(profile: TrainingProfile | null, start: Date, separateLogistics = false) {
   const warnings: string[] = [];
   let review = false;
   const healthCondition = hasReportedCondition(profile?.currentInjuries) || hasReportedCondition(profile?.medicalConditions);
-  if (triathlon && healthCondition) {
+  if (separateLogistics && healthCondition) {
     review = true;
     warnings.push('Lesão atual ou condição de saúde informada: consulte um profissional de saúde. O treinador deve revisar antes da geração do plano.');
-  } else if (!triathlon && (healthCondition || hasReportedCondition(profile?.limitations))) {
+  } else if (!separateLogistics && (healthCondition || hasReportedCondition(profile?.limitations))) {
     review = true;
     warnings.push('Lesão atual, condição de saúde ou limitação informada: intensidade automática suspensa; o treinador deve revisar o plano e orientar avaliação profissional quando indicada.');
   }
@@ -443,6 +445,13 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   const selected = profile?.modality || 'triatlo';
   const isTriathlon = selected === 'triatlo';
   selectedRace = selectTrainingRace(races, start, selected, profile?.trainingGoal);
+  const inferredGoal = inferRaceGoal(selected, selectedRace?.distance);
+  if (!profile?.trainingGoal && inferredGoal) {
+    profile = { ...profile, trainingGoal: inferredGoal };
+    warnings.push('Foco derivado da distância cadastrada da prova prioritária.');
+  }
+  const goal = profile?.trainingGoal || null;
+  const isMarathon = selected === 'corrida' && goal === '42k';
   const race = selectedRace ? calendarDay(selectedRace.date) : null;
   const format = selected === 'triatlo' ? getTriathlonFormat(selectedRace) : null;
   const periodization = format && race ? triathlonPeriodization(format, start, race) : null;
@@ -467,19 +476,16 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
     ? [{ date: event.parsed!.toISOString().slice(0, 10), name: event.name || 'Prova secundária', priority: event.priority }] : []);
   if (periodization && !cycleReached) warnings.push('Este bloco preparatório termina antes da prova-alvo; a distribuição do ciclo completo ainda não pode ser confirmada.');
   if (!race) warnings.push('Sem prova-alvo com data válida: plano de preparação, sem inventar uma semana de prova.');
-  const safety = safetyPolicy(profile, start, isTriathlon);
+  const safety = safetyPolicy(profile, start, isTriathlon || isMarathon);
   requiresCoachReview = safety.review || feedback.status==='revisar';
   warnings.push(...safety.warnings,...feedback.reasons);
-  if (isTriathlon && (safety.healthCondition || feedback.status === 'revisar')) {
+  if ((isTriathlon || isMarathon) && (safety.healthCondition || feedback.status === 'revisar')) {
     warnings.push('Prescrição pendente: consulte um profissional de saúde e revise os dados com o treinador.');
     return result();
   }
   const level = profile?.level || 'intermediario';
   const swimIssue = swimmingAccessIssue(profile);
   const swimming = !swimIssue;
-  const inferredGoal=inferRaceGoal(selected, selectedRace?.distance);
-  if(!profile?.trainingGoal&&inferredGoal){profile={...profile,trainingGoal:inferredGoal};warnings.push('Foco derivado da distância cadastrada da prova prioritária; nenhum resultado fisiológico foi presumido.');}
-  const goal = profile?.trainingGoal || null;
   const goalKm:Record<string,number>={'5k':5,'10k':10,'15k':15,'21k':21.0975,'42k':42.195};
   if(selected==='corrida' && goal && goalKm[goal] && profile?.goalTime) {
     const desired=parseRaceTime(profile.goalTime);
@@ -508,6 +514,8 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
   const returning=(profile?.inactivityWeeks??0)>=4 || goal==='retorno';
   const declaredMinutes=modalities.map(sport=>numericValue(prefs.recentMinutes?.[sport]));
   const declaredTotal=declaredMinutes.every(value=>value!=null)?declaredMinutes.reduce((sum,value)=>sum+(value??0),0):null;
+  const noRecentLoad = isMarathon ? (declaredTotal ?? ((currentHours ?? 0) * 60)) <= 0 : currentHours === 0;
+  const marathonSafetyReview = safety.review || feedback.status === 'revisar';
   const reference = declaredTotal!=null&&declaredTotal>0&&!returning?Math.floor(declaredTotal):currentHours != null && currentHours > 0 && !returning ? Math.floor(currentHours * 60) : days.length * (level === 'iniciante' || returning ? 20 : 30);
   const initial=Math.floor(reference*feedback.initialFactor);
   if (!(declaredTotal && declaredTotal > 0) && (currentHours == null || currentHours <= 0)) warnings.push('Volume atual ausente ou zero: início conservador, sem presumir uma hora de treino. Confirme com o treinador.');
@@ -629,11 +637,11 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
       }
     }
     let targetHigh = 0.2;
-    if (week < 2 || recovery || safety.review || days.length < 3 || currentHours === 0 || weekPhase === 'race' || weekPhase === 'transition' || (race && weekEnd > race && weekStart.getTime() <= race.getTime() + 28 * DAY_MS)) targetHigh = 0;
+    if (week < 2 || recovery || safety.review || days.length < 3 || noRecentLoad || weekPhase === 'race' || weekPhase === 'transition' || (race && weekEnd > race && weekStart.getTime() <= race.getTime() + 28 * DAY_MS)) targetHigh = 0;
     else if (level === 'iniciante') targetHigh = week < 4 ? 0 : 0.1;
     else if (weekPhase === 'peak') targetHigh = 0.1;
     if ((numericValue(profile?.sleepHours) ?? 8) < 6 || profile?.stressLevel === 'alto') targetHigh = Math.min(targetHigh, 0.1);
-    if(requiresCoachReview || returning)targetHigh=0;
+    if ((isMarathon ? marathonSafetyReview : requiresCoachReview) || returning) targetHigh = 0;
     if(goal==='tecnica' || goal==='iniciacao')targetHigh=0;
     if(goal==='base')targetHigh=Math.min(targetHigh,.05);
     if(profile?.goalType==='completar')targetHigh=Math.min(targetHigh,.1);
@@ -739,6 +747,15 @@ export function generateStructuredPlan(profile: TrainingProfile | null, races: T
     if (workouts.every(workout => workout.structure.distribution.highSeconds === 0)) {
       warnings.push('O ciclo inteiro ficou em intensidade leve. Revise tempo disponível para séries completas, base recente e necessidade de recuperação com o treinador.');
     }
+  }
+  if (isMarathon && workouts.length && workouts.every(workout => !workout.structure.distribution.highSeconds)) {
+    const tooShort = workouts.every(workout => workout.modality !== 'corrida' || workout.duration < 25);
+    const reason = noRecentLoad || returning ? 'a base recente indica adaptação ou retorno'
+      : marathonSafetyReview ? 'a triagem exige revisão profissional'
+      : days.length < 3 ? 'a agenda tem menos de três dias disponíveis'
+      : tooShort ? 'nenhuma sessão de corrida ficou com pelo menos 25 minutos para comportar os blocos'
+      : 'as fases ou o espaçamento do longão e das sessões disponíveis não deixaram um dia adequado';
+    warnings.push('O bloco de maratona ficou só em intensidade leve porque ' + reason + '. Confira a prévia com o treinador.');
   }
   if (periodization && lastRegularMinutes != null && weekSummaries[0]?.plannedMinutes > lastRegularMinutes) {
     warnings.push('O teto após as descargas deixou a última semana regular abaixo do volume inicial. Revise a preparação para a prova com o treinador.');

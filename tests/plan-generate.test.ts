@@ -1,4 +1,4 @@
-import {preparationIssues} from '../lib/training-audit';
+import {preparationIssues,thresholdMinutes} from '../lib/training-audit';
 import { assessmentIssue } from '../lib/assessment-review';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,7 +12,7 @@ import * as training from '../lib/training-structure';
 import { assessmentReadiness } from '../lib/assessment-validation';
 import { trainingFeedback } from '../lib/training-feedback';
 import { TRAINING_GOALS } from '../lib/training-goals';
-import type { TrainingProfile } from '../lib/training-types';
+import type { TrainingProfile, TrainingRace } from '../lib/training-types';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const source = ts.transpileModule(
@@ -42,11 +42,12 @@ const profile = {
 
 function endpoint({
   savedProfile = profile as TrainingProfile,
+  savedRaces,
   user = { id: 'atleta-atual', role: 'atleta' } as {
     id: string;
     role: string;
   } | null,
-} = {}) {
+}: { savedProfile?: TrainingProfile; savedRaces?: TrainingRace[]; user?: { id: string; role: string } | null } = {}) {
   const state = {
     archives: 0,
     createdPlan: null as any,
@@ -65,7 +66,7 @@ function endpoint({
       },
     },
     targetRace: {
-      findMany: async () => [
+      findMany: async () => savedRaces ?? [
         {
           id: 'prova-b',
           name: 'Prova secundária',
@@ -126,7 +127,7 @@ function endpoint({
     },
     '@/lib/assessment-validation': { assessmentReadiness },
     '@/lib/assessment-review': { assessmentIssue },
-    '@/lib/training-audit': {preparationIssues},
+    '@/lib/training-audit': {preparationIssues,thresholdMinutes},
     '@/lib/training-feedback': { trainingFeedback },
     '@/lib/training-goals': { TRAINING_GOALS },
     '@/lib/training-structure': {
@@ -170,6 +171,54 @@ function endpoint({
       ),
   };
 }
+
+test('prévia e gravação de maratona em 12 semanas confirmam a prova de 42 km e os três estímulos', async () => {
+  const marathon = { id: 'maratona', date: '2027-05-09', distance: '42,195 km', priority: 'B' };
+  const otherRace = { id: 'prova-curta', date: '2027-03-07', distance: '5k', priority: 'A' };
+  for (const mode of ['distancia','zona'] as const) {
+    const route = endpoint({
+      savedRaces: [otherRace, marathon],
+      savedProfile: { ...profile, runStructure: mode, trainingGoal: '42k', currentWeeklyVol: 0,
+        limitations: 'Treino na esteira durante a semana', currentInjuries:'Sem lesão atual', medicalConditions: 'Sem condições médicas' },
+    });
+    const options = { startDate:'2027-02-15', weeks:12 };
+    const response = await route.post({ ...options, preview:true });
+    assert.equal(response.status, 200);
+    const preview = await response.json();
+    assert.equal(preview.goal, '42k');
+    assert.ok(preview.warnings.some((warning:string) => warning.includes('Prazo curto')));
+    assert.deepEqual(preview.qualityExamples.map((example:{title:string}) => example.title), ['Tiros','Fartlek','Ritmo sustentado']);
+    assert.ok(preview.runningIntensity.at > 0 && preview.runningIntensity.above > 0);
+    assert.equal(preview.runningIntensity.unknown, 0);
+    assert.equal(route.state.archives, 0);
+    const confirm = await route.post({ ...options, previewToken:preview.previewToken });
+    assert.equal(confirm.status, 200);
+    assert.equal(route.state.createdPlan.raceId, marathon.id);
+    assert.equal(route.state.savedWorkouts.length, preview.workoutsCount);
+    assert.ok(route.state.savedWorkouts.every(workout => workout.date.toISOString().slice(0,10) !== marathon.date));
+    assert.ok(route.state.savedWorkouts.some(workout => workout.title.startsWith('Longo')));
+    for (const workout of route.state.savedWorkouts.filter(w => /^Tiros|^Fartlek|^Ritmo/.test(w.title))) {
+      assert.ok(workout.structure.steps.some((step:{kind:string}) => step.kind === 'aquecimento'));
+      assert.ok(workout.structure.steps.some((step:{kind:string}) => step.kind === 'desaquecimento'));
+      const principal = workout.structure.steps.find((step:{zone:string}) => ['Z4','Z5'].includes(step.zone));
+      assert.equal(principal.target.unit, mode === 'zona' ? 'bpm' : 's/km');
+      if (mode === 'distancia') assert.ok(principal.distanceMeters > 0);
+    }
+  }
+});
+
+test('a prova de maratona inferida valida triagem antes de gravar e permanece como foco após confirmar', async () => {
+  const savedRaces = [{ id:'maratona', date:'2027-05-09', distance:'Maratona', priority:'A' }];
+  const options = { startDate:'2027-02-15', weeks:12 };
+  const incomplete = endpoint({ savedRaces, savedProfile: { ...profile, planningPreferences: { recentMinutes: { corrida: 300 } } } });
+  const failed = await incomplete.post({ ...options, preview:true });
+  assert.equal(failed.status, 422);
+  assert.ok((await failed.json()).assessmentIssues.some((issue:{field:string}) => issue.field === 'planningPreferences.recentLongRunMinutes'));
+  assert.equal(incomplete.state.archives, 0);
+  const complete = endpoint({ savedRaces });
+  assert.equal((await complete.post(options)).status, 200);
+  assert.equal(complete.state.profileUpdate.trainingGoal,'42k');
+});
 
 test('triatlo com agenda parcial gera prévia com três modalidades e séries antes de gravar', async () => {
   const route = endpoint({ savedProfile: {

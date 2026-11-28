@@ -76,12 +76,13 @@ export function targetForZone(profile: TrainingProfile | null, modality: Trainin
     const maximum = numericValue(profile?.maxHeartRate);
     const resting = numericValue(profile?.restingHeartRate);
     const consistent = heartRate && (!maximum || heartRate <= maximum) && (!resting || resting < heartRate);
-    if (profile?.runStructure === 'zona' && profile.hasHRM !== false && consistent && heartRate >= 60 && heartRate <= 230) {
+    const canPrescribeAbove = zone !== 'Z5' || maximum == null || Math.floor(maximum) > Math.floor(heartRate || 0);
+    if (profile?.runStructure === 'zona' && profile.hasHRM !== false && consistent && canPrescribeAbove && heartRate >= 60 && heartRate <= 230) {
       // Friel, tabela revisada em setembro/2025: FTHR, sem estimar FC pela idade.
       const bands: Record<TrainingZone, [number, number]> = { Z1: [0.5, 0.78], Z2: [0.78, 0.87], Z3: [0.87, 0.94], Z4: [0.94, 1], Z5: [1, 1.05] };
       const [lo, hi] = bands[zone];
       const max = maximum;
-      const low = Math.ceil(heartRate * lo);
+      const low = zone === 'Z5' ? Math.floor(heartRate) + 1 : Math.ceil(heartRate * lo);
       const high = Math.max(low, Math.min(zone === 'Z5' ? Math.floor(heartRate * hi) : Math.ceil(heartRate * hi) - 1, max ?? 250));
       return { basis: 'threshold_hr', unit: 'bpm', low, high, source: 'FC de limiar funcional informada; cinco faixas operacionais do Gotri, sem equivalência literal às sete zonas Friel. Piso Z1 de 50% e teto Z5 de 105% são limites operacionais do app. FC responde com atraso em intervalos curtos; revisar com treinador.', text: `${low}–${high} bpm` };
     }
@@ -105,6 +106,9 @@ export function targetForZone(profile: TrainingProfile | null, modality: Trainin
 
 export function thresholdWarnings(profile: TrainingProfile | null, modality: TrainingModality): string[] {
   if (modality === 'corrida' && profile?.runStructure === 'zona') {
+    if (targetForZone(profile,'corrida','Z2').unit === 'bpm' && targetForZone(profile,'corrida','Z5').unit !== 'bpm') {
+      return ['A FC máxima informada não deixa faixa acima da FC de limiar. Confira os valores. Nos blocos de Z5, use ritmo de limiar confirmado ou percepção de esforço.'];
+    }
     if (targetForZone(profile,'corrida','Z2').unit === 'bpm') return ['Faixas de FC usam o limiar funcional informado; FC não deve ser perseguida em intervalos curtos por seu atraso de resposta.'];
     return ['Modo FC sem limiar funcional ou monitor: usar limiar de pace quando disponível; caso contrário, percepção. Nenhuma FC foi estimada pela idade.'];
   }
