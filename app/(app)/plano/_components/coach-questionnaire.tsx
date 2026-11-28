@@ -6,7 +6,7 @@ import { ChevronRight, ChevronLeft, ClipboardCheck, Activity, Target, Heart, Wre
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input as BaseInput } from '@/components/ui/input';
-import { assessmentIssue, assessmentIssues, type AssessmentIssue } from '@/lib/assessment-review';
+import { assessmentIssue, assessmentIssues, hasReportedCondition, type AssessmentIssue } from '@/lib/assessment-review';
 import { AssessmentReview, useAssessmentReview } from '@/components/assessment-review';
 import { missingAssessmentFields } from '@/lib/assessment-missing';
 import { Label } from '@/components/ui/label';
@@ -52,7 +52,7 @@ const DAYS = [
 type OptionButtonProps = { selected: boolean; onClick: () => void; children: React.ReactNode; className?: string };
 function OptionButton({ selected, onClick, children, className }: OptionButtonProps) {
   return (
-    <button type="button" onClick={onClick}
+    <button type="button" aria-pressed={selected} onClick={onClick}
       className={`px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${selected ? 'border-primary bg-primary/10 text-primary shadow-sm' : 'border-border hover:border-primary/40 hover:bg-muted/50'} ${className ?? ''}`}
     >{children}</button>
   );
@@ -75,6 +75,12 @@ function dateField(value: unknown): string {
   return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : '';
 }
 
+const healthQuestions = [
+  ['currentInjuries', 'Você tem alguma lesão atual que limita seu treino?'],
+  ['injuryHistory', 'Você já teve alguma lesão relevante para o treino?'],
+  ['medicalConditions', 'Você tem alguma condição médica relevante para o treino?'],
+] as const;
+
 export function CoachQuestionnaire({ profile, races = [], generationErrors = [], generationIssues = [], reviewField, onComplete }: { profile: any; races?: { name: string; date: string | Date; distance?: string }[]; generationErrors?: string[]; generationIssues?: AssessmentIssue[]; reviewField?: string; onComplete: (opts?: { modality?: string; startDate?: string; weeks?: number }) => Promise<void> | void }) {
   const router=useRouter();
   const confirmedProfile = Boolean(profile?.coachAssessmentDone || profile?.profileCompleted);
@@ -84,6 +90,9 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
   const [attempted,setAttempted]=useState(generationErrors.length>0);
   const [serverIssues,setServerIssues]=useState<AssessmentIssue[]>([]);
   const [editedFields,setEditedFields]=useState<string[]>([]);
+  const [healthAnswers, setHealthAnswers] = useState(() => Object.fromEntries(
+    healthQuestions.map(([field]) => [field, profile?.[field]?.trim() ? hasReportedCondition(profile[field]) : undefined]),
+  ));
   const [planStartDate, setPlanStartDate] = useState('');
   const [planWeeks, setPlanWeeks] = useState('');
   const todayStr = useLocalDate();
@@ -200,6 +209,12 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
       for (const [label, value] of [['Limiar de corrida', form.runThresholdPace], ['CSS de natação', form.swimCssPace]] as const) if (value && !parseRaceTime(String(value))) add(label==='Limiar de corrida'?'runThresholdPace':'swimCssPace',`${label}: use o formato m:ss com segundos de 00 a 59.`);
       if (form.maxHeartRate && form.restingHeartRate && Number(form.restingHeartRate) >= Number(form.maxHeartRate)) add('restingHeartRate','A FC de repouso deve ser menor que a FC máxima informada.');
       if (form.thresholdHeartRate && form.maxHeartRate && Number(form.thresholdHeartRate) > Number(form.maxHeartRate)) add('thresholdHeartRate','A FC de limiar não pode superar a FC máxima informada.');
+    }
+    if (key === 'saude') {
+      for (const [field] of healthQuestions) {
+        if (healthAnswers[field] === undefined) add(field, 'Selecione Sim ou Não.');
+        else if (healthAnswers[field] && !hasReportedCondition(form[field])) add(field, 'Descreva o que você informou ao selecionar Sim.');
+      }
     }
     if (key === 'logistica') {
       if (!form.availableDays.length) add('availableDays','Selecione pelo menos um dia disponível para treinar.');
@@ -656,19 +671,22 @@ export function CoachQuestionnaire({ profile, races = [], generationErrors = [],
             {/* ===== STEP: Saúde ===== */}
             {current.key === 'saude' && (
               <>
-                <p className="text-sm text-muted-foreground">Um coach responsável SEMPRE pergunta sobre saúde antes de prescrever treino. Seja honesto aqui.</p>
-                <div className="space-y-2">
-                  <Label className="text-base">Lesões atuais (que limitam o treino hoje)</Label>
-                  <Textarea name="currentInjuries" value={form.currentInjuries} onChange={e => set('currentInjuries', e.target.value)} placeholder="Ex.: tendinite no tendão de Aquiles direito, dor no ombro ao nadar..." rows={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-base">Histórico de lesões passadas</Label>
-                  <Textarea name="injuryHistory" value={form.injuryHistory} onChange={e => set('injuryHistory', e.target.value)} placeholder="Ex.: fratura de estresse no pé em 2022, cirurgia no menisco em 2020..." rows={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-base">Condições médicas relevantes</Label>
-                  <Textarea name="medicalConditions" value={form.medicalConditions} onChange={e => set('medicalConditions', e.target.value)} placeholder="Ex.: asma, hipotireoidismo, diabetes..." rows={2} />
-                </div>
+                <p className="text-sm text-muted-foreground">Uma lesão atual ou condição médica informada pode exigir revisão profissional antes da geração automática do plano.</p>
+                {healthQuestions.map(([field, question]) => (
+                  <fieldset key={field} data-assessment-field={field} className="space-y-2">
+                    <legend className="font-medium">{question}</legend>
+                    <div className="flex gap-2">
+                      {[true, false].map(answer => (
+                        <OptionButton key={String(answer)} selected={healthAnswers[field] === answer} onClick={() => {
+                          setHealthAnswers(previous => ({ ...previous, [field]: answer }));
+                          set(field, answer ? (hasReportedCondition(form[field]) ? form[field] : '') : 'Não');
+                        }}>{answer ? 'Sim' : 'Não'}</OptionButton>
+                      ))}
+                    </div>
+                    {healthAnswers[field] === true && <Textarea name={field} aria-label={question} value={form[field]} onChange={event => set(field, event.target.value)} placeholder="Descreva brevemente" rows={2} />}
+                    {fieldError(field) && <p className="text-sm text-destructive">{fieldError(field)}</p>}
+                  </fieldset>
+                ))}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Horas de sono por noite</Label>

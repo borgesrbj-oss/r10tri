@@ -27,3 +27,10 @@ export function assessmentIssues(details:unknown): AssessmentIssue[] {
     return issue?[issue]:[];
   });
 }
+
+export function hasReportedCondition(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const absence = /^(nao|nenhum|nenhuma|sem|nenhuma lesao( atual)?|sem lesao( atual)?|sem lesoes( atuais)?|sem restricoes|sem dor|sem condicao medica|sem condicoes( medicas| de saude)?|nenhuma condicao medica|nao tenho|nao se aplica)[.!]?$/;
+  return Boolean(normalized) && !absence.test(normalized);
+}

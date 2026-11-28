@@ -1,3 +1,4 @@
+import { hasReportedCondition } from './assessment-review';
 import {fitTimeConstraints} from './time-constraints';
 import { calendarDay } from './calendar-day';
 import { buildBrickTransition, describeBrickTransition } from './brick-transition';
@@ -239,13 +240,6 @@ export function readWorkoutStructure(input: unknown): WorkoutStructure | null {
   if (distribution.totalSeconds !== record.durationSeconds) return null;
   const swimTechnique = modality === 'natacao' && record.swimTechnique === 'crawlAlignment' ? 'crawlAlignment' as const : undefined;
   return { version: 1, ...(swimTechnique ? { swimTechnique } : {}), ...(transition ? { transition } : {}), ...(record.thresholdReference?{thresholdReference:record.thresholdReference as WorkoutStructure['thresholdReference']}:{}),...(record.prescriptionMode==='distancia'?{prescriptionMode:'distancia' as const}:{}),...(record.origin==='coach'?{origin:'coach' as const}:{}), modality, phase: record.phase as TrainingPhase, durationSeconds: Number(record.durationSeconds), steps, distribution, warnings: Array.isArray(record.warnings) ? record.warnings.filter((warning): warning is string => typeof warning === 'string').slice(0, 50) : [], requiresCoachReview: record.requiresCoachReview === true };
-}
-
-function hasReportedCondition(value: unknown): boolean {
-  if (typeof value !== 'string') return false;
-  const normalized = value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const absence = /^(nao|nenhum|nenhuma|sem|nenhuma lesao( atual)?|sem lesao( atual)?|sem lesoes( atuais)?|sem restricoes|sem dor|sem condicao medica|sem condicoes( medicas| de saude)?|nenhuma condicao medica|nao tenho|nao se aplica)[.!]?$/;
-  return Boolean(normalized) && !absence.test(normalized);
 }
 
 function safetyPolicy(profile: TrainingProfile | null, start: Date, separateLogistics = false) {
